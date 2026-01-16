@@ -354,29 +354,46 @@ class ProductController extends Controller
 
         $product = Product::active()->findOrFail($id);
 
-        $categoryIds = $product->categories()->pluck('id');
-        $platformIds = $product->platforms()->pluck('id');
-        $typeIds     = $product->types()->pluck('id');
+        $categoryIds = $product->categories()->pluck('product_categories.id');
+        $platformIds = $product->platforms()->pluck('product_platforms.id');
+        $typeIds     = $product->types()->pluck('product_types.id');
+
 
         $products = Product::query()
-            ->active()
-            ->where('id', '!=', $product->id)
-            ->where(function ($q) use ($categoryIds, $platformIds, $typeIds) {
-                $q->whereHas('categories', fn ($q) => $q->whereIn('id', $categoryIds))
-                  ->orWhereHas('platforms', fn ($q) => $q->whereIn('id', $platformIds))
-                  ->orWhereHas('types', fn ($q) => $q->whereIn('id', $typeIds));
-            })
-            ->withMin(['offers as lowest_price' => function ($q) {
-                $q->where('status', 'active');
-            }], 'retail_price')
-            ->orderBy('lowest_price')
-            ->limit($limit)
-            ->get([
-                'id',
-                'title',
-                'slug',
-                'cover_image',
-            ]);
+        ->active()
+        ->where('products.id', '!=', $product->id)
+        ->where(function ($q) use ($categoryIds, $platformIds, $typeIds) {
+
+            if ($categoryIds->isNotEmpty()) {
+                $q->whereHas('categories', function ($q) use ($categoryIds) {
+                    $q->whereIn('product_categories.id', $categoryIds);
+                });
+            }
+
+            if ($platformIds->isNotEmpty()) {
+                $q->orWhereHas('platforms', function ($q) use ($platformIds) {
+                    $q->whereIn('product_platforms.id', $platformIds);
+                });
+            }
+
+            if ($typeIds->isNotEmpty()) {
+                $q->orWhereHas('types', function ($q) use ($typeIds) {
+                    $q->whereIn('product_types.id', $typeIds);
+                });
+            }
+        })
+        ->withMin(['offers as lowest_price' => function ($q) {
+            $q->where('seller_offers.status', 'active');
+        }], 'retail_price')
+        ->orderBy('lowest_price')
+        ->limit($limit)
+        ->get([
+            'products.id',
+            'products.title',
+            'products.slug',
+            'products.cover_image',
+        ]);
+
 
         return response()->json([
             'status'  => 'success',

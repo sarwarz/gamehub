@@ -318,3 +318,156 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/products/{id}/related'
+    metadata:
+      custom: []
+      groupName: Products
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get related products'
+      description: |-
+        Returns products related to the given product based on shared
+        categories, platforms, or types.
+
+        Used for "You may also like" or "Similar products" sections.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'Product ID.'
+        required: true
+        example: 25
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 25
+    queryParameters:
+      limit:
+        custom: []
+        name: limit
+        description: 'Number of related products to return. Default: 6'
+        required: false
+        example: 6
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      limit: 6
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Related products fetched successfully",
+            "data": [
+              {
+                "id": 30,
+                "title": "Windows 10 Pro",
+                "slug": "windows-10-pro",
+                "cover_image": "/storage/products/windows-10.jpg",
+                "lowest_price": 9.99
+              }
+            ]
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "message": "Product not found"
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/products/trending
+    metadata:
+      custom: []
+      groupName: Products
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get trending products'
+      description: |-
+        Returns trending or popular products based on featured flag,
+        promotion, or sorting priority.
+
+        Used for homepage sections like "Trending now".
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      limit:
+        custom: []
+        name: limit
+        description: 'Number of products to return. Default: 10'
+        required: false
+        example: 10
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      limit: 10
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Trending products fetched successfully",
+            "data": [
+              {
+                "id": 18,
+                "title": "Office 2021 Professional Plus",
+                "slug": "office-2021-pro-plus",
+                "cover_image": "/storage/products/office-2021.jpg",
+                "lowest_price": 14.50
+              }
+            ]
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

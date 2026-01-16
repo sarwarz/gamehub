@@ -146,6 +146,12 @@
                                                                                 <li class="tocify-item level-2" data-unique="products-GETapi-v1-products--id-">
                                 <a href="#products-GETapi-v1-products--id-">Get product details</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="products-GETapi-v1-products--id--related">
+                                <a href="#products-GETapi-v1-products--id--related">Get related products</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="products-GETapi-v1-products-trending">
+                                <a href="#products-GETapi-v1-products-trending">Get trending products</a>
+                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-taxonomies" class="tocify-header">
@@ -3355,6 +3361,328 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Product ID. Example: <code>25</code></p>
             </div>
                     </form>
+
+                    <h2 id="products-GETapi-v1-products--id--related">Get related products</h2>
+
+<p>
+</p>
+
+<p>Returns products related to the given product based on shared
+categories, platforms, or types.</p>
+<p>Used for &quot;You may also like&quot; or &quot;Similar products&quot; sections.</p>
+
+<span id="example-requests-GETapi-v1-products--id--related">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://gamehub.licensesender.com/api/v1/products/25/related?limit=6" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://gamehub.licensesender.com/api/v1/products/25/related"
+);
+
+const params = {
+    "limit": "6",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-products--id--related">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;status&quot;: &quot;success&quot;,
+    &quot;message&quot;: &quot;Related products fetched successfully&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 30,
+            &quot;title&quot;: &quot;Windows 10 Pro&quot;,
+            &quot;slug&quot;: &quot;windows-10-pro&quot;,
+            &quot;cover_image&quot;: &quot;/storage/products/windows-10.jpg&quot;,
+            &quot;lowest_price&quot;: 9.99
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;message&quot;: &quot;Product not found&quot;
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-products--id--related" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-products--id--related"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-products--id--related"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-products--id--related" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-products--id--related">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-products--id--related" data-method="GET"
+      data-path="api/v1/products/{id}/related"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-products--id--related', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-products--id--related"
+                    onclick="tryItOut('GETapi-v1-products--id--related');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-products--id--related"
+                    onclick="cancelTryOut('GETapi-v1-products--id--related');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-products--id--related"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/products/{id}/related</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-products--id--related"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-products--id--related"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="id"                data-endpoint="GETapi-v1-products--id--related"
+               value="25"
+               data-component="url">
+    <br>
+<p>Product ID. Example: <code>25</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-products--id--related"
+               value="6"
+               data-component="query">
+    <br>
+<p>Number of related products to return. Default: 6 Example: <code>6</code></p>
+            </div>
+                </form>
+
+                    <h2 id="products-GETapi-v1-products-trending">Get trending products</h2>
+
+<p>
+</p>
+
+<p>Returns trending or popular products based on featured flag,
+promotion, or sorting priority.</p>
+<p>Used for homepage sections like &quot;Trending now&quot;.</p>
+
+<span id="example-requests-GETapi-v1-products-trending">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "https://gamehub.licensesender.com/api/v1/products/trending?limit=10" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "https://gamehub.licensesender.com/api/v1/products/trending"
+);
+
+const params = {
+    "limit": "10",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-products-trending">
+            <blockquote>
+            <p>Example response (200):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;status&quot;: &quot;success&quot;,
+    &quot;message&quot;: &quot;Trending products fetched successfully&quot;,
+    &quot;data&quot;: [
+        {
+            &quot;id&quot;: 18,
+            &quot;title&quot;: &quot;Office 2021 Professional Plus&quot;,
+            &quot;slug&quot;: &quot;office-2021-pro-plus&quot;,
+            &quot;cover_image&quot;: &quot;/storage/products/office-2021.jpg&quot;,
+            &quot;lowest_price&quot;: 14.5
+        }
+    ]
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-products-trending" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-products-trending"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-products-trending"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-products-trending" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-products-trending">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-products-trending" data-method="GET"
+      data-path="api/v1/products/trending"
+      data-authed="0"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-products-trending', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+                    <button type="button"
+                    style="background-color: #8fbcd4; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-tryout-GETapi-v1-products-trending"
+                    onclick="tryItOut('GETapi-v1-products-trending');">Try it out ⚡
+            </button>
+            <button type="button"
+                    style="background-color: #c97a7e; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-canceltryout-GETapi-v1-products-trending"
+                    onclick="cancelTryOut('GETapi-v1-products-trending');" hidden>Cancel 🛑
+            </button>&nbsp;&nbsp;
+            <button type="submit"
+                    style="background-color: #6ac174; padding: 5px 10px; border-radius: 5px; border-width: thin;"
+                    id="btn-executetryout-GETapi-v1-products-trending"
+                    data-initial-text="Send Request 💥"
+                    data-loading-text="⏱ Sending..."
+                    hidden>Send Request 💥
+            </button>
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/products/trending</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-products-trending"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-products-trending"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-products-trending"
+               value="10"
+               data-component="query">
+    <br>
+<p>Number of products to return. Default: 10 Example: <code>10</code></p>
+            </div>
+                </form>
 
                 <h1 id="taxonomies">Taxonomies</h1>
 
