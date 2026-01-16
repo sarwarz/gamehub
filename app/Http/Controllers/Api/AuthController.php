@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
@@ -45,7 +46,7 @@ class AuthController extends Controller
         $user = User::create([
             'name'      => $data['name'],
             'email'     => $data['email'],
-            'password'  => $data['password'],
+            'password' => Hash::make($data['password']),
             'is_active' => true,
         ]);
 
