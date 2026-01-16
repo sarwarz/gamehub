@@ -7,13 +7,32 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
     /**
-     * Register new user
+     * Register a new user
+     *
+     * Creates a new buyer account for the eCommerce platform.
+     *
+     * @group Authentication
+     *
+     * @bodyParam name string required Full name of the user. Example: John Doe
+     * @bodyParam email string required Email address (must be unique). Example: john@example.com
+     * @bodyParam password string required Minimum 8 characters. Example: password123
+     * @bodyParam password_confirmation string required Must match password. Example: password123
+     *
+     * @response 201 {
+     *   "status": "success",
+     *   "message": "Registration successful"
+     * }
+     *
+     * @response 422 {
+     *   "message": "The email has already been taken.",
+     *   "errors": {
+     *     "email": ["The email has already been taken."]
+     *   }
+     * }
      */
     public function register(Request $request)
     {
@@ -24,13 +43,13 @@ class AuthController extends Controller
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
-            'email'    => $data['email'],
-            'password' => $data['password'],
-            'is_active'=> true,
+            'name'      => $data['name'],
+            'email'     => $data['email'],
+            'password'  => $data['password'],
+            'is_active' => true,
         ]);
 
-        // Default buyer role
+        // Assign default buyer role
         $user->roles()->attach(
             Role::where('name', 'buyer')->first()
         );
@@ -42,7 +61,36 @@ class AuthController extends Controller
     }
 
     /**
-     * Login
+     * Login user
+     *
+     * Authenticates a user and returns a Sanctum token.
+     *
+     * @group Authentication
+     *
+     * @bodyParam email string required Registered email address. Example: john@example.com
+     * @bodyParam password string required User password. Example: password123
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": {
+     *     "user": {
+     *       "id": 1,
+     *       "name": "John Doe",
+     *       "email": "john@example.com"
+     *     },
+     *     "token": "1|xxxxxxxxxxxxxxxxxxxxxxxx"
+     *   }
+     * }
+     *
+     * @response 401 {
+     *   "status": "error",
+     *   "message": "Invalid credentials"
+     * }
+     *
+     * @response 403 {
+     *   "status": "error",
+     *   "message": "Account disabled"
+     * }
      */
     public function login(Request $request)
     {
@@ -67,7 +115,7 @@ class AuthController extends Controller
             ], 403);
         }
 
-        // Optional: revoke old tokens
+        // Revoke previous tokens
         $user->tokens()->delete();
 
         $abilities = ['buyer'];
@@ -93,9 +141,19 @@ class AuthController extends Controller
         ]);
     }
 
-
     /**
-     * Logout
+     * Logout user
+     *
+     * Revokes the current access token.
+     *
+     * @group Authentication
+     *
+     * @authenticated
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Logged out successfully"
+     * }
      */
     public function logout(Request $request)
     {
@@ -108,7 +166,25 @@ class AuthController extends Controller
     }
 
     /**
-     * Get logged in user
+     * Get authenticated user
+     *
+     * Returns the currently logged-in user with roles and permissions.
+     *
+     * @group Authentication
+     *
+     * @authenticated
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": {
+     *     "user": {
+     *       "id": 1,
+     *       "name": "John Doe",
+     *       "roles": [],
+     *       "permissions": []
+     *     }
+     *   }
+     * }
      */
     public function me(Request $request)
     {
@@ -121,5 +197,4 @@ class AuthController extends Controller
             ]
         ]);
     }
-
 }

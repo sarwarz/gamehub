@@ -10,7 +10,7 @@ use App\Services\CurrencyService;
 
 class ProductController extends Controller
 {
-    protected $currencyService;
+    protected CurrencyService $currencyService;
 
     public function __construct(CurrencyService $currencyService)
     {
@@ -18,7 +18,38 @@ class ProductController extends Controller
     }
 
     /**
-     * Product listing (paginated + filters)
+     * List products
+     *
+     * Returns paginated products with filters and lowest price.
+     *
+     * @group Products
+     *
+     * @queryParam search string Search by product title. Example: Windows
+     * @queryParam category_id integer Filter by category ID. Example: 1
+     * @queryParam platform_id integer Filter by platform ID. Example: 2
+     * @queryParam type_id integer Filter by type ID. Example: 3
+     * @queryParam region_id integer Filter by region ID. Example: 4
+     * @queryParam language_id integer Filter by language ID. Example: 5
+     * @queryParam works_on_id integer Filter by OS. Example: 1
+     * @queryParam per_page integer Items per page. Example: 12
+     * @queryParam page integer Page number. Example: 1
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Products fetched successfully",
+     *   "data": {
+     *     "products": [],
+     *     "currency": {
+     *       "code": "USD",
+     *       "symbol": "$"
+     *     },
+     *     "pagination": {
+     *       "total": 120,
+     *       "current_page": 1,
+     *       "last_page": 10
+     *     }
+     *   }
+     * }
      */
     public function index(Request $request)
     {
@@ -34,12 +65,10 @@ class ProductController extends Controller
             'offers.seller:id,store_name,rating',
         ])->active();
 
-        // Search filter
         if ($request->filled('search')) {
             $query->where('title', 'like', '%' . $request->search . '%');
         }
 
-        // 🏷 Taxonomy filters
         $taxonomyFilters = [
             'category_id' => ['relation' => 'categories', 'table' => 'product_categories'],
             'platform_id' => ['relation' => 'platforms', 'table' => 'product_platforms'],
@@ -57,31 +86,26 @@ class ProductController extends Controller
             }
         }
 
-
         $products = $query->paginate($request->get('per_page', 12));
 
-        // Get default currency
-        $defaultCurrency = \App\Models\Currency::where('is_default', true)->first();
+        $defaultCurrency = Currency::where('is_default', true)->first();
 
-        // Transform products
         $productsData = $products->map(function ($product) use ($defaultCurrency) {
-            // Get lowest offer
             $lowestOffer = $product->offers->sortBy('retail_price')->first();
 
             return [
-                'id'          => $product->id,
-                'title'       => $product->title,
-                'slug'        => $product->slug,
-                'cover_image' => $product->cover_image,
-                'developer'   => $product->developer,
-                'publisher'   => $product->publisher,
-                'categories'  => $product->categories,
-                'platforms'   => $product->platforms,
-                'types'       => $product->types,
-                'regions'     => $product->regions,
-                'languages'   => $product->languages,
-                'works_on'    => $product->worksOn,
-                //  Lowest price only
+                'id'           => $product->id,
+                'title'        => $product->title,
+                'slug'         => $product->slug,
+                'cover_image'  => $product->cover_image,
+                'developer'    => $product->developer,
+                'publisher'    => $product->publisher,
+                'categories'   => $product->categories,
+                'platforms'    => $product->platforms,
+                'types'        => $product->types,
+                'regions'      => $product->regions,
+                'languages'    => $product->languages,
+                'works_on'     => $product->worksOn,
                 'lowest_price' => $lowestOffer ? [
                     'price_name' => $defaultCurrency->code,
                     'symbol'     => $defaultCurrency->symbol,
@@ -106,9 +130,23 @@ class ProductController extends Controller
         ]);
     }
 
-
     /**
-     * Single product detail
+     * Get product details
+     *
+     * Returns full product details including offers and multi-currency prices.
+     *
+     * @group Products
+     *
+     * @urlParam id integer required Product ID. Example: 25
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Product details fetched successfully"
+     * }
+     *
+     * @response 404 {
+     *   "message": "Not found"
+     * }
      */
     public function show($id)
     {
@@ -126,7 +164,6 @@ class ProductController extends Controller
 
         $currencies = Currency::where('is_active', true)->get();
 
-        //  Sort offers by retail_price before transforming
         $offers = $product->offers
             ->sortBy('retail_price')
             ->map(function ($offer) use ($currencies) {
@@ -154,45 +191,20 @@ class ProductController extends Controller
                     'promoted' => $offer->is_promoted,
                 ];
             })
-            ->values(); // reindex after sorting
+            ->values();
 
         return response()->json([
             'status'  => 'success',
             'message' => 'Product details fetched successfully',
             'data'    => [
-                'id'                => $product->id,
-                'title'             => $product->title,
-                'slug'              => $product->slug,
-                'sku'               => $product->sku,
-                'short_description' => $product->short_description,
-                'description'       => $product->description,
-                'cover_image'       => $product->cover_image,
-                'gallery'           => $product->gallery ?? [],
-                'developer'         => $product->developer,
-                'publisher'         => $product->publisher,
-                'categories'        => $product->categories,
-                'platforms'         => $product->platforms,
-                'types'             => $product->types,
-                'regions'           => $product->regions,
-                'languages'         => $product->languages,
-                'works_on'          => $product->worksOn,
-                'system_requirements'=> $product->system_requirements,
-                'offers'            => $offers,
-                'promoted_offers'   => $offers->where('promoted', true)->values(),
-                'currencies'        => $currencies,
-                'meta' => [
-                    'title'       => $product->meta_title,
-                    'description' => $product->meta_description,
-                    'keywords'    => $product->meta_keywords,
-                    'is_featured' => $product->is_featured,
-                    'sort_order'  => $product->sort_order,
-                    'delivery_type'=> $product->delivery_type,
-                ],
+                'id'          => $product->id,
+                'title'       => $product->title,
+                'slug'        => $product->slug,
+                'sku'         => $product->sku,
+                'description' => $product->description,
+                'offers'      => $offers,
+                'currencies'  => $currencies,
             ],
         ]);
     }
-
-
-
-
 }

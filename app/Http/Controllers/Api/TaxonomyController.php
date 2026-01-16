@@ -14,6 +14,24 @@ use App\Models\ProductPublisher;
 
 class TaxonomyController extends Controller
 {
+    /**
+     * List product categories
+     *
+     * Returns all product categories.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Operating Systems",
+     *       "slug": "operating-systems"
+     *     }
+     *   ]
+     * }
+     */
     public function categories()
     {
         return response()->json([
@@ -22,6 +40,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List platforms
+     *
+     * Returns all supported platforms.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Windows",
+     *       "slug": "windows"
+     *     }
+     *   ]
+     * }
+     */
     public function platforms()
     {
         return response()->json([
@@ -30,6 +66,25 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List product types
+     *
+     * Returns all product types with commission.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Retail",
+     *       "slug": "retail",
+     *       "commission": 10
+     *     }
+     *   ]
+     * }
+     */
     public function types()
     {
         return response()->json([
@@ -38,6 +93,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List regions
+     *
+     * Returns all product regions.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Global",
+     *       "slug": "global"
+     *     }
+     *   ]
+     * }
+     */
     public function regions()
     {
         return response()->json([
@@ -46,6 +119,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List languages
+     *
+     * Returns all supported languages.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "English",
+     *       "slug": "en"
+     *     }
+     *   ]
+     * }
+     */
     public function languages()
     {
         return response()->json([
@@ -54,6 +145,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List supported operating systems
+     *
+     * Returns OS/platform compatibility (works on).
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Windows 10",
+     *       "slug": "windows-10"
+     *     }
+     *   ]
+     * }
+     */
     public function worksOn()
     {
         return response()->json([
@@ -62,6 +171,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List developers
+     *
+     * Returns all product developers.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Microsoft",
+     *       "slug": "microsoft"
+     *     }
+     *   ]
+     * }
+     */
     public function developers()
     {
         return response()->json([
@@ -70,6 +197,24 @@ class TaxonomyController extends Controller
         ]);
     }
 
+    /**
+     * List publishers
+     *
+     * Returns all product publishers.
+     *
+     * @group Taxonomies
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "data": [
+     *     {
+     *       "id": 1,
+     *       "name": "Microsoft",
+     *       "slug": "microsoft"
+     *     }
+     *   ]
+     * }
+     */
     public function publishers()
     {
         return response()->json([
