@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -16,34 +17,27 @@ class AuthController extends Controller
      */
     public function register(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $data = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|unique:users',
-            'password' => 'required|string|min:6|confirmed',
+            'email'    => 'required|email|unique:users',
+            'password' => 'required|string|min:8|confirmed',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
-
-        $validated = $validator->validated();
 
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name'     => $data['name'],
+            'email'    => $data['email'],
+            'password' => $data['password'],
+            'is_active'=> true,
         ]);
+
+        // Default buyer role
+        $user->roles()->attach(
+            Role::where('name', 'buyer')->first()
+        );
 
         return response()->json([
             'status'  => 'success',
-            'message' => 'Registration successful',
-            'data'    => [
-                'user' => $user
-            ]
+            'message' => 'Registration successful'
         ], 201);
     }
 
@@ -52,20 +46,10 @@ class AuthController extends Controller
      */
     public function login(Request $request)
     {
-        $validator = Validator::make($request->all(), [
+        $credentials = $request->validate([
             'email'    => 'required|email',
             'password' => 'required|string',
         ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Validation failed',
-                'errors'  => $validator->errors(),
-            ], 422);
-        }
-
-        $credentials = $validator->validated();
 
         if (!Auth::attempt($credentials)) {
             return response()->json([
@@ -75,17 +59,40 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $token = $user->createToken('nextjs-token')->plainTextToken;
+
+        if (!$user->is_active) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Account disabled'
+            ], 403);
+        }
+
+        // Optional: revoke old tokens
+        $user->tokens()->delete();
+
+        $abilities = ['buyer'];
+
+        if ($user->hasRole('admin')) {
+            $abilities = ['admin'];
+        } elseif ($user->is_seller) {
+            $abilities = ['seller'];
+        }
+
+        $token = $user->createToken(
+            'nextjs-token',
+            $abilities,
+            now()->addDays(7)
+        )->plainTextToken;
 
         return response()->json([
-            'status'  => 'success',
-            'message' => 'Login successful',
-            'data'    => [
+            'status' => 'success',
+            'data'   => [
                 'user'  => $user,
                 'token' => $token,
             ]
         ]);
     }
+
 
     /**
      * Logout
@@ -105,11 +112,14 @@ class AuthController extends Controller
      */
     public function me(Request $request)
     {
+        $user = $request->user()->load('roles.permissions');
+
         return response()->json([
-            'status'  => 'success',
-            'data'    => [
-                'user' => $request->user()
+            'status' => 'success',
+            'data'   => [
+                'user' => $user
             ]
         ]);
     }
+
 }
