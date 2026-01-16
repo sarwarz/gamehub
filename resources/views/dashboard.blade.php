@@ -11,7 +11,7 @@
         <div class="d-flex align-items-end row">
             <div class="col-7">
             <div class="card-body text-nowrap">
-                <h5 class="card-title mb-0">Congratulations John! 🎉</h5>
+                <h5 class="card-title mb-0">Congratulations {{ ucwords(Auth::user()->name ) }}! 🎉</h5>
                 <p class="mb-2">Best seller of the month</p>
                 <h4 class="text-primary mb-1">$48.9k</h4>
                 <a href="javascript:;" class="btn btn-primary">View Sales</a>

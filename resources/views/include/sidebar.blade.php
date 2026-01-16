@@ -41,10 +41,6 @@
     </li>
     @endif
 
-    <!-- eCommerce Header -->
-    <li class="menu-header small">
-        <span class="menu-header-text" data-i18n="eCommerce">eCommerce</span>
-    </li>
 
      <!-- Products Attributes -->
     @if(
