@@ -14,7 +14,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Demo: Login Basic - Pages | Vuexy - Bootstrap Dashboard PRO</title>
+    <title>Login | {{ config('app.name') }}</title>
 
     <meta name="description" content="" />
 
@@ -107,24 +107,24 @@
                       </svg>
                     </span>
                   </span>
-                  <span class="app-brand-text demo text-heading fw-bold">Vuexy</span>
+                  <span class="app-brand-text demo text-heading fw-bold">{{ config('app.name') }}</span>
                 </a>
               </div>
               <!-- /Logo -->
-              <h4 class="mb-1">Welcome to Vuexy! 👋</h4>
+              <h4 class="mb-1">Welcome to {{ config('app.name') }}! 👋</h4>
               <p class="mb-6">Please sign-in to your account and start the adventure</p>
 
               <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="post">
                 @csrf
                 <div class="mb-6 form-control-validation">
-                  <label for="email" class="form-label">Email or Username</label>
+                  <label for="email" class="form-label">Email</label>
                   <input
                     type="text"
                     class="form-control"
                     id="email"
                     name="email"
                     value="{{ old('email') }}"
-                    placeholder="Enter your email or username"
+                    placeholder="Enter your email"
                     autofocus />
                 </div>
                 <div class="mb-6 form-password-toggle form-control-validation">
