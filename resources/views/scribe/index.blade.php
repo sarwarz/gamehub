@@ -26,7 +26,7 @@
             </style>
 
     <script>
-        var tryItOutBaseUrl = "http://127.0.0.1:8000/api/v1";
+        var tryItOutBaseUrl = "https://gamehub.licensesender.com/api";
         var useCsrf = Boolean();
         var csrfUrl = "/sanctum/csrf-cookie";
     </script>
@@ -194,7 +194,7 @@
     <div class="content">
         <h1 id="introduction">Introduction</h1>
 <aside>
-    <strong>Base URL</strong>: <code>http://localhost</code>
+    <strong>Base URL</strong>: <code>https://gamehub.licensesender.com</code>
 </aside>
 <pre><code>This documentation aims to provide all the information you need to work with our API.
 
@@ -221,7 +221,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/auth/register" \
+    "https://gamehub.licensesender.com/api/v1/auth/register" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -235,7 +235,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/auth/register"
+    "https://gamehub.licensesender.com/api/v1/auth/register"
 );
 
 const headers = {
@@ -419,7 +419,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/auth/login" \
+    "https://gamehub.licensesender.com/api/v1/auth/login" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -431,7 +431,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/auth/login"
+    "https://gamehub.licensesender.com/api/v1/auth/login"
 );
 
 const headers = {
@@ -603,14 +603,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/auth/logout" \
+    "https://gamehub.licensesender.com/api/v1/auth/logout" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/auth/logout"
+    "https://gamehub.licensesender.com/api/v1/auth/logout"
 );
 
 const headers = {
@@ -724,14 +724,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/auth/me" \
+    --get "https://gamehub.licensesender.com/api/v1/auth/me" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/auth/me"
+    "https://gamehub.licensesender.com/api/v1/auth/me"
 );
 
 const headers = {
@@ -855,14 +855,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/currencies" \
+    --get "https://gamehub.licensesender.com/api/v1/currencies" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/currencies"
+    "https://gamehub.licensesender.com/api/v1/currencies"
 );
 
 const headers = {
@@ -984,14 +984,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/currencies/default" \
+    --get "https://gamehub.licensesender.com/api/v1/currencies/default" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/currencies/default"
+    "https://gamehub.licensesender.com/api/v1/currencies/default"
 );
 
 const headers = {
@@ -1108,7 +1108,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/currencies/convert?amount=100&amp;to=EUR" \
+    --get "https://gamehub.licensesender.com/api/v1/currencies/convert?amount=100&amp;to=EUR" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -1120,7 +1120,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/currencies/convert"
+    "https://gamehub.licensesender.com/api/v1/currencies/convert"
 );
 
 const params = {
@@ -1313,14 +1313,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/currencies/USD" \
+    --get "https://gamehub.licensesender.com/api/v1/currencies/USD" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/currencies/USD"
+    "https://gamehub.licensesender.com/api/v1/currencies/USD"
 );
 
 const headers = {
@@ -1465,14 +1465,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/orders?page=1" \
+    --get "https://gamehub.licensesender.com/api/v1/orders?page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders"
+    "https://gamehub.licensesender.com/api/v1/orders"
 );
 
 const params = {
@@ -1608,14 +1608,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/orders/101" \
+    --get "https://gamehub.licensesender.com/api/v1/orders/101" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders/101"
+    "https://gamehub.licensesender.com/api/v1/orders/101"
 );
 
 const headers = {
@@ -1745,7 +1745,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/orders" \
+    "https://gamehub.licensesender.com/api/v1/orders" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -1763,7 +1763,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders"
+    "https://gamehub.licensesender.com/api/v1/orders"
 );
 
 const headers = {
@@ -2058,7 +2058,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "http://localhost/api/v1/orders/101/status" \
+    "https://gamehub.licensesender.com/api/v1/orders/101/status" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2069,7 +2069,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders/101/status"
+    "https://gamehub.licensesender.com/api/v1/orders/101/status"
 );
 
 const headers = {
@@ -2214,7 +2214,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
-    "http://localhost/api/v1/orders/101/pay" \
+    "https://gamehub.licensesender.com/api/v1/orders/101/pay" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2227,7 +2227,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders/101/pay"
+    "https://gamehub.licensesender.com/api/v1/orders/101/pay"
 );
 
 const headers = {
@@ -2398,7 +2398,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/orders/101/refund" \
+    "https://gamehub.licensesender.com/api/v1/orders/101/refund" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2412,7 +2412,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders/101/refund"
+    "https://gamehub.licensesender.com/api/v1/orders/101/refund"
 );
 
 const headers = {
@@ -2596,7 +2596,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
-    "http://localhost/api/v1/orders/101/notes" \
+    "https://gamehub.licensesender.com/api/v1/orders/101/notes" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2608,7 +2608,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/orders/101/notes"
+    "https://gamehub.licensesender.com/api/v1/orders/101/notes"
 );
 
 const headers = {
@@ -2779,14 +2779,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/products?search=Windows&amp;category_id=1&amp;platform_id=2&amp;type_id=3&amp;region_id=4&amp;language_id=5&amp;works_on_id=1&amp;per_page=12&amp;page=1" \
+    --get "https://gamehub.licensesender.com/api/v1/products?search=Windows&amp;category_id=1&amp;platform_id=2&amp;type_id=3&amp;region_id=4&amp;language_id=5&amp;works_on_id=1&amp;per_page=12&amp;page=1" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/products"
+    "https://gamehub.licensesender.com/api/v1/products"
 );
 
 const params = {
@@ -3034,14 +3034,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/products/25" \
+    --get "https://gamehub.licensesender.com/api/v1/products/25" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/products/25"
+    "https://gamehub.licensesender.com/api/v1/products/25"
 );
 
 const headers = {
@@ -3180,14 +3180,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/categories" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/categories" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/categories"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/categories"
 );
 
 const headers = {
@@ -3306,14 +3306,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/platforms" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/platforms" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/platforms"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/platforms"
 );
 
 const headers = {
@@ -3432,14 +3432,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/types" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/types" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/types"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/types"
 );
 
 const headers = {
@@ -3559,14 +3559,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/regions" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/regions" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/regions"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/regions"
 );
 
 const headers = {
@@ -3685,14 +3685,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/languages" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/languages" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/languages"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/languages"
 );
 
 const headers = {
@@ -3811,14 +3811,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/works-on" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/works-on" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/works-on"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/works-on"
 );
 
 const headers = {
@@ -3937,14 +3937,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/developers" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/developers" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/developers"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/developers"
 );
 
 const headers = {
@@ -4063,14 +4063,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "http://localhost/api/v1/taxonomies/publishers" \
+    --get "https://gamehub.licensesender.com/api/v1/taxonomies/publishers" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
 
 <div class="javascript-example">
     <pre><code class="language-javascript">const url = new URL(
-    "http://localhost/api/v1/taxonomies/publishers"
+    "https://gamehub.licensesender.com/api/v1/taxonomies/publishers"
 );
 
 const headers = {
