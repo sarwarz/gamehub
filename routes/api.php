@@ -59,8 +59,27 @@ Route::prefix('v1')->group(function () {
     | Products (Public)
     |--------------------------------------------------------------------------
     */
-    Route::get('/products', [ProductController::class, 'index']);
-    Route::get('/products/{id}', [ProductController::class, 'show']);
+    Route::prefix('products')->group(function () {
+
+        // Live search (autocomplete)
+        Route::get('/search', [ProductController::class, 'search']);
+
+        // Product listing (filters, pagination, sorting)
+        Route::get('/', [ProductController::class, 'index']);
+
+        // Product details
+        Route::get('/{id}', [ProductController::class, 'show'])
+            ->whereNumber('id');
+
+        // Related / similar products
+        Route::get('/{id}/related', [ProductController::class, 'related'])
+            ->whereNumber('id');
+
+        // Recently viewed / trending products
+        Route::get('/trending', [ProductController::class, 'trending']);
+    });
+
+    
 
     /*
     |--------------------------------------------------------------------------

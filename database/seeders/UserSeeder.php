@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
             'name'          => 'Super Admin',
             'username'      => 'superadmin',
             'email'         => 'superadmin@gmail.com',
-            'password'      => Hash::make('Freky@9622!'),
+            'password'      => Hash::make('Freky@9622'),
             'is_active'     => true,
             'is_seller'     => false,
             'is_verified'   => true,
@@ -34,7 +34,7 @@ class UserSeeder extends Seeder
             'is_active'  => true,
             'is_seller'  => false,
             'is_verified'=> true,
-            'is_super_admin'=> false,
+            'is_super_admin'=> true,
         ]);
 
         // Seller user

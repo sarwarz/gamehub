@@ -5,6 +5,100 @@ endpoints:
     custom: []
     httpMethods:
       - GET
+    uri: api/v1/products/search
+    metadata:
+      custom: []
+      groupName: Products
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Live product search'
+      description: |-
+        Lightweight endpoint for live search and autocomplete.
+        Returns minimal product data sorted by lowest available price.
+
+        Features:
+        - Full-text search on product title and SKU
+        - Cached for performance
+        - Limited result set for fast responses
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Search keyword (minimum 2 characters).'
+        required: true
+        example: Windows
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: Windows
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must be at least 2 characters. Must not be greater than 100 characters.'
+        required: true
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": "success",
+            "message": "Search results fetched successfully",
+            "data": {
+              "query": "windows",
+              "count": 2,
+              "results": [
+                {
+                  "id": 25,
+                  "title": "Windows 11 Pro",
+                  "slug": "windows-11-pro",
+                  "image": "/storage/products/windows-11.jpg",
+                  "price": 12.99
+                }
+              ]
+            }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The q field is required."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
     uri: api/v1/products
     metadata:
       custom: []

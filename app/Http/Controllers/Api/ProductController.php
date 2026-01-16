@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Currency;
 use Illuminate\Http\Request;
 use App\Services\CurrencyService;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -207,4 +209,238 @@ class ProductController extends Controller
             ],
         ]);
     }
+
+    /**
+     * Live product search
+     *
+     * Lightweight endpoint for live search and autocomplete.
+     * Returns minimal product data sorted by lowest available price.
+     *
+     * Features:
+     * - Full-text search on product title and SKU
+     * - Cached for performance
+     * - Limited result set for fast responses
+     *
+     * @group Products
+     *
+     * @queryParam q string required Search keyword (minimum 2 characters). Example: Windows
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Search results fetched successfully",
+     *   "data": {
+     *     "query": "windows",
+     *     "count": 2,
+     *     "results": [
+     *       {
+     *         "id": 25,
+     *         "title": "Windows 11 Pro",
+     *         "slug": "windows-11-pro",
+     *         "image": "/storage/products/windows-11.jpg",
+     *         "price": 12.99
+     *       }
+     *     ]
+     *   }
+     * }
+     *
+     * @response 422 {
+     *   "message": "The q field is required."
+     * }
+     */
+
+
+    public function search(Request $request)
+    {
+        $request->validate([
+            'q' => 'required|string|min:2|max:100',
+        ]);
+
+        $q = trim($request->q);
+
+        $cacheKey = 'product_search:' . md5($q);
+
+        $results = Cache::remember(
+            $cacheKey,
+            config('cache.ttl.product_search', 30),
+            function () use ($q) {
+
+                $query = Product::query()
+                    ->select([
+                        'products.id',
+                        'products.title',
+                        'products.slug',
+                        'products.cover_image',
+                    ])
+                    ->where('products.status', 'active');
+
+                /** 
+                 * Prefer FULLTEXT, fallback to LIKE
+                 */
+                try {
+                    $query->whereRaw(
+                        "MATCH(products.title, products.sku) AGAINST (? IN BOOLEAN MODE)",
+                        [$q . '*']
+                    );
+                } catch (\Throwable $e) {
+                    $query->where(function ($q2) use ($q) {
+                        $q2->where('products.title', 'like', "%{$q}%")
+                        ->orWhere('products.sku', 'like', "%{$q}%");
+                    });
+                }
+
+                return $query
+                    ->withMin(['offers as price' => function ($q) {
+                        $q->where('status', 'active');
+                    }], 'retail_price')
+                    ->orderBy('price')
+                    ->limit(10)
+                    ->get()
+                    ->map(fn ($p) => [
+                        'id'    => $p->id,
+                        'title' => $p->title,
+                        'slug'  => $p->slug,
+                        'image' => $p->cover_image,
+                        'price' => $p->price ? round($p->price, 2) : null,
+                    ]);
+            }
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Search results fetched successfully',
+            'data'    => [
+                'query'   => $q,
+                'count'   => $results->count(),
+                'results' => $results,
+            ],
+        ]);
+    }
+
+
+        /**
+     * Get related products
+     *
+     * Returns products related to the given product based on shared
+     * categories, platforms, or types.
+     *
+     * Used for "You may also like" or "Similar products" sections.
+     *
+     * @group Products
+     *
+     * @urlParam id integer required Product ID. Example: 25
+     * @queryParam limit integer Number of related products to return. Default: 6 Example: 6
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Related products fetched successfully",
+     *   "data": [
+     *     {
+     *       "id": 30,
+     *       "title": "Windows 10 Pro",
+     *       "slug": "windows-10-pro",
+     *       "cover_image": "/storage/products/windows-10.jpg",
+     *       "lowest_price": 9.99
+     *     }
+     *   ]
+     * }
+     *
+     * @response 404 {
+     *   "message": "Product not found"
+     * }
+     */
+    public function related(Request $request, int $id)
+    {
+        $limit = (int) $request->get('limit', 6);
+
+        $product = Product::active()->findOrFail($id);
+
+        $categoryIds = $product->categories()->pluck('id');
+        $platformIds = $product->platforms()->pluck('id');
+        $typeIds     = $product->types()->pluck('id');
+
+        $products = Product::query()
+            ->active()
+            ->where('id', '!=', $product->id)
+            ->where(function ($q) use ($categoryIds, $platformIds, $typeIds) {
+                $q->whereHas('categories', fn ($q) => $q->whereIn('id', $categoryIds))
+                  ->orWhereHas('platforms', fn ($q) => $q->whereIn('id', $platformIds))
+                  ->orWhereHas('types', fn ($q) => $q->whereIn('id', $typeIds));
+            })
+            ->withMin(['offers as lowest_price' => function ($q) {
+                $q->where('status', 'active');
+            }], 'retail_price')
+            ->orderBy('lowest_price')
+            ->limit($limit)
+            ->get([
+                'id',
+                'title',
+                'slug',
+                'cover_image',
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Related products fetched successfully',
+            'data'    => $products,
+        ]);
+    }
+
+        /**
+     * Get trending products
+     *
+     * Returns trending or popular products based on featured flag,
+     * promotion, or sorting priority.
+     *
+     * Used for homepage sections like "Trending now".
+     *
+     * @group Products
+     *
+     * @queryParam limit integer Number of products to return. Default: 10 Example: 10
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Trending products fetched successfully",
+     *   "data": [
+     *     {
+     *       "id": 18,
+     *       "title": "Office 2021 Professional Plus",
+     *       "slug": "office-2021-pro-plus",
+     *       "cover_image": "/storage/products/office-2021.jpg",
+     *       "lowest_price": 14.50
+     *     }
+     *   ]
+     * }
+     */
+    public function trending(Request $request)
+    {
+        $limit = (int) $request->get('limit', 10);
+
+        $products = Product::query()
+            ->active()
+            ->where('is_featured', true)
+            ->withMin(['offers as lowest_price' => function ($q) {
+                $q->where('status', 'active');
+            }], 'retail_price')
+            ->orderByDesc('sort_order')
+            ->orderBy('lowest_price')
+            ->limit($limit)
+            ->get([
+                'id',
+                'title',
+                'slug',
+                'cover_image',
+            ]);
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Trending products fetched successfully',
+            'data'    => $products,
+        ]);
+    }
+
+
+
+
+
+
 }
