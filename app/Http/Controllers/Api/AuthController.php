@@ -50,9 +50,9 @@ class AuthController extends Controller
             'is_active' => true,
         ]);
 
-        // Assign default buyer role
+        // Assign default customer role
         $user->roles()->attach(
-            Role::where('name', 'buyer')->first()
+            Role::where('name', 'customer')->first()
         );
 
         return response()->json([

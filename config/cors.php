@@ -26,7 +26,7 @@ return [
 
     'allowed_origins' => [
         'http://localhost:3000',
-        'https://your-nextjs.com',
+        'https://e-com-mart.vercel.app',
     ],
 
     'allowed_origins_patterns' => [],
