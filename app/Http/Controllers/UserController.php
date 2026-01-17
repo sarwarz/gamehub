@@ -46,13 +46,13 @@ class UserController extends Controller
                     return $roles ?: '<span class="badge bg-label-secondary">No Role</span>';
                 })
                 ->addColumn('actions', function ($user) {
-                    if ($user->is_super_admin) {
-                        return '
-                            <button class="btn btn-sm btn-secondary" disabled>
-                                Protected
-                            </button>
-                        ';
-                    }
+                    // if ($user->is_super_admin) {
+                    //     return '
+                    //         <button class="btn btn-sm btn-secondary" disabled>
+                    //             Protected
+                    //         </button>
+                    //     ';
+                    // }
 
                     $editUrl   = route('users.edit', $user->id);
                     $deleteUrl = route('users.destroy', $user->id);
