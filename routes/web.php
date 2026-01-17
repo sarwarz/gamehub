@@ -276,6 +276,7 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
     // Users
     Route::resource('users', UserController::class)->middleware('permission:users');
+    Route::get('/customer', [UserController::class, 'customer'])->name('customer.index')->middleware('permission:users');
     Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])->name('users.bulk-delete')->middleware('permission:users');
 });
 

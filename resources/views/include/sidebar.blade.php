@@ -639,7 +639,7 @@
 
     <!-- Users -->
    @if(auth()->user()->hasPermission('users') && Route::has('users.index'))
-    <li class="menu-item {{ menuItemActive(['users.*'], 'open active') }}">
+    <li class="menu-item {{ menuItemActive(['users.*', 'customer.*'], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-user"></i>
@@ -655,9 +655,9 @@
             </li>
             @endif
 
-            @if(auth()->user()->hasPermission('users') && Route::has('users.index'))
-            <li class="menu-item {{ menuItemActive(['users.index']) }}">
-                <a href="{{ route('users.index') }}" class="menu-link">
+            @if(auth()->user()->hasPermission('users') && Route::has('customer.index'))
+            <li class="menu-item {{ menuItemActive(['customer.index']) }}">
+                <a href="{{ route('customer.index') }}" class="menu-link">
                     <div data-i18n="All Customer">All Customer</div>
                 </a>
             </li>

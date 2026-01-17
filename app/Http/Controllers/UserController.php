@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Permission;
 use Illuminate\Http\Request;
 use Yajra\DataTables\DataTables;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -181,4 +182,66 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Selected users deleted successfully.']);
     }
+    /**
+     * Display customers list with DataTable
+     */
+    public function customer(Request $request)
+    {
+        if ($request->ajax()) {
+
+            $customers = User::query()
+                ->where('is_seller', false)
+                ->whereDoesntHave('roles', function ($q) {
+                    $q->where('name', 'admin');
+                });
+
+            return DataTables::of($customers)
+
+                ->addColumn('customer', function ($user) {
+                    return '
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="'.asset($user->avatar ?? 'assets/img/avatars/default.png').'"
+                                 class="rounded-circle"
+                                 width="40">
+                            <div>
+                                <strong>'.$user->name.'</strong><br>
+                                <small class="text-muted">'.$user->email.'</small>
+                            </div>
+                        </div>
+                    ';
+                })
+
+                ->addColumn('status', function ($user) {
+                    return $user->is_active
+                        ? '<span class="badge bg-success">Active</span>'
+                        : '<span class="badge bg-danger">Inactive</span>';
+                })
+
+                ->addColumn('wallet_balance', function ($user) {
+                    return number_format(optional($user->wallet)->balance ?? 0, 2);
+                })
+
+                ->addColumn('verified', function ($user) {
+                    return $user->is_verified
+                        ? '<span class="badge bg-success">Verified</span>'
+                        : '<span class="badge bg-warning">Unverified</span>';
+                })
+
+                ->addColumn('actions', function ($user) {
+                    return '
+                        <a href="'.route('users.edit', $user).'"
+                           class="btn btn-sm btn-warning">
+                            Edit
+                        </a>
+                    ';
+                })
+
+                ->rawColumns(['customer', 'status', 'verified', 'actions'])
+                ->make(true);
+        }
+
+        return view('content.users.customer');
+    }
+
+
 }
