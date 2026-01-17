@@ -10,6 +10,11 @@ class PermissionSeeder extends Seeder
     public function run(): void
     {
         $permissions = [
+
+            /* Dashboard */
+            'dashboard',
+
+            /* Product Attributes */
             'categories',
             'platforms',
             'types',
@@ -18,20 +23,62 @@ class PermissionSeeder extends Seeder
             'workson',
             'developers',
             'publishers',
+
+            /* Products */
             'products',
-            'sellers',
+            'product-requests',
+            'product-reviews',
+
+            /* Seller Offers */
             'seller-offers',
-            'currencies',
+
+            /* Orders */
             'orders',
+
+            /* Transactions */
+            'transactions',
+
+            /* Sellers */
+            'sellers',
+            'seller-withdraws',
+
+            /* Ecommerce */
+            'coupons',
+            'taxes',
+            'payment-methods',
+
+            /* Website / CMS */
+            'currencies',
+            'sliders',
+            'pages',
+
+            /* Blogs */
+            'blogs',
+            'blog-categories',
+            'blog-comments',
+
+            /* Wallet */
+            'wallets',
+
+            /* Support */
+            'support-tickets',
+
+            /* Communications */
+            'subscribers',
+            'contact-messages',
+
+            /* Users & Access Control */
+            'users',
             'roles',
             'permissions',
-            'users',
         ];
 
-        foreach ($permissions as $perm) {
+        foreach ($permissions as $permission) {
             Permission::firstOrCreate(
-                ['name' => $perm],
-                ['label' => ucwords(str_replace('-', ' ', $perm))]
+                ['name' => $permission],
+                [
+                    'label' => ucwords(str_replace('-', ' ', $permission)),
+                ]
             );
         }
     }

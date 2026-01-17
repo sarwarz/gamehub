@@ -27,13 +27,21 @@ class UserController extends Controller
                         : '<input type="checkbox" class="form-check-input bulk-checkbox" value="'.$user->id.'">';
                 })
                 ->addColumn('roles', function ($user) {
-                    $roles = $user->roles->pluck('name')->map(fn($r) =>
-                        '<span class="badge bg-label-info">'.ucfirst($r).'</span>'
-                    )->implode(' ');
+                    $roles = $user->roles
+                    ->pluck('name')
+                    ->map(function ($role) {
+                        $class = match ($role) {
+                            'superadmin' => 'bg-label-danger',
+                            'admin'      => 'bg-label-warning',
+                            'seller'     => 'bg-label-primary',
+                            'customer'   => 'bg-label-success',
+                            default      => 'bg-label-info',
+                        };
 
-                    if ($user->is_super_admin) {
-                        $roles .= ' <span class="badge bg-label-danger">Super Admin</span>';
-                    }
+                        return '<span class="badge ' . $class . '">' . ucfirst($role) . '</span>';
+                    })
+                    ->implode(' ');
+
 
                     return $roles ?: '<span class="badge bg-label-secondary">No Role</span>';
                 })
@@ -126,19 +134,18 @@ class UserController extends Controller
         return view('content.users.edit', compact('user','roles','permissions'));
     }
 
-
     /**
      * Update user
      */
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|email|max:255|unique:users,email,' . $user->id,
-            'password'    => 'nullable|string|min:8|confirmed',
-            'roles'       => 'nullable|array',
-            'roles.*'     => 'exists:roles,id',
-            'permissions' => 'nullable|array',
+            'name'          => 'required|string|max:255',
+            'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
+            'password'      => 'nullable|string|min:8|confirmed',
+            'roles'         => 'nullable|array',
+            'roles.*'       => 'exists:roles,id',
+            'permissions'   => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
         ]);
 
@@ -151,16 +158,34 @@ class UserController extends Controller
             $data['password'] = Hash::make($request->password);
         }
 
+        /**
+         * ✅ ONLY update flags if roles are submitted
+         */
+        if ($request->has('roles')) {
+            $roleNames = Role::whereIn('id', $request->roles)->pluck('name')->toArray();
+
+            $data['is_super_admin'] = in_array('superadmin', $roleNames);
+
+            // ⚠️ USE THE CORRECT COLUMN NAME
+            $data['is_seller'] = in_array('seller', $roleNames);
+            // If your column is `is_selelr`, use:
+            // $data['is_selelr'] = in_array('seller', $roleNames);
+
+            $user->roles()->sync($request->roles);
+        }
+
+        // Sync permissions (optional)
+        if ($request->has('permissions')) {
+            $user->permissions()->sync($request->permissions);
+        }
+
         $user->update($data);
 
-        // Sync roles
-        $user->roles()->sync($request->roles ?? []);
-
-        // Sync user-specific permissions
-        $user->permissions()->sync($request->permissions ?? []);
-
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()
+            ->route('users.index')
+            ->with('success', 'User updated successfully.');
     }
+
 
 
     /**
@@ -189,11 +214,12 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
 
-            $customers = User::query()
-                ->where('is_seller', false)
-                ->whereDoesntHave('roles', function ($q) {
-                    $q->where('name', 'admin');
-                });
+            $customers = User::with('roles')
+            ->whereHas('roles', function ($q) {
+                $q->where('name', 'customer');
+            });
+
+
 
             return DataTables::of($customers)
 
@@ -210,6 +236,27 @@ class UserController extends Controller
                         </div>
                     ';
                 })
+
+                ->addColumn('roles', function ($user) {
+
+                    if ($user->roles->isEmpty()) {
+                        return '<span class="badge bg-secondary">No Role</span>';
+                    }
+
+                    return $user->roles->pluck('name')->map(function ($role) {
+
+                        $class = match ($role) {
+                            'superadmin' => 'bg-label-danger',
+                            'admin'      => 'bg-label-warning',
+                            'seller'     => 'bg-label-primary',
+                            'customer'   => 'bg-label-success',
+                            default      => 'bg-label-info',
+                        };
+
+                        return '<span class="badge ' . $class . ' me-1">' . ucfirst($role) . '</span>';
+                    })->implode(' ');
+                })
+
 
                 ->addColumn('status', function ($user) {
                     return $user->is_active
@@ -236,7 +283,7 @@ class UserController extends Controller
                     ';
                 })
 
-                ->rawColumns(['customer', 'status', 'verified', 'actions'])
+                ->rawColumns(['customer', 'status','roles', 'verified', 'actions'])
                 ->make(true);
         }
 

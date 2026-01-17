@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'is_active',
         'is_seller',
+        'is_super_admin',
         'is_verified',
         'avatar',
         'phone',

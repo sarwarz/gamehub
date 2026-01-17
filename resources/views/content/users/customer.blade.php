@@ -28,6 +28,7 @@
                 <thead>
                     <tr>
                         <th>Customer</th>
+                        <th>Roles</th>
                         <th>Status</th>
                         <th>Verified</th>
                         <th>Wallet Balance</th>
@@ -51,6 +52,7 @@ let table = $('#customers-table').DataTable({
     order: [[0, 'asc']],
     columns: [
         { data: 'customer', orderable: false, searchable: true },
+        { data: 'roles', orderable: false, searchable: false },
         { data: 'status', orderable: false, searchable: false },
         { data: 'verified', orderable: false, searchable: false },
         { data: 'wallet_balance', name: 'wallet.balance' },
