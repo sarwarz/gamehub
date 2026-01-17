@@ -16,80 +16,9 @@ class SellerController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $sellers = Seller::with(['user', 'paymentInfo']);
-
-            return DataTables::of($sellers)
-                ->addIndexColumn()
-                ->addColumn('checkbox', function ($row) {
-                    return '<input type="checkbox" class="bulk-checkbox form-check-input" value="' . $row->id . '">';
-                })
-                ->addColumn('seller_column', function ($row) {
-                    $avatar = $row->logo
-                        ? asset('storage/'.$row->logo)
-                        : asset('assets/img/avatars/1.png');
-
-                    $name = e($row->user->name ?? $row->store_name);
-                    $email = e($row->email ?? $row->user->email ?? 'N/A');
-
-                    return '
-                        <div class="d-flex justify-content-start align-items-center">
-                            <div class="avatar-wrapper">
-                                <div class="avatar avatar me-2 me-sm-4 rounded-2 bg-label-secondary">
-                                    <img src="'.$avatar.'" alt="'.$name.'" class="rounded" width="40" height="40">
-                                </div>
-                            </div>
-                            <div class="d-flex flex-column">
-                                <h6 class="mb-0">'.$name.'</h6>
-                                <small class="text-truncate d-none d-sm-block">'.$email.'</small>
-                            </div>
-                        </div>
-                    ';
-                })
-                ->addColumn('store_name', fn($row) => e($row->store_name))
-                ->addColumn('status_badge', function ($row) {
-                    $class = match($row->status) {
-                        'active'    => 'success',
-                        'pending'   => 'warning',
-                        'suspended' => 'danger',
-                        default     => 'secondary',
-                    };
-                    return '<span class="badge bg-'.$class.'">'.ucfirst($row->status).'</span>';
-                })
-                ->addColumn('is_verified_badge', function ($row) {
-                    return $row->is_verified
-                        ? '<span class="badge bg-success">Verified</span>'
-                        : '<span class="badge bg-warning">Unverified</span>';
-                })
-                ->addColumn('total_sales', fn($row) => number_format($row->total_sales))
-                ->addColumn('balance', function ($row) {
-                    $balance = $row->paymentInfo->current_balance ?? 0;
-                    return '<span class="text-success">$'.number_format($balance, 2).'</span>';
-                })
-                ->addColumn('actions', function ($row) {
-                    $editUrl   = route('sellers.edit', $row->id);
-                    $deleteUrl = route('sellers.destroy', $row->id);
-
-                    return '
-                        <div class="btn-group">
-                            <a href="'.$editUrl.'" class="btn btn-sm btn-primary" title="Edit">
-                                <i class="ti ti-edit"></i>
-                            </a>
-                            <button class="btn btn-sm btn-danger btn-delete" 
-                                data-url="'.$deleteUrl.'" title="Delete">
-                                <i class="ti ti-trash"></i>
-                            </button>
-                        </div>
-                    ';
-                })
-                ->rawColumns([
-                    'checkbox',
-                    'seller_column',
-                    'status_badge',
-                    'is_verified_badge',
-                    'balance',
-                    'actions'
-                ])
-                ->make(true);
+            return $this->sellerDataTable(
+                Seller::with(['user'])
+            );
         }
 
         return view('content.sellers.index');
@@ -205,4 +134,121 @@ class SellerController extends Controller
             return response()->json(['message' => 'Failed to delete sellers'], 500);
         }
     }
+
+    public function pending(Request $request)
+    {
+        if ($request->ajax()) {
+            return $this->sellerDataTable(
+                Seller::where('status', 'pending')->with(['user'])
+            );
+        }
+
+        return view('content.sellers.pending');
+    }
+
+    public function suspended(Request $request)
+    {
+        if ($request->ajax()) {
+            return $this->sellerDataTable(
+                Seller::where('status', 'suspended')->with(['user'])
+            );
+        }
+
+        return view('content.sellers.suspended');
+    }
+
+
+
+    private function sellerDataTable($query)
+    {
+        return DataTables::of($query)
+            ->addIndexColumn()
+
+            ->addColumn('checkbox', fn($row) =>
+                '<input type="checkbox" class="bulk-checkbox form-check-input" value="'.$row->id.'">'
+            )
+
+            ->addColumn('seller_column', function ($row) {
+                $avatar = $row->logo
+                    ? asset('storage/'.$row->logo)
+                    : asset('assets/img/avatars/1.png');
+
+                $name  = e($row->user->name ?? $row->store_name);
+                $email = e($row->email ?? $row->user->email ?? 'N/A');
+
+                return '
+                    <div class="d-flex align-items-center">
+                        <img src="'.$avatar.'" class="rounded me-2" width="40" height="40">
+                        <div>
+                            <strong>'.$name.'</strong><br>
+                            <small class="text-muted">'.$email.'</small>
+                        </div>
+                    </div>
+                ';
+            })
+
+            ->addColumn('store_name', fn($row) => e($row->store_name))
+
+            ->addColumn('status_badge', function ($row) {
+                $map = [
+                    'active'    => 'success',
+                    'pending'   => 'warning',
+                    'suspended' => 'danger',
+                ];
+
+                $class = $map[$row->status] ?? 'secondary';
+
+                return '<span class="badge bg-'.$class.'">'
+                    .ucfirst($row->status).
+                '</span>';
+            })
+
+            ->addColumn('is_verified_badge', fn($row) =>
+                $row->is_verified
+                    ? '<span class="badge bg-success">Verified</span>'
+                    : '<span class="badge bg-warning">Unverified</span>'
+            )
+
+            ->addColumn('total_sales', fn($row) => number_format($row->total_sales))
+
+            ->addColumn('balance', function ($row) {
+                $balance = $row->paymentInfo->current_balance ?? 0;
+                return '<span class="fw-semibold text-success">$'
+                    .number_format($balance, 2).
+                '</span>';
+            })
+
+            // 🔽 UPDATED ACTION STYLE (dropdown)
+            ->addColumn('actions', function ($row) {
+
+                $editUrl   = route('sellers.edit', $row->id);
+                $deleteUrl = route('sellers.destroy', $row->id);
+
+                return '
+                    <div class="d-flex gap-2">
+                        <a href="'.$editUrl.'"
+                        class="btn btn-sm btn-primary">
+                            Edit
+                        </a>
+
+                        <button type="button"
+                            class="btn btn-sm btn-danger btn-delete"
+                            data-url="'.$deleteUrl.'">
+                            Delete
+                        </button>
+                    </div>
+                ';
+            })
+
+            ->rawColumns([
+                'checkbox',
+                'seller_column',
+                'status_badge',
+                'is_verified_badge',
+                'balance',
+                'actions'
+            ])
+            ->make(true);
+    }
+
 }

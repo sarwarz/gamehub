@@ -96,6 +96,12 @@ class User extends Authenticatable
         return $this->belongsToMany(Permission::class, 'permission_user');
     }
 
+    public function wallet()
+    {
+        return $this->hasOne(Wallet::class);
+    }
+
+
    public function hasPermission(string $permission): bool
     {
         // Super Admin bypass

@@ -540,15 +540,7 @@
     });
 </script>
 
-<script>
-    $(document).ready(function() {
-        $('.select2').select2({
-            placeholder: "-- Select Option --",
-            allowClear: true,
-            width: '100%'
-        });
-    });
-</script>
+
 
 <script>
 $(function () {

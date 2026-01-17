@@ -161,7 +161,17 @@
 
     <!-- Page JS -->
     <script src="{{ asset('assets/js/app-ecommerce-dashboard.js') }}"></script>
-	  @stack('page-js');
+    <script>
+    $(document).ready(function() {
+            $('.select2').select2({
+                placeholder: "-- Select Option --",
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+	@stack('page-js');
+    
     <script>
       // ===============================
       // Global Delete Handlers with SweetAlert2

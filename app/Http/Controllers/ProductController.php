@@ -24,78 +24,16 @@ class ProductController extends Controller
     /**
      * Display a listing of the products.
      */
-   public function index(Request $request)
+    public function index(Request $request)
     {
         if ($request->ajax()) {
+
             $products = Product::with([
                 'categories', 'platforms', 'types', 'regions',
                 'languages', 'worksOn', 'developer', 'publisher'
             ]);
 
-            return DataTables::of($products)
-                ->addIndexColumn()
-                ->addColumn('checkbox', function ($row) {
-                    return '<input type="checkbox" class="bulk-checkbox form-check-input" value="' . $row->id . '">';
-                })
-                ->addColumn('product_column', function ($row) {
-                    $image = $row->cover_image 
-                        ? asset('storage/'.$row->cover_image) 
-                        : asset('assets/img/default-product.png');
-
-                    $title = e($row->title);
-                    $developer = $row->developer ? e($row->developer->name) : 'Unknown Developer';
-                    $publisher = $row->publisher ? e($row->publisher->name) : 'Unknown Publisher';
-
-                    return '
-                        <div class="d-flex justify-content-start align-items-center product-name">
-                            <div class="avatar-wrapper">
-                                <div class="avatar avatar me-2 me-sm-4 rounded-2 bg-label-secondary">
-                                    <img src="'.$image.'" alt="'.$title.'" class="rounded" width="40" height="40">
-                                </div>
-                            </div>
-                            <div class="d-flex flex-column">
-                                <h6 class="text-nowrap mb-0">'.$title.'</h6>
-                                <small class="text-truncate d-none d-sm-block">
-                                    <span class="badge bg-label-primary me-1">Dev: '.$developer.'</span>
-                                    <span class="badge bg-label-info">Pub: '.$publisher.'</span>
-                                </small>
-                            </div>
-                        </div>
-                    ';
-                })
-
-
-                ->addColumn('categories', function ($row) {
-                    return $row->categories->isNotEmpty()
-                        ? $row->categories->pluck('name')->implode(', ')
-                        : '-';
-                })
-                ->addColumn('types', function ($row) {
-                    return $row->types->isNotEmpty()
-                        ? $row->types->pluck('name')->implode(', ')
-                        : '-';
-                })
-                ->addColumn('regions', function ($row) {
-                    return $row->regions->isNotEmpty()
-                        ? $row->regions->pluck('name')->implode(', ')
-                        : '-';
-                })
-            
-                ->addColumn('status_badge', function ($row) {
-                    $class = $row->status === 'active' ? 'success' : 'secondary';
-                    return '<span class="badge bg-' . $class . '">' . ucfirst($row->status) . '</span>';
-                })
-                ->addColumn('actions', function ($row) {
-                    $editUrl   = route('products.edit', $row->id);
-                    $deleteUrl = route('products.destroy', $row->id);
-
-                    return '
-                        <a href="' . $editUrl . '" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger btn-delete" data-url="' . $deleteUrl . '">Delete</button>
-                    ';
-                })
-                ->rawColumns(['checkbox', 'status_badge', 'product_column', 'actions'])
-                ->make(true);
+            return $this->productDataTable($products);
         }
 
         return view('content.products.index');
@@ -363,9 +301,6 @@ class ProductController extends Controller
     }
 
 
-
-    
-
     /**
      * Remove the specified product.
      */
@@ -492,6 +427,103 @@ class ProductController extends Controller
 
         return response()->json($offers);
     }
+
+    public function inactive(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Product::with([
+                'categories', 'platforms', 'types', 'regions',
+                'languages', 'worksOn', 'developer', 'publisher'
+            ])->where('status', 'inactive');
+
+            return $this->productDataTable($query);
+        }
+
+        return view('content.products.inactive');
+    }
+
+    public function featured(Request $request)
+    {
+        if ($request->ajax()) {
+            $query = Product::with([
+                'categories', 'platforms', 'types', 'regions',
+                'languages', 'worksOn', 'developer', 'publisher'
+            ])->where('is_featured', true);
+
+            return $this->productDataTable($query);
+        }
+
+        return view('content.products.featured');
+    }
+
+    private function productDataTable($products)
+    {
+        return DataTables::of($products)
+            ->addIndexColumn()
+
+            ->addColumn('checkbox', function ($row) {
+                return '<input type="checkbox" class="bulk-checkbox form-check-input" value="'.$row->id.'">';
+            })
+
+            ->addColumn('product_column', function ($row) {
+                $image = $row->cover_image
+                    ? asset('storage/'.$row->cover_image)
+                    : asset('assets/img/default-product.png');
+
+                $title = e($row->title);
+                $developer = $row->developer?->name ?? 'Unknown Dev';
+                $publisher = $row->publisher?->name ?? 'Unknown Pub';
+
+                return '
+                    <div class="d-flex align-items-center">
+                        <img src="'.$image.'" class="rounded me-2" width="40" height="40">
+                        <div>
+                            <strong>'.$title.'</strong><br>
+                            <small class="badge bg-label-primary">Dev: '.$developer.'</small>
+                            <small class="badge bg-label-info">Pub: '.$publisher.'</small>
+                        </div>
+                    </div>
+                ';
+            })
+
+            ->addColumn('categories', fn($row) =>
+                $row->categories->pluck('name')->implode(', ') ?: '-'
+            )
+
+            ->addColumn('types', fn($row) =>
+                $row->types->pluck('name')->implode(', ') ?: '-'
+            )
+
+            ->addColumn('regions', fn($row) =>
+                $row->regions->pluck('name')->implode(', ') ?: '-'
+            )
+
+            ->addColumn('status_badge', function ($row) {
+                $map = [
+                    'active'   => 'success',
+                    'inactive' => 'secondary',
+                    'draft'    => 'warning',
+                    'archived' => 'dark',
+                ];
+                return '<span class="badge bg-'.$map[$row->status].'">'.ucfirst($row->status).'</span>';
+            })
+
+            ->addColumn('actions', function ($row) {
+                return '
+                    <a href="'.route('products.edit', $row->id).'" class="btn btn-sm btn-warning">Edit</a>
+                    <button class="btn btn-sm btn-danger btn-delete"
+                        data-url="'.route('products.destroy', $row->id).'">
+                        Delete
+                    </button>
+                ';
+            })
+
+            ->rawColumns(['checkbox', 'product_column', 'status_badge', 'actions'])
+            ->make(true);
+    }
+
+
+
 
 
 }

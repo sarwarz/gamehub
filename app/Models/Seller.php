@@ -42,10 +42,5 @@ class Seller extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function paymentInfo()
-    {
-        return $this->hasOne(SellerPaymentInfo::class);
-    }
-
 
 }

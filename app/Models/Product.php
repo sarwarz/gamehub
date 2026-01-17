@@ -136,6 +136,12 @@ class Product extends Model
         return $this->hasMany(SellerOffer::class, 'product_id');
     }
 
+    public function sliders()
+    {
+        return $this->hasMany(Slider::class);
+    }
+
+
 
     // Scope: Active Products
     public function scopeActive($query)

@@ -191,6 +191,7 @@
                             <option value="draft" {{ $offer->status == 'draft' ? 'selected' : '' }}>Draft</option>
                             <option value="active" {{ $offer->status == 'active' ? 'selected' : '' }}>Active</option>
                             <option value="inactive" {{ $offer->status == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="suspended" {{ $offer->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
                         </select>
                     </div>
                 </div>

@@ -131,42 +131,59 @@
     @endif
 
     <!-- Manage Products -->
-    @if( auth()->user()->hasPermission('products') )
-    <li class="menu-item {{ menuItemActive(['products.*'], 'open active') }}">
+    @if(auth()->user()->hasPermission('products'))
+    <li class="menu-item {{ menuItemActive([
+            'products.index',
+            'products.inactive',
+            'products.featured',
+            'product-requests.index',
+            'product-reviews.index'
+        ], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-brand-databricks"></i>
             <div data-i18n="Manage Products">Manage Products</div>
         </a>
+
         <ul class="menu-sub">
-            
-            @if(auth()->user()->hasPermission('products') && Route::has('products.index'))
+
+            {{-- All Products --}}
+            @if(Route::has('products.index'))
             <li class="menu-item {{ menuItemActive(['products.index']) }}">
                 <a href="{{ route('products.index') }}" class="menu-link">
                     <div data-i18n="All Product">All Product</div>
                 </a>
             </li>
             @endif
-        
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+
+            {{-- Inactive Products --}}
+            @if(Route::has('products.inactive'))
+            <li class="menu-item {{ menuItemActive(['products.inactive']) }}">
+                <a href="{{ route('products.inactive') }}" class="menu-link">
                     <div data-i18n="Inactive Product">Inactive Product</div>
                 </a>
             </li>
+            @endif
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            {{-- Featured Products --}}
+            @if(Route::has('products.featured'))
+            <li class="menu-item {{ menuItemActive(['products.featured']) }}">
+                <a href="{{ route('products.featured') }}" class="menu-link">
                     <div data-i18n="Featured Product">Featured Product</div>
                 </a>
             </li>
+            @endif
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            {{-- Request Product --}}
+            <li class="menu-item {{ menuItemActive(['product-requests.index']) }}">
+                <a href="{{ route('product-requests.index') }}" class="menu-link">
                     <div data-i18n="Request Product">Request Product</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+
+            {{-- Product Reviews --}}
+            <li class="menu-item {{ menuItemActive(['product-reviews.index']) }}">
+                <a href="{{ route('product-reviews.index') }}" class="menu-link">
                     <div data-i18n="Product Reviews">Product Reviews</div>
                 </a>
             </li>
@@ -175,17 +192,18 @@
     </li>
     @endif
 
-     <!-- Manage Offers -->
-    @if( auth()->user()->hasPermission('seller-offers') )
+
+    @if(auth()->user()->hasPermission('seller-offers'))
     <li class="menu-item {{ menuItemActive(['seller-offers.*'], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-pencil-dollar"></i>
             <div data-i18n="Manage Offers">Manage Offers</div>
         </a>
+
         <ul class="menu-sub">
-            
-            @if(auth()->user()->hasPermission('seller-offers') && Route::has('seller-offers.index'))
+
+            @if(Route::has('seller-offers.index'))
             <li class="menu-item {{ menuItemActive(['seller-offers.index']) }}">
                 <a href="{{ route('seller-offers.index') }}" class="menu-link">
                     <div data-i18n="All Offers">All Offers</div>
@@ -193,21 +211,26 @@
             </li>
             @endif
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Pending Offer">Pending Offer</div>
+            @if(Route::has('seller-offers.pending'))
+            <li class="menu-item {{ menuItemActive(['seller-offers.pending']) }}">
+                <a href="{{ route('seller-offers.pending') }}" class="menu-link">
+                    <div data-i18n="Pending Offers">Pending Offers</div>
                 </a>
             </li>
+            @endif
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Rejected Offer">Rejected Offer</div>
+            @if(Route::has('seller-offers.rejected'))
+            <li class="menu-item {{ menuItemActive(['seller-offers.rejected']) }}">
+                <a href="{{ route('seller-offers.rejected') }}" class="menu-link">
+                    <div data-i18n="Rejected Offers">Rejected Offers</div>
                 </a>
             </li>
+            @endif
 
         </ul>
     </li>
-    @endif
+    @endcan
+
 
     <!-- Orders -->
 
@@ -230,41 +253,70 @@
             </li>
             @endif
 
-            @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-            <li class="menu-item {{ menuItemActive(['orders.index']) }}">
+
+            <li class="menu-item ">
                 <a href="{{ route('orders.index') }}" class="menu-link">
                     <div data-i18n="Pending Orders">Pending Orders</div>
                 </a>
             </li>
-            @endif
 
-            @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-            <li class="menu-item {{ menuItemActive(['orders.index']) }}">
+            <li class="menu-item ">
                 <a href="{{ route('orders.index') }}" class="menu-link">
                     <div data-i18n="Processing Orders">Processing Orders</div>
                 </a>
             </li>
-            @endif
 
-            @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-            <li class="menu-item {{ menuItemActive(['orders.index']) }}">
+
+            <li class="menu-item ">
                 <a href="{{ route('orders.index') }}" class="menu-link">
                     <div data-i18n="Completed Orders">Completed Orders</div>
                 </a>
             </li>
-            @endif
 
-             @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-            <li class="menu-item {{ menuItemActive(['orders.index']) }}">
+
+            <li class="menu-item ">
                 <a href="{{ route('orders.index') }}" class="menu-link">
                     <div data-i18n="Declined Orders">Declined Orders</div>
                 </a>
             </li>
-            @endif
 
         </ul>
     </li>
     @endif
+
+    <li class="menu-item {{ menuItemActive(['transactions.*'], 'open active') }}">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ti tabler-transaction-dollar"></i>
+            <div data-i18n="Transactions">Transactions</div>
+        </a>
+
+        <ul class="menu-sub">
+            <li class="menu-item {{ menuItemActive(['transactions.index']) }}">
+                <a href="{{ route('transactions.index') }}" class="menu-link">
+                    <div>All Transactions</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['transactions.pending']) }}">
+                <a href="{{ route('transactions.pending') }}" class="menu-link">
+                    <div>Pending Transactions</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['transactions.failed']) }}">
+                <a href="{{ route('transactions.failed') }}" class="menu-link">
+                    <div>Failed Transactions</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['transactions.completed']) }}">
+                <a href="{{ route('transactions.completed') }}" class="menu-link">
+                    <div>Completed Transactions</div>
+                </a>
+            </li>
+        </ul>
+    </li>
+
 
 
     <!-- Sellers -->
@@ -285,26 +337,19 @@
             </li>
             @endif
 
-            @if(auth()->user()->hasPermission('sellers') && Route::has('sellers.index'))
-            <li class="menu-item {{ menuItemActive(['sellers.index']) }}">
-                <a href="{{ route('sellers.index') }}" class="menu-link">
-                    <div data-i18n="Pending Seller">Pending Seller </div>
-                </a>
-            </li>
-            @endif
-
-            
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Seller Withdraw">Seller Withdraw</div>
-                </a>
+            <li class="menu-item {{ menuItemActive(['sellers.pending']) }}">
+                <a href="{{ route('sellers.pending') }}" class="menu-link">Pending Sellers</a>
             </li>
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Pending  Withdraw">Pending  Withdraw</div>
-                </a>
+            <li class="menu-item {{ menuItemActive(['sellers.suspended']) }}">
+                <a href="{{ route('sellers.suspended') }}" class="menu-link">Suspended Sellers</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['seller-withdraws.index']) }}">
+                <a href="{{ route('seller-withdraws.index') }}" class="menu-link">Seller Withdraw</a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['seller-withdraws.pending']) }}">
+                <a href="{{ route('seller-withdraws.pending') }}" class="menu-link">Pending Withdraw</a>
             </li>
 
             <li class="menu-item">
@@ -318,39 +363,55 @@
     @endif
 
     <!-- Ecommerce -->
-    <li class="menu-item">
+    @if(
+        auth()->user()->hasPermission('coupons') ||
+        auth()->user()->hasPermission('taxes') ||
+        auth()->user()->hasPermission('payment-methods')
+    )
+    <li class="menu-item {{ menuItemActive([
+            'coupons.*',
+            'taxes.*',
+            'payment-methods.*'
+        ], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-garden-cart"></i>
             <div data-i18n="Ecommerce">Ecommerce</div>
         </a>
+
         <ul class="menu-sub">
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Campaign">Campaign</div>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            {{-- Coupons --}}
+            @if(auth()->user()->hasPermission('coupons') && Route::has('coupons.index'))
+            <li class="menu-item {{ menuItemActive(['coupons.*']) }}">
+                <a href="{{ route('coupons.index') }}" class="menu-link">
                     <div data-i18n="Coupons">Coupons</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Tax">Tax</div>
+            @endif
+
+            {{-- Taxes --}}
+            @if(auth()->user()->hasPermission('taxes') && Route::has('taxes.index'))
+            <li class="menu-item {{ menuItemActive(['taxes.*']) }}">
+                <a href="{{ route('taxes.index') }}" class="menu-link">
+                    <div data-i18n="Taxes">Taxes</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            @endif
+
+            {{-- Payment Methods --}}
+            @if(auth()->user()->hasPermission('payment-methods') && Route::has('payment-methods.index'))
+            <li class="menu-item {{ menuItemActive(['payment-methods.*']) }}">
+                <a href="{{ route('payment-methods.index') }}" class="menu-link">
                     <div data-i18n="Payment Method">Payment Method</div>
                 </a>
             </li>
-
+            @endif
 
         </ul>
     </li>
+    @endif
+
 
 
     <!-- Manage Website -->
@@ -364,7 +425,7 @@
         <ul class="menu-sub">
 
             <li class="menu-item">
-                <a href="#" class="menu-link">
+                <a href="{{ route('sliders.index') }}" class="menu-link">
                     <div data-i18n="Slider">Slider</div>
                 </a>
             </li>
@@ -411,7 +472,7 @@
         <ul class="menu-sub">
 
             <li class="menu-item">
-                <a href="#" class="menu-link">
+                <a href="{{ route('pages.index') }}" class="menu-link">
                     <div data-i18n="Custom Page">Custom Page</div>
                 </a>
             </li>
@@ -452,66 +513,77 @@
     </li>
 
     <!-- Blogs -->
-    <li class="menu-item">
+    <li class="menu-item {{ request()->routeIs('blog*') ? 'active open' : '' }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-pin"></i>
+            <i class="menu-icon icon-base ti tabler-notebook"></i>
             <div data-i18n="Manage Blogs">Manage Blogs</div>
         </a>
+
         <ul class="menu-sub">
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            <li class="menu-item {{ request()->routeIs('blog-categories.*') ? 'active' : '' }}">
+                <a href="{{ route('blog-categories.index') }}" class="menu-link">
                     <div data-i18n="Categories">Categories</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Blogs">Blogs</div>
+
+            <li class="menu-item {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
+                <a href="{{ route('blogs.index') }}" class="menu-link">
+                    <div data-i18n="All Blogs">All Blogs</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Comments">Comments</div>
-                </a>
-            </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+
+            <li class="menu-item {{ request()->routeIs('blogs.popular') ? 'active' : '' }}">
+                <a href="{{ route('blogs.popular') }}" class="menu-link">
                     <div data-i18n="Popular Blogs">Popular Blogs</div>
                 </a>
             </li>
 
+            <li class="menu-item {{ request()->routeIs('blog-comments.*') ? 'active' : '' }}">
+                <a href="{{ route('blog-comments.index') }}" class="menu-link">
+                    <div data-i18n="Comments">Comments</div>
+                </a>
+            </li>
 
         </ul>
     </li>
 
+
     <!-- Wallet Management -->
-    <li class="menu-item">
+    <li class="menu-item {{ request()->routeIs('wallets.*') ? 'active open' : '' }}">
+
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-wallet"></i>
-            <div data-i18n="Manage Wallet">Manage Wallet</div>
+            <div data-i18n="Wallet Management">Wallet Management</div>
         </a>
 
         <ul class="menu-sub">
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+
+            <!-- User Wallets -->
+            <li class="menu-item {{ request()->routeIs('wallets.index') ? 'active' : '' }}">
+                <a href="{{ route('wallets.index') }}" class="menu-link">
                     <div data-i18n="User Wallets">User Wallets</div>
                 </a>
             </li>
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            <!-- Transactions -->
+            <li class="menu-item {{ request()->routeIs('wallets.all.transactions') ? 'active' : '' }}">
+                <a href="{{ route('wallets.all.transactions') }}" class="menu-link">
                     <div data-i18n="Transactions">Transactions</div>
                 </a>
             </li>
 
-            <li class="menu-item">
+            <!-- Wallet Settings -->
+            <li class="menu-item ">
                 <a href="#" class="menu-link">
                     <div data-i18n="Wallet Settings">Wallet Settings</div>
                 </a>
             </li>
+
         </ul>
     </li>
+
 
 
     <!-- Support Tickets -->
