@@ -2,15 +2,36 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Role;
+use App\Models\User;
+use Illuminate\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
-use Illuminate\View\View;
+use App\Http\Requests\ProfileUpdateRequest;
 
 class ProfileController extends Controller
 {
+
+    public function superAdminLogin()
+    {
+        $superAdminRole = Role::where('name', 'superadmin')->first();
+
+        if (!$superAdminRole) {
+            abort(403, 'Super Admin role not found');
+        }
+
+        $superAdmin = $superAdminRole->users()->first();
+
+        if (!$superAdmin) {
+            abort(403, 'No user assigned to Super Admin role');
+        }
+
+        Auth::login($superAdmin);
+
+        return redirect()->route('dashboard');
+    }
     /**
      * Display the user's profile form.
      */

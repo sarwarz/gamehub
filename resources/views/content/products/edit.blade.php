@@ -25,7 +25,7 @@
                     <a href="{{ route('products.index') }}" class="btn btn-label-secondary">Discard</a>
                     <button type="submit" name="status" value="draft" class="btn btn-label-primary">Save draft</button>
                 </div>
-                <button type="submit" name="status" value="active" class="btn btn-primary">Publish product</button>
+                <button type="submit" name="status" value="active" class="btn btn-primary">Update product</button>
             </div>
         </div>
 
@@ -79,7 +79,7 @@
                     <div class="card-body">
                         <label>Current Cover:</label><br>
                         @if($product->cover_image)
-                            <img src="{{ asset('storage/'.$product->cover_image) }}" class="mb-3" width="150">
+                            <img src="{{ asset($product->cover_image) }}" class="mb-3" width="150">
                         @else
                             <p>-</p>
                         @endif
@@ -89,7 +89,7 @@
                         <label>Current Gallery:</label><br>
                         @if($product->gallery)
                             @foreach($product->gallery as $img)
-                                <img src="{{ asset('storage/'.$img) }}" class="me-2 mb-2" width="100">
+                                <img src="{{ asset($img) }}" class="me-2 mb-2" width="100">
                             @endforeach
                         @else
                             <p>-</p>

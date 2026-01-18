@@ -140,17 +140,29 @@ class ProductController extends Controller
 
         // Handle cover image
         if ($request->hasFile('cover_image')) {
-            $validated['cover_image'] = $request->file('cover_image')->store('products/cover', 'public');
+            $file = $request->file('cover_image');
+            $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
+
+            $file->move(public_path('uploads/products/cover'), $filename);
+
+            $validated['cover_image'] = 'uploads/products/cover/'.$filename;
         }
+
 
         // Handle gallery images
         if ($request->hasFile('gallery')) {
             $galleryPaths = [];
+
             foreach ($request->file('gallery') as $file) {
-                $galleryPaths[] = $file->store('products/gallery', 'public');
+                $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
+                $file->move(public_path('uploads/products/gallery'), $filename);
+
+                $galleryPaths[] = 'uploads/products/gallery/'.$filename;
             }
-            $validated['gallery'] = $galleryPaths; // save as array, cast to JSON in model
+
+            $validated['gallery'] = $galleryPaths;
         }
+
 
 
         // Save product
@@ -270,17 +282,42 @@ class ProductController extends Controller
 
             // Cover image
             if ($request->hasFile('cover_image')) {
-                $validated['cover_image'] = $request->file('cover_image')->store('products/cover', 'public');
+                // delete old image
+                if ($product->cover_image && file_exists(public_path($product->cover_image))) {
+                    unlink(public_path($product->cover_image));
+                }
+
+                $file = $request->file('cover_image');
+                $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
+                $file->move(public_path('uploads/products/cover'), $filename);
+
+                $validated['cover_image'] = 'uploads/products/cover/'.$filename;
             }
+
 
             // Gallery
             if ($request->hasFile('gallery')) {
+
+                // delete old gallery
+                if (!empty($product->gallery)) {
+                    foreach ($product->gallery as $img) {
+                        if (file_exists(public_path($img))) {
+                            unlink(public_path($img));
+                        }
+                    }
+                }
+
                 $galleryPaths = [];
                 foreach ($request->file('gallery') as $file) {
-                    $galleryPaths[] = $file->store('products/gallery', 'public');
+                    $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/products/gallery'), $filename);
+
+                    $galleryPaths[] = 'uploads/products/gallery/'.$filename;
                 }
+
                 $validated['gallery'] = $galleryPaths;
             }
+
 
             // Update product
             $product->update($validated);
@@ -368,15 +405,15 @@ class ProductController extends Controller
                     $product->worksOn()->detach();
 
                     // Delete cover image
-                    if ($product->cover_image && Storage::disk('public')->exists($product->cover_image)) {
-                        Storage::disk('public')->delete($product->cover_image);
+                    if ($product->cover_image && file_exists(public_path($product->cover_image))) {
+                        unlink(public_path($product->cover_image));
                     }
 
                     // Delete gallery
                     if (!empty($product->gallery)) {
                         foreach ($product->gallery as $img) {
-                            if (Storage::disk('public')->exists($img)) {
-                                Storage::disk('public')->delete($img);
+                            if (file_exists(public_path($img))) {
+                                unlink(public_path($img));
                             }
                         }
                     }
@@ -467,8 +504,8 @@ class ProductController extends Controller
 
             ->addColumn('product_column', function ($row) {
                 $image = $row->cover_image
-                    ? asset('storage/'.$row->cover_image)
-                    : asset('assets/img/default-product.png');
+                        ? asset($row->cover_image)
+                        : asset('assets/img/default-product.png');
 
                 $title = e($row->title);
                 $developer = $row->developer?->name ?? 'Unknown Dev';
@@ -521,6 +558,8 @@ class ProductController extends Controller
             ->rawColumns(['checkbox', 'product_column', 'status_badge', 'actions'])
             ->make(true);
     }
+
+   
 
 
 

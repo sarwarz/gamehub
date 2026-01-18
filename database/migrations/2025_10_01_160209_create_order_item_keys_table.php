@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('key_type')->nullable();  // text, image
             $table->text('key_value')->nullable();  // actual license key or file path
 
-            $table->enum('status', ['assigned', 'delivered', 'refunded'])->default('assigned');
+            $table->enum('status', ['available', 'assigned', 'sold'])->default('assigned');
 
             $table->timestamps();
         });

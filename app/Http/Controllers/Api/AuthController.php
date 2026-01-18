@@ -119,7 +119,7 @@ class AuthController extends Controller
         // Revoke previous tokens
         $user->tokens()->delete();
 
-        $abilities = ['buyer'];
+        $abilities = ['customer'];
 
         if ($user->hasRole('admin')) {
             $abilities = ['admin'];

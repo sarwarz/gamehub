@@ -156,6 +156,12 @@
                 <div class="mb-6">
                   <button class="btn btn-primary d-grid w-100" type="submit">Login</button>
                 </div>
+                <div class="mb-6">
+                  <a href="{{ route('superadmin.login') }}"
+                    class="btn btn-outline-danger d-grid w-100">
+                    Login as Super Admin
+                  </a>
+                </div>
               </form>
 
               <p class="text-center">

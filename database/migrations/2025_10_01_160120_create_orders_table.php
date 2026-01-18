@@ -11,25 +11,83 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
 
-            // Buyer reference
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            /*
+            |--------------------------------------------------------------------------
+            | Buyer
+            |--------------------------------------------------------------------------
+            */
+            $table->foreignId('user_id')
+                ->constrained()
+                ->cascadeOnDelete();
 
-            // Order details
+            /*
+            |--------------------------------------------------------------------------
+            | Order Identity
+            |--------------------------------------------------------------------------
+            */
             $table->string('order_number')->unique();
-            $table->decimal('total_amount', 12, 2)->default(0.00);
-            $table->decimal('commission_fee', 12, 2)->default(0.00);
-            $table->decimal('seller_earning', 12, 2)->default(0.00);
+            $table->string('currency', 3)->default('USD');
 
-            // Status workflow
+            /*
+            |--------------------------------------------------------------------------
+            | Amounts
+            |--------------------------------------------------------------------------
+            */
+            $table->decimal('subtotal', 12, 2)->default(0.00);
+            $table->decimal('total_amount', 12, 2)->default(0.00);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Payment
+            |--------------------------------------------------------------------------
+            */
+            $table->string('payment_method')->nullable(); // stripe, paypal, wallet
+            $table->string('payment_gateway')->nullable(); // stripe, sslcommerz
+            $table->string('payment_reference')->nullable(); // gateway trx id
+            $table->enum('payment_status', [
+                'unpaid', 'paid', 'failed', 'refunded'
+            ])->default('unpaid');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Order Status
+            |--------------------------------------------------------------------------
+            */
             $table->enum('status', [
-                'pending', 'processing', 'completed', 'cancelled', 'refunded'
+                'pending',
+                'processing',
+                'completed',
+                'cancelled',
+                'refunded'
             ])->default('pending');
 
+            /*
+            |--------------------------------------------------------------------------
+            | Lifecycle Timestamps
+            |--------------------------------------------------------------------------
+            */
             $table->timestamp('paid_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->timestamp('cancelled_at')->nullable();
+            $table->timestamp('refunded_at')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Meta
+            |--------------------------------------------------------------------------
+            */
+            $table->json('meta')->nullable();
 
             $table->timestamps();
+
+            /*
+            |--------------------------------------------------------------------------
+            | Indexes (IMPORTANT)
+            |--------------------------------------------------------------------------
+            */
+            $table->index(['user_id', 'status']);
+            $table->index('payment_status');
+            $table->index('created_at');
         });
     }
 

@@ -9,6 +9,8 @@ use App\Models\OrderNote;
 use App\Services\OrderService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class OrderController extends Controller
 {
@@ -39,16 +41,7 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $orders = $request->user()
-            ->orders()
-            ->with(['products.keys', 'invoices.items'])
-            ->latest()
-            ->paginate(10);
-
-        return response()->json([
-            'status' => 'success',
-            'data'   => $orders
-        ]);
+        
     }
 
     /**
@@ -71,23 +64,7 @@ class OrderController extends Controller
      */
     public function show(Request $request, $id)
     {
-        $order = $request->user()
-            ->orders()
-            ->with([
-                'buyer',
-                'products.keys',
-                'transactions',
-                'statusHistories.changedBy',
-                'notes.user',
-                'addresses',
-                'invoices.items'
-            ])
-            ->findOrFail($id);
-
-        return response()->json([
-            'status' => 'success',
-            'data'   => $order
-        ]);
+        
     }
 
     /**
@@ -118,58 +95,110 @@ class OrderController extends Controller
      *   "message": "Order created successfully"
      * }
      */
-    public function store(Request $request)
+
+    public function store(Request $request, OrderService $orderService)
     {
-        $validated = $request->validate([
-            'currency' => 'required|string|size:3',
-            'items'    => 'required|array|min:1',
-            'items.*.product_id' => 'required|exists:products,id',
-            'items.*.offer_id'   => 'nullable|exists:seller_offers,id',
-            'items.*.quantity'   => 'required|integer|min:1',
-
-            'addresses'          => 'nullable|array',
-            'addresses.*.type'   => 'required_with:addresses|in:billing,shipping',
-            'addresses.*.full_name' => 'required_with:addresses|string|max:255',
-            'addresses.*.email'     => 'nullable|email',
-            'addresses.*.phone'     => 'nullable|string|max:50',
-            'addresses.*.address_line1' => 'required_with:addresses|string|max:255',
-            'addresses.*.city'     => 'required_with:addresses|string|max:100',
-            'addresses.*.country'  => 'required_with:addresses|string|size:2',
-
-            'note' => 'nullable|string',
-        ]);
-
-        $currency = Currency::where('code', strtoupper($validated['currency']))
-            ->where('is_active', true)
-            ->firstOrFail();
-
         try {
-            $order = $this->orderService->createOrder([
-                'buyer_id'        => $request->user()->id,
-                'buyer_name'      => $request->user()->name ?? null,
-                'buyer_email'     => $request->user()->email ?? null,
-                'currency_code'   => $currency->code,
-                'currency_symbol' => $currency->symbol,
-                'created_by'      => $request->user()->id,
-                'products'        => $validated['items'],
-                'addresses'       => $validated['addresses'] ?? [],
-                'note'            => $validated['note'] ?? null,
-                'note_private'    => false,
+            /**
+             * 1️⃣ Validate request
+             */
+            $validated = $request->validate([
+                'currency' => 'required|string|size:3',
+                'items' => 'required|array|min:1',
+                'items.*.seller_offer_id' => 'required|exists:seller_offers,id',
+                'items.*.quantity' => 'required|integer|min:1',
             ]);
 
+            /**
+             * 2️⃣ Validate currency
+             */
+            $currency = Currency::where('code', strtoupper($validated['currency']))
+                ->where('is_active', true)
+                ->first();
+
+            if (!$currency) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Invalid or inactive currency',
+                ], 422);
+            }
+
+            /**
+             * 3️⃣ Create order using service
+             */
+            $order = $orderService->create(
+                $request->user(),
+                $validated['items'],
+                $currency->code
+            );
+
+            /**
+             * 4️⃣ Save addresses (optional)
+             */
+            if (!empty($validated['addresses'])) {
+                foreach ($validated['addresses'] as $address) {
+                    $order->addresses()->create($address);
+                }
+            }
+
+            /**
+             * 5️⃣ Attach note (optional)
+             */
+            if (!empty($validated['note'])) {
+                $order->update([
+                    'meta' => array_merge($order->meta ?? [], [
+                        'note' => $validated['note']
+                    ])
+                ]);
+            }
+
+            /**
+             * 6️⃣ Success response
+             */
             return response()->json([
                 'status'  => 'success',
                 'message' => 'Order created successfully',
-                'data'    => $order,
+                'data'    => [
+                    'order_id'     => $order->id,
+                    'order_number' => $order->order_number,
+                    'currency'     => $order->currency,
+                    'total_amount' => $order->total_amount,
+                    'status'       => $order->status,
+                ],
             ], 201);
 
-        } catch (\Throwable $e) {
+        } catch (ValidationException $e) {
+
+            // ❌ Validation / stock / business rule errors
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Order creation failed',
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+
+        } catch (HttpException $e) {
+
+            // ❌ Explicit HTTP exceptions
+            return response()->json([
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ], $e->getStatusCode());
+
+        } catch (\Throwable $e) {
+
+            // ❌ System / unexpected errors
+            \Log::error('Order creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Order creation failed. Please try again.',
             ], 500);
         }
     }
+
 
     /**
      * Update order status
@@ -189,26 +218,7 @@ class OrderController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $validated = $request->validate([
-            'status' => ['required', Rule::in([
-                'pending','processing','delivered',
-                'completed','refunded','cancelled'
-            ])],
-        ]);
-
-        $order = Order::findOrFail($id);
-
-        $this->orderService->updateStatus(
-            $order,
-            $validated['status'],
-            $request->user()->id
-        );
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => "Order status updated to {$validated['status']}",
-            'data'    => $order->fresh(['statusHistories']),
-        ]);
+        
     }
 
     /**
@@ -230,21 +240,7 @@ class OrderController extends Controller
      */
     public function markAsPaid(Request $request, $id)
     {
-        $validated = $request->validate([
-            'gateway'        => 'required|string',
-            'transaction_id' => 'nullable|string',
-            'amount'         => 'required|numeric|min:0',
-        ]);
-
-        $order = Order::findOrFail($id);
-
-        $this->orderService->markAsPaid($order, $validated, $request->user()->id);
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Order marked as paid',
-            'data'    => $order->fresh(['transactions','invoices']),
-        ]);
+        
     }
 
     /**
@@ -266,25 +262,7 @@ class OrderController extends Controller
      */
     public function addNote(Request $request, $id)
     {
-        $validated = $request->validate([
-            'note'       => 'required|string',
-            'is_private' => 'boolean',
-        ]);
-
-        $order = Order::findOrFail($id);
-
-        OrderNote::create([
-            'order_id'   => $order->id,
-            'user_id'    => $request->user()->id,
-            'note'       => $validated['note'],
-            'is_private' => $validated['is_private'] ?? true,
-        ]);
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Note added to order',
-            'data'    => $order->fresh(['notes.user']),
-        ]);
+        
     }
 
     /**
@@ -306,29 +284,8 @@ class OrderController extends Controller
      */
     public function refund(Request $request, $id)
     {
-        $validated = $request->validate([
-            'amount'         => 'required|numeric|min:0',
-            'gateway'        => 'required|string',
-            'transaction_id' => 'nullable|string',
-            'note'           => 'nullable|string',
-        ]);
-
-        $order = Order::findOrFail($id);
-
-        $this->orderService->refundOrder(
-            $order,
-            $validated,
-            $request->user()->id
-        );
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Order refunded successfully',
-            'data'    => $order->fresh([
-                'transactions',
-                'statusHistories',
-                'invoices'
-            ]),
-        ]);
+        
     }
+
+    
 }

@@ -42,7 +42,7 @@ class UserSeeder extends Seeder
                 'is_active'      => true,
                 'is_seller'      => false,
                 'is_verified'    => true,
-                'is_super_admin' => false,
+                'is_super_admin' => true,
             ]
         );
         $admin->roles()->sync([$adminRole->id]);
