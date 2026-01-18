@@ -9,66 +9,105 @@ use Illuminate\Support\Str;
 
 class SellerSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Ensure at least one seller user exists
-        $sellerUser = User::firstOrCreate(
-            ['email' => 'seller@gmail.com'],
+        $realSellers = [
             [
-                'name'        => 'Demo Seller',
-                'username'    => 'seller01',
-                'password'    => bcrypt('password'),
-                'is_seller'   => true,
-                'is_verified' => true,
-                'is_active'   => true,
-            ]
-        );
-
-        // Create seller profile for this user
-        Seller::firstOrCreate(
-            ['user_id' => $sellerUser->id],
+                'name'        => 'GameHub Official',
+                'username'    => 'gamehub_official',
+                'email'       => 'support@gamehub.com',
+                'store_name'  => 'GameHub Store',
+                'description' => 'Official digital game and software marketplace.',
+                'country'     => 'United States',
+                'city'        => 'Los Angeles',
+                'rating'      => 4.9,
+                'total_sales' => 2500,
+                'logo'        => 'uploads/sellers/logos/GameHubOfficial.jpg',
+            ],
             [
-                'store_name'  => 'Demo Seller Store',
-                'slug'        => 'demo-seller-store',
-                'description' => 'This is a demo seller profile for testing.',
-                'email'       => $sellerUser->email,
-                'phone'       => '+880123456789',
+                'name'        => 'Digital Keys BD',
+                'username'    => 'digitalkeysbd',
+                'email'       => 'sales@digitalkeysbd.com',
+                'store_name'  => 'Digital Keys BD',
+                'description' => 'Trusted Bangladeshi seller of genuine game & software keys.',
                 'country'     => 'Bangladesh',
                 'city'        => 'Dhaka',
-                'address'     => 'House 10, Road 5, Dhanmondi',
+                'rating'      => 4.7,
+                'total_sales' => 1800,
+                'logo'        => 'uploads/sellers/logos/digitalkeysbd.png',
+            ],
+            [
+                'name'        => 'PlayZone Market',
+                'username'    => 'playzone_market',
+                'email'       => 'support@playzone.com',
+                'store_name'  => 'PlayZone Market',
+                'description' => 'Affordable PC games, DLCs, and digital items.',
+                'country'     => 'United Kingdom',
+                'city'        => 'London',
+                'rating'      => 4.6,
+                'total_sales' => 1320,
+                'logo'        => 'uploads/sellers/logos/PlayZoneMarket.png',
+            ],
+            [
+                'name'        => 'KeyWorld',
+                'username'    => 'keyworld',
+                'email'       => 'contact@keyworld.io',
+                'store_name'  => 'KeyWorld',
+                'description' => 'Global distributor of genuine activation keys.',
+                'country'     => 'Germany',
+                'city'        => 'Berlin',
+                'rating'      => 4.8,
+                'total_sales' => 2100,
+                'logo'        => 'uploads/sellers/logos/KeyWorld.jpg',
+            ],
+            [
+                'name'        => 'NextGen Games',
+                'username'    => 'nextgen_games',
+                'email'       => 'hello@nextgengames.gg',
+                'store_name'  => 'NextGen Games',
+                'description' => 'Next-generation games at competitive prices.',
+                'country'     => 'Canada',
+                'city'        => 'Toronto',
                 'rating'      => 4.5,
-                'total_sales' => 100,
-                'status'      => 'active',
-                'is_verified' => true,
-            ]
-        );
+                'total_sales' => 980,
+                'logo'        => 'uploads/sellers/logos/nextgen_games.png',
+            ],
+        ];
 
-        // Create multiple fake sellers (optional)
-        for ($i = 1; $i <= 5; $i++) {
-            $user = User::factory()->create([
-                'is_seller'   => true,
-                'is_verified' => fake()->boolean(),
-                'is_active'   => true,
-            ]);
+        foreach ($realSellers as $sellerData) {
 
-            Seller::create([
-                'user_id'     => $user->id,
-                'store_name'  => "Store $i",
-                'slug'        => "store-" . Str::slug($user->username ?? $user->id),
-                'description' => "This is the description for Store $i",
-                'email'       => $user->email,
-                'phone'       => fake()->phoneNumber(),
-                'country'     => fake()->country(),
-                'city'        => fake()->city(),
-                'address'     => fake()->address(),
-                'rating'      => fake()->randomFloat(2, 3, 5),
-                'total_sales' => fake()->numberBetween(10, 500),
-                'status'      => 'active',
-                'is_verified' => fake()->boolean(),
-            ]);
+            // Create or get seller user
+            $user = User::firstOrCreate(
+                ['email' => $sellerData['email']],
+                [
+                    'name'        => $sellerData['name'],
+                    'username'    => $sellerData['username'],
+                    'password'    => bcrypt('password'),
+                    'is_seller'   => true,
+                    'is_verified' => true,
+                    'is_active'   => true,
+                ]
+            );
+
+            // Create seller profile
+            Seller::firstOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'store_name'  => $sellerData['store_name'],
+                    'slug'        => Str::slug($sellerData['store_name']),
+                    'description' => $sellerData['description'],
+                    'logo'        => $sellerData['logo'],
+                    'email'       => $sellerData['email'],
+                    'phone'       => fake()->phoneNumber(),
+                    'country'     => $sellerData['country'],
+                    'city'        => $sellerData['city'],
+                    'address'     => fake()->address(),
+                    'rating'      => $sellerData['rating'],
+                    'total_sales' => $sellerData['total_sales'],
+                    'status'      => 'active',
+                    'is_verified' => true,
+                ]
+            );
         }
     }
 }

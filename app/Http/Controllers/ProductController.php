@@ -437,7 +437,7 @@ class ProductController extends Controller
         return response()->json([
             'id'       => $product->id,
             'title'    => $product->title,
-            'cover'    => $product->cover_image ? asset('storage/'.$product->cover_image) : asset('assets/img/default-product.png'),
+            'cover'    => $product->cover_image ? asset($product->cover_image) : asset('assets/img/default-product.png'),
             'types'  => $product->types->pluck('name')->toArray(),
             'regions'  => $product->regions->pluck('name')->toArray(),
             'languages'=> $product->languages->pluck('name')->toArray(),

@@ -20,7 +20,6 @@ class DatabaseSeeder extends Seeder
             PermissionSeeder::class,
             UserSeeder::class,
             CurrencySeeder::class,
-            SellerSeeder::class,
             ProductCategorySeeder::class,
             ProductPlatformSeeder::class,
             ProductTypeSeeder::class,
@@ -32,6 +31,8 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             ProductReviewSeeder::class,
             PaymentMethodSeeder::class,
+            SellerSeeder::class,
+            SellerOfferSeeder::class,
         ]);
 
     }

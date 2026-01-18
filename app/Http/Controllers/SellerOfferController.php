@@ -210,7 +210,7 @@ class SellerOfferController extends Controller
             ->addColumn('product', function ($o) {
                 return '
                     <div class="d-flex align-items-center">
-                        <img src="'.asset('storage/'.$o->product->cover_image).'"
+                        <img src="'.asset($o->product->cover_image).'"
                             class="rounded me-2" width="40" height="40">
                         <span>'.e($o->product->title).'</span>
                     </div>
