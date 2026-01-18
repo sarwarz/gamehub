@@ -1,19 +1,27 @@
-name: Taxonomies
-description: ''
+name: 'Product Attributes'
+description: |-
+
+  Product-related attributes used for filters,
+  dropdowns, and product creation.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/categories
+    uri: api/v1/product-attributes
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List product categories'
-      description: 'Returns all product categories.'
+      title: 'Get all product attributes'
+      description: |-
+        Fetch all product attributes in a single request.
+        Recommended for frontend initialization.
       authenticated: false
       deprecated: false
     headers:
@@ -32,14 +40,18 @@ endpoints:
         status: 200
         content: |-
           {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Operating Systems",
-                "slug": "operating-systems"
-              }
-            ]
+            "status": true,
+            "message": "Product attributes fetched successfully",
+            "data": {
+              "categories": [{"id":1,"name":"Operating Systems","slug":"operating-systems"}],
+              "platforms": [{"id":1,"name":"Windows","slug":"windows"}],
+              "types": [{"id":1,"name":"Retail","slug":"retail","commission":10}],
+              "regions": [{"id":1,"name":"Global","slug":"global"}],
+              "languages": [{"id":1,"name":"English","slug":"en"}],
+              "works_on": [{"id":1,"name":"Windows 10","slug":"windows-10"}],
+              "developers": [{"id":1,"name":"Microsoft","slug":"microsoft"}],
+              "publishers": [{"id":1,"name":"Microsoft","slug":"microsoft"}]
+            }
           }
         headers: []
         description: ''
@@ -52,15 +64,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/platforms
+    uri: api/v1/product-attributes/categories
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List platforms'
-      description: 'Returns all supported platforms.'
+      title: 'Get product categories'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -79,14 +94,8 @@ endpoints:
         status: 200
         content: |-
           {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Windows",
-                "slug": "windows"
-              }
-            ]
+            "status": true,
+            "data": [{"id":1,"name":"Operating Systems","slug":"operating-systems"}]
           }
         headers: []
         description: ''
@@ -99,15 +108,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/types
+    uri: api/v1/product-attributes/platforms
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List product types'
-      description: 'Returns all product types with commission.'
+      title: 'Get product platforms'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -124,20 +136,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Retail",
-                "slug": "retail",
-                "commission": 10
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":2,"name":"Epic Games","slug":"epic-games"},{"id":5,"name":"GOG","slug":"gog"},{"id":10,"name":"Mac OS","slug":"mac-os"},{"id":8,"name":"Nintendo Switch","slug":"nintendo-switch"},{"id":3,"name":"Origin","slug":"origin"},{"id":7,"name":"PlayStation","slug":"playstation"},{"id":1,"name":"Steam","slug":"steam"},{"id":4,"name":"Uplay","slug":"uplay"},{"id":9,"name":"Windows","slug":"windows"},{"id":6,"name":"Xbox","slug":"xbox"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null
@@ -147,15 +152,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/regions
+    uri: api/v1/product-attributes/types
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List regions'
-      description: 'Returns all product regions.'
+      title: 'Get product types'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -172,19 +180,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Global",
-                "slug": "global"
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"DLC","slug":"dlc","commission":"8.00"},{"id":1,"name":"Game","slug":"game","commission":"10.00"},{"id":3,"name":"Gift Card","slug":"gift-card","commission":"5.00"},{"id":2,"name":"Software","slug":"software","commission":"12.50"},{"id":5,"name":"Subscription","slug":"subscription","commission":"15.00"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null
@@ -194,15 +196,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/languages
+    uri: api/v1/product-attributes/regions
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List languages'
-      description: 'Returns all supported languages.'
+      title: 'Get product regions'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -219,19 +224,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "English",
-                "slug": "en"
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":7,"name":"Africa","slug":"africa"},{"id":5,"name":"Asia","slug":"asia"},{"id":2,"name":"Europe (EU)","slug":"europe-eu"},{"id":1,"name":"Global","slug":"global"},{"id":6,"name":"Middle East","slug":"middle-east"},{"id":3,"name":"North America (NA)","slug":"north-america-na"},{"id":8,"name":"Oceania","slug":"oceania"},{"id":4,"name":"South America (SA)","slug":"south-america-sa"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null
@@ -241,15 +240,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/works-on
+    uri: api/v1/product-attributes/languages
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List supported operating systems'
-      description: 'Returns OS/platform compatibility (works on).'
+      title: 'Get product languages'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -266,19 +268,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Windows 10",
-                "slug": "windows-10"
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":12,"name":"Arabic","slug":"arabic"},{"id":8,"name":"Chinese (Simplified)","slug":"chinese-simplified"},{"id":9,"name":"Chinese (Traditional)","slug":"chinese-traditional"},{"id":1,"name":"English","slug":"english"},{"id":2,"name":"French","slug":"french"},{"id":3,"name":"German","slug":"german"},{"id":14,"name":"Hindi","slug":"hindi"},{"id":5,"name":"Italian","slug":"italian"},{"id":10,"name":"Japanese","slug":"japanese"},{"id":11,"name":"Korean","slug":"korean"},{"id":6,"name":"Portuguese","slug":"portuguese"},{"id":7,"name":"Russian","slug":"russian"},{"id":4,"name":"Spanish","slug":"spanish"},{"id":13,"name":"Turkish","slug":"turkish"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null
@@ -288,15 +284,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/developers
+    uri: api/v1/product-attributes/works-on
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List developers'
-      description: 'Returns all product developers.'
+      title: 'Get supported operating systems'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -313,19 +312,13 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Microsoft",
-                "slug": "microsoft"
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"Android","slug":"android"},{"id":5,"name":"iOS","slug":"ios"},{"id":3,"name":"Linux","slug":"linux"},{"id":2,"name":"Mac OS","slug":"mac-os"},{"id":1,"name":"Windows","slug":"windows"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null
@@ -335,15 +328,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/taxonomies/publishers
+    uri: api/v1/product-attributes/developers
     metadata:
       custom: []
-      groupName: Taxonomies
-      groupDescription: ''
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List publishers'
-      description: 'Returns all product publishers.'
+      title: 'Get product developers'
+      description: ''
       authenticated: false
       deprecated: false
     headers:
@@ -360,19 +356,57 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": [
-              {
-                "id": 1,
-                "name": "Microsoft",
-                "slug": "microsoft"
-              }
-            ]
-          }
-        headers: []
-        description: ''
+        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"CD Projekt Red","slug":"cd-projekt-red"},{"id":3,"name":"Mojang Studios","slug":"mojang-studios"},{"id":2,"name":"Rockstar Games","slug":"rockstar-games"},{"id":1,"name":"Ubisoft","slug":"ubisoft"},{"id":5,"name":"Valve Corporation","slug":"valve-corporation"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/product-attributes/publishers
+    metadata:
+      custom: []
+      groupName: 'Product Attributes'
+      groupDescription: |-
+
+        Product-related attributes used for filters,
+        dropdowns, and product creation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get product publishers'
+      description: ''
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Success","data":[{"id":3,"name":"Activision","slug":"activision"},{"id":5,"name":"Bethesda Softworks","slug":"bethesda-softworks"},{"id":2,"name":"Electronic Arts (EA)","slug":"electronic-arts-ea"},{"id":4,"name":"Square Enix","slug":"square-enix"},{"id":1,"name":"Ubisoft","slug":"ubisoft"}]}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth: []
     controller: null

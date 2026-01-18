@@ -248,7 +248,7 @@ endpoints:
         name: newsletter_subscribed
         description: ''
         required: false
-        example: true
+        example: false
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -292,7 +292,7 @@ endpoints:
       country: US
       company: mqesedyghenqcopwvownk
       tax_id: bamlnfngefbeilfzsyuxo
-      newsletter_subscribed: true
+      newsletter_subscribed: false
       preferred_currency: USD
       preferred_language: en
     fileParameters: []

@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\ProductReviewController;
 use App\Http\Controllers\Api\ProductRequestController;
 use App\Http\Controllers\Api\SellerWithdrawController;
+use App\Http\Controllers\Api\ProductAttributeController;
 
 Route::prefix('v1')->group(function () {
 
@@ -56,19 +57,23 @@ Route::prefix('v1')->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Taxonomies
+    | Product Attributes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('taxonomies')->group(function () {
-        Route::get('/categories', [TaxonomyController::class, 'categories']);
-        Route::get('/platforms', [TaxonomyController::class, 'platforms']);
-        Route::get('/types', [TaxonomyController::class, 'types']);
-        Route::get('/regions', [TaxonomyController::class, 'regions']);
-        Route::get('/languages', [TaxonomyController::class, 'languages']);
-        Route::get('/works-on', [TaxonomyController::class, 'worksOn']);
-        Route::get('/developers', [TaxonomyController::class, 'developers']);
-        Route::get('/publishers', [TaxonomyController::class, 'publishers']);
+    Route::prefix('product-attributes')->group(function () {
+        Route::get('/', [ProductAttributeController::class, 'index']);
+
+        Route::get('/categories', [ProductAttributeController::class, 'categories']);
+        Route::get('/platforms', [ProductAttributeController::class, 'platforms']);
+        Route::get('/types', [ProductAttributeController::class, 'types']);
+        Route::get('/regions', [ProductAttributeController::class, 'regions']);
+        Route::get('/languages', [ProductAttributeController::class, 'languages']);
+        Route::get('/works-on', [ProductAttributeController::class, 'worksOn']);
+        Route::get('/developers', [ProductAttributeController::class, 'developers']);
+        Route::get('/publishers', [ProductAttributeController::class, 'publishers']);
     });
+
+
 
     /*
     |--------------------------------------------------------------------------
