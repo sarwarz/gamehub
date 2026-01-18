@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 class PermissionMiddleware
 {
@@ -11,28 +12,40 @@ class PermissionMiddleware
     {
         $user = auth()->user();
 
-        // Super Admin bypass
-        if ($user && $user->is_super_admin) {
+        // 1️⃣ Not logged in
+        if (! $user) {
+            return $request->expectsJson()
+                ? response()->json(['message' => 'Unauthenticated.'], Response::HTTP_UNAUTHORIZED)
+                : response()->view('errors.401', [], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // 2️⃣ Super Admin bypass
+        if ($user->is_super_admin) {
             return $next($request);
         }
 
-        if (!$user) {
-            abort(403, 'Unauthorized - You are not logged in.');
-        }
-
-        // If user has the exact permission
+        // 3️⃣ Exact permission
         if ($user->hasPermission($permission)) {
             return $next($request);
         }
 
-        // If user has parent permission that matches route name (e.g. products.*)
-        $routeName = $request->route()->getName(); // e.g. products.index
-        $parent = explode('.', $routeName)[0];     // products
+        // 4️⃣ Route-based fallback (safe)
+        $routeName = optional($request->route())->getName();
 
-        if ($user->hasPermission($parent)) {
-            return $next($request);
+        if ($routeName) {
+            $parent = str($routeName)->before('.')->toString();
+
+            if ($user->hasPermission($parent)) {
+                return $next($request);
+            }
         }
 
-        abort(403, 'Unauthorized - You do not have the required permission.');
+        // 5️⃣ Forbidden (403)
+        return $request->expectsJson()
+            ? response()->json(
+                ['message' => 'You do not have permission to access this resource.'],
+                Response::HTTP_FORBIDDEN
+            )
+            : response()->view('errors.403', [], Response::HTTP_FORBIDDEN);
     }
 }

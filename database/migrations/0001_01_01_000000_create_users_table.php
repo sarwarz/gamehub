@@ -23,10 +23,6 @@ return new class extends Migration
 
             //account type
             $table->boolean('is_active')->default(true);
-            $table->boolean('is_super_admin')->default(false);
-
-            // Seller quick info (optional, detailed in sellers table)
-            $table->boolean('is_seller')->default(false);
             $table->boolean('is_verified')->default(false); // KYC or seller verification
 
             $table->rememberToken();
