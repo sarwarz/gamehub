@@ -1,0 +1,251 @@
+name: Taxes
+description: |-
+
+  APIs for retrieving and calculating tax rules
+  for checkout and seller-specific configurations.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/taxes
+    metadata:
+      custom: []
+      groupName: Taxes
+      groupDescription: |-
+
+        APIs for retrieving and calculating tax rules
+        for checkout and seller-specific configurations.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List applicable taxes'
+      description: 'Retrieve active taxes based on location and seller.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      seller_id:
+        custom: []
+        name: seller_id
+        description: 'Optional Seller ID.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      country:
+        custom: []
+        name: country
+        description: 'Optional Country code.'
+        required: false
+        example: US
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      state:
+        custom: []
+        name: state
+        description: 'Optional State.'
+        required: false
+        example: CA
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: 'Optional City.'
+        required: false
+        example: 'Los Angeles'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      seller_id: 5
+      country: US
+      state: CA
+      city: 'Los Angeles'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Taxes fetched successfully",
+            "data": []
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/taxes/calculate
+    metadata:
+      custom: []
+      groupName: Taxes
+      groupDescription: |-
+
+        APIs for retrieving and calculating tax rules
+        for checkout and seller-specific configurations.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Calculate tax amount'
+      description: 'Calculate applicable tax amount for an order.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Order amount.'
+        required: true
+        example: 100.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      seller_id:
+        custom: []
+        name: seller_id
+        description: 'Optional Seller ID.'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      country:
+        custom: []
+        name: country
+        description: 'Country code.'
+        required: true
+        example: US
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      state:
+        custom: []
+        name: state
+        description: 'Optional State.'
+        required: false
+        example: CA
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: 'Optional City.'
+        required: false
+        example: 'Los Angeles'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      amount: 100.0
+      seller_id: 5
+      country: US
+      state: CA
+      city: 'Los Angeles'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Tax calculated successfully",
+            "data": {
+              "tax_total": 12.5
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/seller/taxes
+    metadata:
+      custom: []
+      groupName: Taxes
+      groupDescription: |-
+
+        APIs for retrieving and calculating tax rules
+        for checkout and seller-specific configurations.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Seller tax rules'
+      description: 'Retrieve tax rules created by the authenticated seller.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Seller taxes fetched successfully",
+            "data": []
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

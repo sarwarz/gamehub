@@ -2,200 +2,124 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Role;
+use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * @group Authentication
+ *
+ * APIs for user authentication using Laravel Sanctum.
+ */
 class AuthController extends Controller
 {
     /**
-     * Register a new user
+     * Register user
      *
-     * Creates a new buyer account for the eCommerce platform.
+     * Create a new user account.
      *
-     * @group Authentication
-     *
-     * @bodyParam name string required Full name of the user. Example: John Doe
-     * @bodyParam email string required Email address (must be unique). Example: john@example.com
-     * @bodyParam password string required Minimum 8 characters. Example: password123
-     * @bodyParam password_confirmation string required Must match password. Example: password123
+     * @bodyParam name string required Full name. Example: John Doe
+     * @bodyParam email string required Email address. Example: john@example.com
+     * @bodyParam password string required Password (min 8 chars).
      *
      * @response 201 {
-     *   "status": "success",
-     *   "message": "Registration successful"
-     * }
-     *
-     * @response 422 {
-     *   "message": "The email has already been taken.",
-     *   "errors": {
-     *     "email": ["The email has already been taken."]
-     *   }
+     *  "status": true,
+     *  "message": "Registration successful"
      * }
      */
     public function register(Request $request)
     {
         $data = $request->validate([
             'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users',
-            'password' => 'required|string|min:8|confirmed',
+            'email'    => 'required|email|unique:users,email',
+            'password' => 'required|min:8',
         ]);
 
         $user = User::create([
-            'name'      => $data['name'],
-            'email'     => $data['email'],
-            'password' => Hash::make($data['password']),
-            'is_active' => true,
+            'name'       => $data['name'],
+            'email'      => $data['email'],
+            'password'   => Hash::make($data['password']),
+            'is_active'  => true,
+            'is_verified'=> false,
         ]);
 
-        // Assign default customer role
-        $user->roles()->attach(
-            Role::where('name', 'customer')->first()
-        );
-
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Registration successful'
-        ], 201);
+        return $this->successResponse($this->token($user), 'Registration successful', 201);
     }
 
     /**
      * Login user
      *
-     * Authenticates a user and returns a Sanctum token.
+     * Authenticate user and return API token.
      *
-     * @group Authentication
-     *
-     * @bodyParam email string required Registered email address. Example: john@example.com
-     * @bodyParam password string required User password. Example: password123
+     * @bodyParam email string required Email. Example: john@example.com
+     * @bodyParam password string required Password.
      *
      * @response 200 {
-     *   "status": "success",
-     *   "data": {
-     *     "user": {
-     *       "id": 1,
-     *       "name": "John Doe",
-     *       "email": "john@example.com"
-     *     },
-     *     "token": "1|xxxxxxxxxxxxxxxxxxxxxxxx"
-     *   }
-     * }
-     *
-     * @response 401 {
-     *   "status": "error",
-     *   "message": "Invalid credentials"
-     * }
-     *
-     * @response 403 {
-     *   "status": "error",
-     *   "message": "Account disabled"
+     *  "status": true,
+     *  "token": "..."
      * }
      */
     public function login(Request $request)
     {
         $credentials = $request->validate([
             'email'    => 'required|email',
-            'password' => 'required|string',
+            'password' => 'required',
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Invalid credentials'
-            ], 401);
-        }
+        $user = User::where('email', $credentials['email'])->first();
 
-        $user = Auth::user();
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            return $this->errorResponse('Invalid credentials', 401);
+        }
 
         if (!$user->is_active) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Account disabled'
-            ], 403);
+            return $this->errorResponse('Account is disabled', 403);
         }
 
-        // Revoke previous tokens
-        $user->tokens()->delete();
-
-        $abilities = ['customer'];
-
-        if ($user->hasRole('admin')) {
-            $abilities = ['admin'];
-        } elseif ($user->is_seller) {
-            $abilities = ['seller'];
-        }
-
-        $token = $user->createToken(
-            'nextjs-token',
-            $abilities,
-            now()->addDays(7)
-        )->plainTextToken;
-
-        return response()->json([
-            'status' => 'success',
-            'data'   => [
-                'user'  => $user,
-                'token' => $token,
-            ]
-        ]);
+        return $this->successResponse($this->token($user), 'Login successful');
     }
 
     /**
      * Logout user
      *
-     * Revokes the current access token.
-     *
-     * @group Authentication
+     * Revoke current access token.
      *
      * @authenticated
-     *
-     * @response 200 {
-     *   "status": "success",
-     *   "message": "Logged out successfully"
-     * }
      */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json([
-            'status'  => 'success',
-            'message' => 'Logged out successfully'
-        ]);
+        return $this->successResponse(null, 'Logged out successfully');
     }
 
-    /**
-     * Get authenticated user
-     *
-     * Returns the currently logged-in user with roles and permissions.
-     *
-     * @group Authentication
-     *
-     * @authenticated
-     *
-     * @response 200 {
-     *   "status": "success",
-     *   "data": {
-     *     "user": {
-     *       "id": 1,
-     *       "name": "John Doe",
-     *       "roles": [],
-     *       "permissions": []
-     *     }
-     *   }
-     * }
-     */
-    public function me(Request $request)
+    protected function token(User $user): array
     {
-        $user = $request->user()->load('roles.permissions');
+        return [
+            'token' => $user->createToken('api')->plainTextToken,
+            'user'  => [
+                'id'    => $user->id,
+                'name'  => $user->name,
+                'email' => $user->email,
+            ],
+        ];
+    }
 
+    protected function successResponse($data, $message = 'Success', $code = 200)
+    {
         return response()->json([
-            'status' => 'success',
-            'data'   => [
-                'user' => $user
-            ]
-        ]);
+            'status'  => true,
+            'message' => $message,
+            'data'    => $data,
+        ], $code);
+    }
+
+    protected function errorResponse($message, $code = 400)
+    {
+        return response()->json([
+            'status'  => false,
+            'message' => $message,
+        ], $code);
     }
 }

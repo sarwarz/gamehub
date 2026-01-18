@@ -1,11 +1,27 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\TaxController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\BlogController;
+use App\Http\Controllers\Api\PageController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\OrderController;
+use App\Http\Controllers\Api\CouponController;
+use App\Http\Controllers\Api\SellerController;
+use App\Http\Controllers\Api\SliderController;
+use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\TaxonomyController;
+use App\Http\Controllers\Api\BlogCommentController;
+use App\Http\Controllers\Api\TransactionController;
+use App\Http\Controllers\Api\UserProfileController;
+use App\Http\Controllers\Api\BlogCategoryController;
+use App\Http\Controllers\Api\PaymentMethodController;
+use App\Http\Controllers\Api\ProductReviewController;
+use App\Http\Controllers\Api\ProductRequestController;
+use App\Http\Controllers\Api\SellerWithdrawController;
 
 Route::prefix('v1')->group(function () {
 
@@ -21,7 +37,7 @@ Route::prefix('v1')->group(function () {
 
         Route::middleware('auth:sanctum')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
-            Route::get('/me', [AuthController::class, 'me']);
+            Route::get('/me', [UserController::class, 'me']);
         });
 
     });
@@ -79,6 +95,42 @@ Route::prefix('v1')->group(function () {
         Route::get('/trending', [ProductController::class, 'trending']);
     });
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Requests (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::get('/product-requests', [ProductRequestController::class, 'index']);
+        Route::post('/product-requests', [ProductRequestController::class, 'store']);
+        Route::get('/product-requests/{id}', [ProductRequestController::class, 'show']);
+        Route::put('/product-requests/{id}', [ProductRequestController::class, 'update']);
+        Route::delete('/product-requests/{id}', [ProductRequestController::class, 'destroy']);
+
+    });
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Review APIs
+    |--------------------------------------------------------------------------
+    */
+
+    // Public – view approved reviews
+    Route::get('/products/{product}/reviews', [ProductReviewController::class, 'index']);
+    Route::get('/products/{product}/reviews/summary', [ProductReviewController::class, 'summary']);
+
+    // Authenticated – create/update/delete review
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/products/{product}/reviews', [ProductReviewController::class, 'store']);
+        Route::put('/reviews/{review}', [ProductReviewController::class, 'update']);
+        Route::delete('/reviews/{review}', [ProductReviewController::class, 'destroy']);
+    });
+
     
 
     /*
@@ -95,5 +147,185 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{id}/refund', [OrderController::class, 'refund']);
         Route::post('/orders/{id}/notes', [OrderController::class, 'addNote']);
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transactions (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::get('/transactions', [TransactionController::class, 'index']);
+        Route::get('/transactions/{id}', [TransactionController::class, 'show']);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sellers (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Public / User-facing
+        Route::get('/sellers', [SellerController::class, 'index']);
+        Route::get('/sellers/{id}', [SellerController::class, 'show']);
+
+        // Seller (Owner)
+        Route::post('/seller', [SellerController::class, 'store']);
+        Route::put('/seller/{id}', [SellerController::class, 'update']);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sellers Withdrawals (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Seller withdraws
+        Route::get('/seller/withdraws', [SellerWithdrawController::class, 'index']);
+        Route::post('/seller/withdraws', [SellerWithdrawController::class, 'store']);
+        Route::get('/seller/withdraws/{id}', [SellerWithdrawController::class, 'show']);
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coupons (Authenticated)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Public / User-facing
+        Route::get('/coupons', [CouponController::class, 'index']);
+        Route::get('/coupons/{id}', [CouponController::class, 'show']);
+
+    });
+
+    // Coupon validation (checkout)
+    Route::post('/coupons/validate', [CouponController::class, 'validateCoupon']);
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Taxes
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/taxes', [TaxController::class, 'index']);
+    Route::post('/taxes/calculate', [TaxController::class, 'calculate']);
+    Route::get('/seller/taxes', [TaxController::class, 'sellerTaxes']);
+
+
+    
+    /*
+    |--------------------------------------------------------------------------
+    | Sliders
+    |--------------------------------------------------------------------------
+    */
+
+    // Public (Frontend / Homepage)
+    Route::get('/sliders', [SliderController::class, 'index']);
+    Route::get('/sliders/{id}', [SliderController::class, 'show']);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Pages
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/pages', [PageController::class, 'index']);
+    Route::get('/pages/{page:slug}', [PageController::class, 'show']);
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Blogs
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/blogs', [BlogController::class, 'index']);
+    Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Blog Categories
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/blog-categories', [BlogCategoryController::class, 'index']);
+    Route::get('/blog-categories/{slug}', [BlogCategoryController::class, 'show']);
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Blog Comments
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/blogs/{blog}/comments', [BlogCommentController::class, 'index']);
+    Route::middleware('auth:sanctum')->post('/blogs/{blog}/comments', [BlogCommentController::class, 'store']);
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Wallet & Transactions
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // Wallet
+        Route::get('/wallet', [WalletController::class, 'show']);
+        Route::get('/wallet/transactions', [WalletController::class, 'transactions']);
+
+    });
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payment Methods
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/payment-methods', [PaymentMethodController::class, 'index']);
+    Route::get('/payment-methods/{code}', [PaymentMethodController::class, 'show']);
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Profile
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth:sanctum')->group(function () {
+
+        // User profile
+        Route::get('/profile', [UserProfileController::class, 'show']);
+        Route::post('/profile', [UserProfileController::class, 'storeOrUpdate']);
+
+    });
+
+
+
+
+
+
+
+
+
+
+
+    
 
 });

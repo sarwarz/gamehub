@@ -1,5 +1,7 @@
 name: Authentication
-description: ''
+description: |-
+
+  APIs for user authentication using Laravel Sanctum.
 endpoints:
   -
     custom: []
@@ -9,11 +11,13 @@ endpoints:
     metadata:
       custom: []
       groupName: Authentication
-      groupDescription: ''
+      groupDescription: |-
+
+        APIs for user authentication using Laravel Sanctum.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Register a new user'
-      description: 'Creates a new buyer account for the eCommerce platform.'
+      title: 'Register user'
+      description: 'Create a new user account.'
       authenticated: false
       deprecated: false
     headers:
@@ -27,7 +31,7 @@ endpoints:
       name:
         custom: []
         name: name
-        description: 'Full name of the user.'
+        description: 'Full name.'
         required: true
         example: 'John Doe'
         type: string
@@ -38,7 +42,7 @@ endpoints:
       email:
         custom: []
         name: email
-        description: 'Email address (must be unique).'
+        description: 'Email address.'
         required: true
         example: john@example.com
         type: string
@@ -49,30 +53,18 @@ endpoints:
       password:
         custom: []
         name: password
-        description: 'Minimum 8 characters.'
+        description: 'Password (min 8 chars).'
         required: true
-        example: password123
+        example: 'O[2UZ5ij-e/dl4m{o,'
         type: string
         enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password_confirmation:
-        custom: []
-        name: password_confirmation
-        description: 'Must match password.'
-        required: true
-        example: password123
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
       name: 'John Doe'
       email: john@example.com
-      password: password123
-      password_confirmation: password123
+      password: 'O[2UZ5ij-e/dl4m{o,'
     fileParameters: []
     responses:
       -
@@ -80,20 +72,8 @@ endpoints:
         status: 201
         content: |-
           {
-            "status": "success",
-            "message": "Registration successful"
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-            "message": "The email has already been taken.",
-            "errors": {
-              "email": ["The email has already been taken."]
-            }
+           "status": true,
+           "message": "Registration successful"
           }
         headers: []
         description: ''
@@ -110,11 +90,13 @@ endpoints:
     metadata:
       custom: []
       groupName: Authentication
-      groupDescription: ''
+      groupDescription: |-
+
+        APIs for user authentication using Laravel Sanctum.
       subgroup: ''
       subgroupDescription: ''
       title: 'Login user'
-      description: 'Authenticates a user and returns a Sanctum token.'
+      description: 'Authenticate user and return API token.'
       authenticated: false
       deprecated: false
     headers:
@@ -128,7 +110,7 @@ endpoints:
       email:
         custom: []
         name: email
-        description: 'Registered email address.'
+        description: Email.
         required: true
         example: john@example.com
         type: string
@@ -139,17 +121,17 @@ endpoints:
       password:
         custom: []
         name: password
-        description: 'User password.'
+        description: Password.
         required: true
-        example: password123
+        example: 'O[2UZ5ij-e/dl4m{o,'
         type: string
         enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
         nullable: false
         deprecated: false
     cleanBodyParameters:
       email: john@example.com
-      password: password123
+      password: 'O[2UZ5ij-e/dl4m{o,'
     fileParameters: []
     responses:
       -
@@ -157,35 +139,8 @@ endpoints:
         status: 200
         content: |-
           {
-            "status": "success",
-            "data": {
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "email": "john@example.com"
-              },
-              "token": "1|xxxxxxxxxxxxxxxxxxxxxxxx"
-            }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 401
-        content: |-
-          {
-            "status": "error",
-            "message": "Invalid credentials"
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 403
-        content: |-
-          {
-            "status": "error",
-            "message": "Account disabled"
+           "status": true,
+           "token": "..."
           }
         headers: []
         description: ''
@@ -202,11 +157,13 @@ endpoints:
     metadata:
       custom: []
       groupName: Authentication
-      groupDescription: ''
+      groupDescription: |-
+
+        APIs for user authentication using Laravel Sanctum.
       subgroup: ''
       subgroupDescription: ''
       title: 'Logout user'
-      description: 'Revokes the current access token.'
+      description: 'Revoke current access token.'
       authenticated: true
       deprecated: false
     headers:
@@ -219,65 +176,7 @@ endpoints:
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "status": "success",
-            "message": "Logged out successfully"
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth: []
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/auth/me
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: ''
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get authenticated user'
-      description: 'Returns the currently logged-in user with roles and permissions.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "status": "success",
-            "data": {
-              "user": {
-                "id": 1,
-                "name": "John Doe",
-                "roles": [],
-                "permissions": []
-              }
-            }
-          }
-        headers: []
-        description: ''
+    responses: []
     responseFields: []
     auth: []
     controller: null

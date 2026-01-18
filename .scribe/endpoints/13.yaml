@@ -1,0 +1,122 @@
+name: Sliders
+description: |-
+
+  APIs for homepage sliders / banners.
+  Used by frontend to render hero sliders.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/sliders
+    metadata:
+      custom: []
+      groupName: Sliders
+      groupDescription: |-
+
+        APIs for homepage sliders / banners.
+        Used by frontend to render hero sliders.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List active sliders'
+      description: 'Retrieve all active sliders ordered by position.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      position:
+        custom: []
+        name: position
+        description: 'Optional. Filter by position.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      position: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Sliders fetched successfully",
+            "data": []
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/sliders/{id}'
+    metadata:
+      custom: []
+      groupName: Sliders
+      groupDescription: |-
+
+        APIs for homepage sliders / banners.
+        Used by frontend to render hero sliders.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get slider details'
+      description: 'Retrieve a single slider by ID.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'Slider ID.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Slider details fetched",
+            "data": {
+              "title": "Windows 11 Pro"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
