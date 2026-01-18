@@ -24,9 +24,10 @@ endpoints:
       description: |-
         Retrieve active CMS pages.
         Supports header/footer filtering.
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -73,7 +74,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -93,9 +97,10 @@ endpoints:
       subgroupDescription: ''
       title: 'Get page by slug'
       description: 'Retrieve a CMS page using slug.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -144,7 +149,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null

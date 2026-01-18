@@ -449,7 +449,9 @@
 You can switch the language used with the tabs at the top right (or from the nav menu at the top left on mobile).&lt;/aside&gt;</code></pre>
 
         <h1 id="authenticating-requests">Authenticating requests</h1>
-<p>This API is not authenticated.</p>
+<p>To authenticate requests, include an <strong><code>Authorization</code></strong> header with the value <strong><code>"Bearer Bearer {YOUR_API_TOKEN}"</code></strong>.</p>
+<p>All authenticated endpoints are marked with a <code>requires authentication</code> badge in the documentation below.</p>
+<p>Generate your API token from the dashboard → API Tokens section.</p>
 
         <h1 id="authentication">Authentication</h1>
 
@@ -458,6 +460,7 @@ You can switch the language used with the tabs at the top right (or from the nav
                                 <h2 id="authentication-POSTapi-v1-auth-register">Register user</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Create a new user account.</p>
@@ -469,6 +472,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/auth/register" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -485,6 +489,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -532,7 +537,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-POSTapi-v1-auth-register" data-method="POST"
       data-path="api/v1/auth/register"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -562,6 +567,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/auth/register</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-auth-register"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -628,6 +645,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="authentication-POSTapi-v1-auth-login">Login user</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Authenticate user and return API token.</p>
@@ -639,6 +657,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/auth/login" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -654,6 +673,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -700,7 +720,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-POSTapi-v1-auth-login" data-method="POST"
       data-path="api/v1/auth/login"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -730,6 +750,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/auth/login</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-auth-login"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -796,6 +828,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/auth/logout" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -806,6 +839,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -866,6 +900,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/auth/logout</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-auth-logout"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -1161,6 +1207,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="blog-comments-GETapi-v1-blogs--blog_id--comments">List blog comments</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve approved comments for a blog post.</p>
@@ -1172,6 +1219,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/blogs/17/comments" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -1182,6 +1230,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -1223,7 +1272,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-blogs--blog_id--comments" data-method="GET"
       data-path="api/v1/blogs/{blog_id}/comments"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -1253,6 +1302,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/blogs/{blog_id}/comments</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-blogs--blog_id--comments"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -1320,6 +1381,7 @@ Comment will be pending approval.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/blogs/17/comments" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -1334,6 +1396,7 @@ Comment will be pending approval.</p>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -1409,6 +1472,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/blogs/{blog_id}/comments</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-blogs--blog_id--comments"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -1774,6 +1849,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="coupons-GETapi-v1-coupons">List active coupons</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve all active coupons.</p>
@@ -1785,6 +1861,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/coupons?type=percent" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -1801,6 +1878,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -1842,7 +1920,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-coupons" data-method="GET"
       data-path="api/v1/coupons"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -1872,6 +1950,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/coupons</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-coupons"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -1914,6 +2004,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="coupons-GETapi-v1-coupons--id-">Get coupon details</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve a single coupon by ID.</p>
@@ -1925,6 +2016,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/coupons/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -1935,6 +2027,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -1980,7 +2073,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-coupons--id-" data-method="GET"
       data-path="api/v1/coupons/{id}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2010,6 +2103,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/coupons/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-coupons--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -2052,6 +2157,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="coupons-POSTapi-v1-coupons-validate">Validate coupon</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Validate a coupon code against order data.</p>
@@ -2063,6 +2169,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/coupons/validate" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2086,6 +2193,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2143,7 +2251,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-POSTapi-v1-coupons-validate" data-method="POST"
       data-path="api/v1/coupons/validate"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2173,6 +2281,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/coupons/validate</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-coupons-validate"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -2259,6 +2379,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="currencies-GETapi-v1-currencies">List active currencies</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns all active currencies supported by the platform.</p>
@@ -2270,6 +2391,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/currencies" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -2280,6 +2402,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2329,7 +2452,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-currencies" data-method="GET"
       data-path="api/v1/currencies"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2360,6 +2483,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-currencies"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -2388,6 +2523,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="currencies-GETapi-v1-currencies-default">Get default currency</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns the system default currency.</p>
@@ -2399,6 +2535,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/currencies/default" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -2409,6 +2546,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2453,7 +2591,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-currencies-default" data-method="GET"
       data-path="api/v1/currencies/default"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2484,6 +2622,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-currencies-default"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -2512,6 +2662,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="currencies-GETapi-v1-currencies-convert">Convert currency</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Converts an amount from the default currency to a target currency.</p>
@@ -2523,6 +2674,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/currencies/convert?amount=100&amp;to=EUR" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -2545,6 +2697,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2608,7 +2761,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-currencies-convert" data-method="GET"
       data-path="api/v1/currencies/convert"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2638,6 +2791,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/currencies/convert</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-currencies-convert"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -2717,6 +2882,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="currencies-GETapi-v1-currencies--code-">Get currency by code</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Fetch a single active currency by its ISO code.</p>
@@ -2728,6 +2894,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/currencies/USD" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -2738,6 +2905,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2792,7 +2960,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-currencies--code-" data-method="GET"
       data-path="api/v1/currencies/{code}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -2822,6 +2990,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/currencies/{code}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-currencies--code-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -2880,6 +3060,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/orders?page=1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -2896,6 +3077,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -2970,6 +3152,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-orders"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -3023,6 +3217,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/orders/101" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -3033,6 +3228,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -3107,6 +3303,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-orders--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -3160,6 +3368,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/orders" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3181,6 +3390,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -3263,6 +3473,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/orders</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-orders"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -3449,6 +3671,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
     "http://127.0.0.1:8000/api/v1/orders/101/status" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3463,6 +3686,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -3539,6 +3763,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-orders--id--status"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -3605,6 +3841,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
     "http://127.0.0.1:8000/api/v1/orders/101/pay" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3620,6 +3857,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -3696,6 +3934,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/orders/{id}/pay</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-orders--id--pay"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -3775,6 +4025,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/orders/101/refund" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3790,6 +4041,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -3866,6 +4118,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/orders/{id}/refund</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-orders--id--refund"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -3945,6 +4209,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/orders/101/notes" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -3960,6 +4225,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -4036,6 +4302,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/orders/{id}/notes</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-orders--id--notes"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -4118,6 +4396,7 @@ Privacy Policy, Terms &amp; Conditions, etc.</p>
                                 <h2 id="pages-GETapi-v1-pages">List pages</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve active CMS pages.
@@ -4130,6 +4409,7 @@ Supports header/footer filtering.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/pages?header=1&amp;footer=1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -4147,6 +4427,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -4188,7 +4469,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-pages" data-method="GET"
       data-path="api/v1/pages"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -4218,6 +4499,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/pages</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-pages"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -4292,6 +4585,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="pages-GETapi-v1-pages--page_slug-">Get page by slug</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve a CMS page using slug.</p>
@@ -4303,6 +4597,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/pages/consequatur" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -4313,6 +4608,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -4356,7 +4652,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-pages--page_slug-" data-method="GET"
       data-path="api/v1/pages/{page_slug}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -4386,6 +4682,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/pages/{page_slug}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-pages--page_slug-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -6252,6 +6560,7 @@ You can optionally filter by status.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/product-requests?status=pending" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -6268,6 +6577,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -6343,6 +6653,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-product-requests"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -6396,6 +6718,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/product-requests" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -6418,6 +6741,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -6505,6 +6829,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/product-requests</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-product-requests"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -6655,6 +6991,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/product-requests/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -6665,6 +7002,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -6740,6 +7078,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-product-requests--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -6793,6 +7143,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
     "http://127.0.0.1:8000/api/v1/product-requests/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -6810,6 +7161,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -6888,6 +7240,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/product-requests/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-product-requests--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -6991,6 +7355,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
     "http://127.0.0.1:8000/api/v1/product-requests/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -7001,6 +7366,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7072,6 +7438,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-product-requests--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -7117,6 +7495,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="product-reviews-GETapi-v1-products--product_id--reviews">List product reviews</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve all approved reviews for a specific product.</p>
@@ -7128,6 +7507,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/1/reviews?page=1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -7144,6 +7524,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7195,7 +7576,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products--product_id--reviews" data-method="GET"
       data-path="api/v1/products/{product_id}/reviews"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -7225,6 +7606,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/{product_id}/reviews</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products--product_id--reviews"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -7292,6 +7685,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="product-reviews-GETapi-v1-products--product_id--reviews-summary">Product review summary</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve average rating and total number of approved reviews for a product.</p>
@@ -7303,6 +7697,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/1/reviews/summary" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -7313,6 +7708,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7353,7 +7749,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products--product_id--reviews-summary" data-method="GET"
       data-path="api/v1/products/{product_id}/reviews/summary"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -7383,6 +7779,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/{product_id}/reviews/summary</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products--product_id--reviews-summary"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -7450,6 +7858,7 @@ The review will be stored with <code>pending</code> status until moderation.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/products/1/reviews" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -7466,6 +7875,7 @@ The review will be stored with <code>pending</code> status until moderation.</p>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7542,6 +7952,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/{product_id}/reviews</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-products--product_id--reviews"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -7646,6 +8068,7 @@ The review will be set back to <code>pending</code> for re-approval.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
     "http://127.0.0.1:8000/api/v1/reviews/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -7662,6 +8085,7 @@ The review will be set back to <code>pending</code> for re-approval.</p>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7738,6 +8162,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/reviews/{review_id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-reviews--review_id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -7841,6 +8277,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request DELETE \
     "http://127.0.0.1:8000/api/v1/reviews/1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -7851,6 +8288,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -7921,6 +8359,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-reviews--review_id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -7978,6 +8428,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="products-GETapi-v1-products-search">Live product search</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Lightweight endpoint for live search and autocomplete.
@@ -7996,6 +8447,7 @@ Returns minimal product data sorted by lowest available price.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/search?q=Windows" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -8016,6 +8468,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8083,7 +8536,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products-search" data-method="GET"
       data-path="api/v1/products/search"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -8113,6 +8566,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/search</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products-search"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -8168,6 +8633,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="products-GETapi-v1-products">List products</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns paginated products with filters and lowest price.</p>
@@ -8179,6 +8645,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products?search=Windows&amp;category_id=1&amp;platform_id=2&amp;type_id=3&amp;region_id=4&amp;language_id=5&amp;works_on_id=1&amp;per_page=12&amp;page=1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -8203,6 +8670,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8255,7 +8723,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products" data-method="GET"
       data-path="api/v1/products"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -8285,6 +8753,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -8423,6 +8903,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="products-GETapi-v1-products--id-">Get product details</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns full product details including offers and multi-currency prices.</p>
@@ -8434,6 +8915,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/25" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -8444,6 +8926,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8493,7 +8976,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products--id-" data-method="GET"
       data-path="api/v1/products/{id}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -8523,6 +9006,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -8565,6 +9060,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="products-GETapi-v1-products--id--related">Get related products</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns products related to the given product based on shared
@@ -8578,6 +9074,7 @@ categories, platforms, or types.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/25/related?limit=6" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -8594,6 +9091,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8652,7 +9150,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products--id--related" data-method="GET"
       data-path="api/v1/products/{id}/related"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -8682,6 +9180,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/{id}/related</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products--id--related"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -8737,6 +9247,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="products-GETapi-v1-products-trending">Get trending products</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Returns trending or popular products based on featured flag,
@@ -8750,6 +9261,7 @@ promotion, or sorting priority.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/products/trending?limit=10" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -8766,6 +9278,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8815,7 +9328,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-products-trending" data-method="GET"
       data-path="api/v1/products/trending"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -8845,6 +9358,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/products/trending</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-products-trending"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -8903,6 +9428,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/seller/withdraws?status=pending" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -8919,6 +9445,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -8994,6 +9521,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-seller-withdraws"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -9047,6 +9586,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/seller/withdraws" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -9063,6 +9603,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9144,6 +9685,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-seller-withdraws"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -9221,6 +9774,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/seller/withdraws/12" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -9231,6 +9785,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9307,6 +9862,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-seller-withdraws--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -9352,6 +9919,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                                 <h2 id="sellers-GETapi-v1-sellers">List sellers</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve active sellers with optional filters.</p>
@@ -9363,6 +9931,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/sellers?verified=1&amp;country=US" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -9380,6 +9949,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9424,7 +9994,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-sellers" data-method="GET"
       data-path="api/v1/sellers"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -9454,6 +10024,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/sellers</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-sellers"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -9518,6 +10100,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="sellers-GETapi-v1-sellers--id-">Get seller details</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve public seller profile details.</p>
@@ -9529,6 +10112,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/sellers/5" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -9539,6 +10123,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9583,7 +10168,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-sellers--id-" data-method="GET"
       data-path="api/v1/sellers/{id}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -9613,6 +10198,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/sellers/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-sellers--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -9667,6 +10264,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/seller" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -9686,6 +10284,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9766,6 +10365,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/seller</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-seller"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -9880,6 +10491,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request PUT \
     "http://127.0.0.1:8000/api/v1/seller/5" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -9898,6 +10510,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -9977,6 +10590,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/seller/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-seller--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -10085,6 +10710,7 @@ Used by frontend to render hero sliders.</p>
                                 <h2 id="sliders-GETapi-v1-sliders">List active sliders</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve all active sliders ordered by position.</p>
@@ -10096,6 +10722,7 @@ Used by frontend to render hero sliders.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/sliders?position=1" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -10112,6 +10739,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10153,7 +10781,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-sliders" data-method="GET"
       data-path="api/v1/sliders"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -10183,6 +10811,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/sliders</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-sliders"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -10225,6 +10865,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                     <h2 id="sliders-GETapi-v1-sliders--id-">Get slider details</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve a single slider by ID.</p>
@@ -10236,6 +10877,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/sliders/3" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -10246,6 +10888,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10289,7 +10932,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-sliders--id-" data-method="GET"
       data-path="api/v1/sliders/{id}"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -10319,6 +10962,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/sliders/{id}</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-sliders--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -10366,6 +11021,7 @@ for checkout and seller-specific configurations.</p>
                                 <h2 id="taxes-GETapi-v1-taxes">List applicable taxes</h2>
 
 <p>
+<small class="badge badge-darkred">requires authentication</small>
 </p>
 
 <p>Retrieve active taxes based on location and seller.</p>
@@ -10377,6 +11033,7 @@ for checkout and seller-specific configurations.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/taxes?seller_id=5&amp;country=US&amp;state=CA&amp;city=Los+Angeles" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -10396,6 +11053,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10437,7 +11095,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 </span>
 <form id="form-GETapi-v1-taxes" data-method="GET"
       data-path="api/v1/taxes"
-      data-authed="0"
+      data-authed="1"
       data-hasfiles="0"
       data-isarraybody="0"
       autocomplete="off"
@@ -10467,6 +11125,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/taxes</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-taxes"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -10557,6 +11227,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/taxes/calculate" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -10575,6 +11246,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10657,6 +11329,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/taxes/calculate</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-taxes-calculate"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -10759,6 +11443,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/seller/taxes" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -10769,6 +11454,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10841,6 +11527,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-seller-taxes"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -10887,6 +11585,7 @@ Supports filtering by type, status, category, and date range.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/transactions?type=credit&amp;status=completed&amp;category=order&amp;from=2026-01-01&amp;to=2026-01-31" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -10907,6 +11606,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -10981,6 +11681,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/transactions</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-transactions"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -11083,6 +11795,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/transactions/10" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -11093,6 +11806,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -11170,6 +11884,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-transactions--id-"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -11228,6 +11954,7 @@ roles, permissions, wallet, and seller info.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/auth/me" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -11238,6 +11965,7 @@ roles, permissions, wallet, and seller info.</p>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -11317,6 +12045,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-auth-me"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -11362,6 +12102,7 @@ information and preferences.</p>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/profile" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -11372,6 +12113,7 @@ information and preferences.</p>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -11447,6 +12189,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-profile"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -11487,6 +12241,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request POST \
     "http://127.0.0.1:8000/api/v1/profile" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
@@ -11505,7 +12260,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"country\": \"US\",
     \"company\": \"mqesedyghenqcopwvownk\",
     \"tax_id\": \"bamlnfngefbeilfzsyuxo\",
-    \"newsletter_subscribed\": false,
+    \"newsletter_subscribed\": true,
     \"preferred_currency\": \"USD\",
     \"preferred_language\": \"en\"
 }"
@@ -11518,6 +12273,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -11538,7 +12294,7 @@ let body = {
     "country": "US",
     "company": "mqesedyghenqcopwvownk",
     "tax_id": "bamlnfngefbeilfzsyuxo",
-    "newsletter_subscribed": false,
+    "newsletter_subscribed": true,
     "preferred_currency": "USD",
     "preferred_language": "en"
 };
@@ -11610,6 +12366,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/profile</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-profile"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
@@ -11835,7 +12603,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Example: <code>false</code></p>
+<p>Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>preferred_currency</code></b>&nbsp;&nbsp;
@@ -11882,6 +12650,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/wallet" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -11892,6 +12661,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 );
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -11967,6 +12737,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
                                 <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-wallet"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;
  &nbsp;
@@ -12007,6 +12789,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
     --get "http://127.0.0.1:8000/api/v1/wallet/transactions?type=credit&amp;source=order" \
+    --header "Authorization: Bearer Bearer {YOUR_API_TOKEN}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
 
@@ -12024,6 +12807,7 @@ Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
 
 const headers = {
+    "Authorization": "Bearer Bearer {YOUR_API_TOKEN}",
     "Content-Type": "application/json",
     "Accept": "application/json",
 };
@@ -12098,6 +12882,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <b><code>api/v1/wallet/transactions</code></b>
         </p>
                 <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-wallet-transactions"
+               value="Bearer Bearer {YOUR_API_TOKEN}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer Bearer {YOUR_API_TOKEN}</code></p>
+            </div>
                                 <div style="padding-left: 28px; clear: unset;">
                 <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
 &nbsp;

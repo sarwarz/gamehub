@@ -25,6 +25,7 @@ endpoints:
       authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -50,7 +51,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -73,6 +77,7 @@ endpoints:
       authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -250,7 +255,7 @@ endpoints:
         name: newsletter_subscribed
         description: ''
         required: false
-        example: false
+        example: true
         type: boolean
         enumValues: []
         exampleWasSpecified: false
@@ -294,7 +299,7 @@ endpoints:
       country: US
       company: mqesedyghenqcopwvownk
       tax_id: bamlnfngefbeilfzsyuxo
-      newsletter_subscribed: false
+      newsletter_subscribed: true
       preferred_currency: USD
       preferred_language: en
     fileParameters: []
@@ -310,7 +315,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null

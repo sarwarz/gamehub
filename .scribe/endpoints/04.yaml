@@ -21,9 +21,10 @@ endpoints:
         - Full-text search on product title and SKU
         - Cached for performance
         - Limited result set for fast responses
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -91,7 +92,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -108,9 +112,10 @@ endpoints:
       subgroupDescription: ''
       title: 'List products'
       description: 'Returns paginated products with filters and lowest price.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -252,7 +257,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -269,9 +277,10 @@ endpoints:
       subgroupDescription: ''
       title: 'Get product details'
       description: 'Returns full product details including offers and multi-currency prices.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -314,7 +323,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -335,9 +347,10 @@ endpoints:
         categories, platforms, or types.
 
         Used for "You may also like" or "Similar products" sections.
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -401,7 +414,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -422,9 +438,10 @@ endpoints:
         promotion, or sorting priority.
 
         Used for homepage sections like "Trending now".
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -467,7 +484,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null

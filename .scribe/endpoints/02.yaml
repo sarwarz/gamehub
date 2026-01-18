@@ -14,9 +14,10 @@ endpoints:
       subgroupDescription: ''
       title: 'List active currencies'
       description: 'Returns all active currencies supported by the platform.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -47,7 +48,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -64,9 +68,10 @@ endpoints:
       subgroupDescription: ''
       title: 'Get default currency'
       description: 'Returns the system default currency.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -92,7 +97,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -109,9 +117,10 @@ endpoints:
       subgroupDescription: ''
       title: 'Convert currency'
       description: 'Converts an amount from the default currency to a target currency.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -198,7 +207,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
@@ -215,9 +227,10 @@ endpoints:
       subgroupDescription: ''
       title: 'Get currency by code'
       description: 'Fetch a single active currency by its ISO code.'
-      authenticated: false
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -265,7 +278,10 @@ endpoints:
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
     controller: null
     method: null
     route: null
