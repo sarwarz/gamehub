@@ -83,7 +83,6 @@ class SellerSeeder extends Seeder
                     'name'        => $sellerData['name'],
                     'username'    => $sellerData['username'],
                     'password'    => bcrypt('password'),
-                    'is_seller'   => true,
                     'is_verified' => true,
                     'is_active'   => true,
                 ]

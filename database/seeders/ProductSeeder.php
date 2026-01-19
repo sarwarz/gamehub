@@ -17,6 +17,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Open-world action-adventure game by Rockstar Games.',
                 'developer_id' => 1, // Rockstar Games
                 'publisher_id' => 1,
+                'label_id'     => 1, // New
                 'cover_image'  => 'uploads/products/cover/gta5.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -28,6 +29,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Epic western open-world adventure.',
                 'developer_id' => 1,
                 'publisher_id' => 1,
+                'label_id'     => 2, // Hot
                 'cover_image'  => 'uploads/products/cover/rdr2.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -39,6 +41,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Futuristic open-world RPG from CD Projekt Red.',
                 'developer_id' => 2,
                 'publisher_id' => 2,
+                'label_id'     => 1, // New
                 'cover_image'  => 'uploads/products/cover/cyberpunk2077.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -50,6 +53,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Action RPG created by FromSoftware.',
                 'developer_id' => 3,
                 'publisher_id' => 3,
+                'label_id'     => 3, // Sale
                 'cover_image'  => 'uploads/products/cover/eldenring.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -61,6 +65,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Fast-paced FPS action from Activision.',
                 'developer_id' => 4,
                 'publisher_id' => 4,
+                'label_id'     => 1, // New
                 'cover_image'  => 'uploads/products/cover/cod-mw3.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -72,6 +77,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Realistic football simulation game.',
                 'developer_id' => 1,
                 'publisher_id' => 2,
+                'label_id'     => 1, // New
                 'cover_image'  => 'uploads/products/cover/fc24.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -83,6 +89,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Sandbox survival and creativity game.',
                 'developer_id' => 2,
                 'publisher_id' => 5,
+                'label_id'     => 2, // Hot
                 'cover_image'  => 'uploads/products/cover/minecraft.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -94,6 +101,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Viking-era action RPG.',
                 'developer_id' => 3,
                 'publisher_id' => 1,
+                'label_id'     => 3, // Sale
                 'cover_image'  => 'uploads/products/cover/ac-valhalla.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -105,6 +113,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Open-world racing game set in Mexico.',
                 'developer_id' => 1,
                 'publisher_id' => 2,
+                'label_id'     => 1, // New
                 'cover_image'  => 'uploads/products/cover/forza5.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',
@@ -116,6 +125,7 @@ class ProductSeeder extends Seeder
                 'description'  => 'Story-rich open-world RPG.',
                 'developer_id' => 1,
                 'publisher_id' => 2,
+                'label_id'     => 2, // Hot
                 'cover_image'  => 'uploads/products/cover/witcher3.jpg',
                 'delivery_type'=> 'instant',
                 'status'       => 'active',

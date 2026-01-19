@@ -6,7 +6,9 @@ use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\SellerOffer;
 use Illuminate\Support\Str;
+use App\Models\ProductLabel;
 use Illuminate\Http\Request;
+use App\Models\ProductLabels;
 use App\Models\ProductRegion;
 use App\Models\ProductWorksOn;
 use App\Models\ProductCategory;
@@ -55,6 +57,7 @@ class ProductController extends Controller
             'workson'    => ProductWorksOn::all(),
             'developers' => ProductDeveloper::all(),
             'publishers' => ProductPublisher::all(),
+            'labels'     => ProductLabel::all(),
         ]);
     }
 
@@ -86,13 +89,14 @@ class ProductController extends Controller
 
             'developer_id'=> 'nullable|exists:product_developers,id',
             'publisher_id'=> 'nullable|exists:product_publishers,id',
+            'label_id'    => 'nullable|exists:product_labels,id',
 
             // Media
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'gallery.*'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
 
             'delivery_type' => 'required|in:instant,manual,email,link',
-            'status'        => 'required|in:draft,active,inactive,archived',
+            'status'        => 'required|in:active,inactive',
             'is_featured'   => 'boolean',
             'sort_order'    => 'integer',
 
@@ -200,6 +204,7 @@ class ProductController extends Controller
             'workson'    => ProductWorksOn::all(),
             'developers' => ProductDeveloper::all(),
             'publishers' => ProductPublisher::all(),
+            'labels'     => ProductLabel::all( ),
         ]);
     }
 
@@ -236,6 +241,7 @@ class ProductController extends Controller
             // Single relations
             'developer_id' => 'nullable|exists:product_developers,id',
             'publisher_id' => 'nullable|exists:product_publishers,id',
+            'label_id'     => 'nullable|exists:product_labels,id',
 
             // Media
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
@@ -246,7 +252,7 @@ class ProductController extends Controller
             'system_requirements' => 'nullable|array',
 
             'delivery_type' => 'required|in:instant,manual,email,link',
-            'status'        => 'required|in:draft,active,inactive,archived',
+            'status'        => 'required|in:active,inactive',
             'is_featured'   => 'boolean',
             'sort_order'    => 'integer',
 

@@ -25,9 +25,7 @@ class UserSeeder extends Seeder
                 'username'       => 'superadmin',
                 'password'       => Hash::make('Freky@9622'),
                 'is_active'      => true,
-                'is_seller'      => false,
                 'is_verified'    => true,
-                'is_super_admin' => true,
             ]
         );
         $superAdmin->roles()->sync([$superAdminRole->id]);
@@ -40,9 +38,7 @@ class UserSeeder extends Seeder
                 'username'       => 'admin',
                 'password'       => Hash::make('Freky@9622'),
                 'is_active'      => true,
-                'is_seller'      => false,
                 'is_verified'    => true,
-                'is_super_admin' => true,
             ]
         );
         $admin->roles()->sync([$adminRole->id]);
@@ -55,9 +51,7 @@ class UserSeeder extends Seeder
                 'username'       => 'seller01',
                 'password'       => Hash::make('password'),
                 'is_active'      => true,
-                'is_seller'      => true,
                 'is_verified'    => true,
-                'is_super_admin' => false,
             ]
         );
         $seller->roles()->sync([$sellerRole->id]);
@@ -70,9 +64,7 @@ class UserSeeder extends Seeder
                 'username'       => 'buyer01',
                 'password'       => Hash::make('password'),
                 'is_active'      => true,
-                'is_seller'      => false,
                 'is_verified'    => false,
-                'is_super_admin' => false,
             ]
         );
         $customer->roles()->sync([$customerRole->id]);

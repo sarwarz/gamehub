@@ -21,6 +21,7 @@ use App\Http\Controllers\SellerOfferController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\BlogCategoryController;
 use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\ProductLabelsController;
 use App\Http\Controllers\ProductRegionController;
 use App\Http\Controllers\ProductReviewController;
 use App\Http\Controllers\ProductRequestController;
@@ -286,6 +287,28 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Bulk delete multiple product publishers
         Route::delete('publishers/bulk-delete', [ProductPublisherController::class, 'bulkDelete'])
             ->name('publishers.bulk-delete');
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Product Labels Management Routes
+    |--------------------------------------------------------------------------
+    | These routes manage product labels including
+    | CRUD operations and bulk delete actions.
+    | All routes are protected by the `labels` permission.
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('permission:labels')->group(function () {
+
+        // Product Label CRUD (index, create, store, edit, update, destroy)
+        Route::resource('labels', ProductLabelsController::class);
+
+        // Bulk delete multiple product labels  
+        Route::delete('labels/bulk-delete', [ProductLabelsController::class, 'bulkDelete'])
+            ->name('labels.bulk-delete');
 
     });
 

@@ -492,6 +492,23 @@
                     </div>
                 </div>
 
+                <!-- Label Card -->
+                <div class="card mb-6">
+                    <div class="card-header"><h5 class="card-title mb-0">Product Label</h5></div>
+                    <div class="card-body">
+                        <select name="label_id" class="form-select select2 @error('label_id') is-invalid @enderror">
+                            <option value="">-- Select Label --</option>
+                            @foreach($labels as $label)
+                                <option value="{{ $label->id }}"
+                                    {{ (old('label_id', $product->label_id ?? '') == $label->id) ? 'selected' : '' }}>
+                                    {{ $label->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('label_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
+
                 <!-- Delivery Type Card -->
                 <div class="card mb-6">
                     <div class="card-header"><h5 class="card-title mb-0">Delivery Type</h5></div>

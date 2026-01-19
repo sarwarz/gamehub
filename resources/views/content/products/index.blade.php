@@ -10,14 +10,92 @@
 
     @include('partials.alerts')
 
+    <div class="card mb-3 p-4 collapse" id="filter-collapse">
+        <div>
+            <div class="card-bodys">
+
+                <form id="filterForm">
+                    <div id="filterRows">
+                        <!-- Filter row -->
+                        <div class="row g-2 align-items-center filter-row mb-2">
+                            <div class="col-md-6">
+                                <select name="field[]" class="form-select">
+                                    <option value="">Select field</option>
+                                    <option value="title">Title</option>
+                                    <option value="sku">SKU</option>
+                                    <option value="status">Status</option>
+                                    <option value="delivery_type">Delivery Type</option>
+                                    <option value="is_featured">Featured</option>
+
+                                    <option value="category_id">Category</option>
+                                    <option value="platform_id">Platform</option>
+                                    <option value="type_id">Type</option>
+                                    <option value="region_id">Region</option>
+                                    <option value="language_id">Language</option>
+
+                                    <option value="developer_id">Developer</option>
+                                    <option value="publisher_id">Publisher</option>
+                                </select>
+
+                            </div>
+
+                            <div class="col-md-6">
+                                <select class="form-select" name="operator[]">
+                                    <option value="=">Is equal to</option>
+                                    <option value="!=">Is not equal to</option>
+                                    <option value="like">Contains</option>
+                                    <option value=">">Greater than</option>
+                                    <option value="<">Less than</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-12">
+                                <input type="text" class="form-control" name="value[]" placeholder="Value">
+                            </div>
+
+                            <div class="col-md-1 text-start">
+                                <button type="button" class="btn btn-outline-danger remove-row d-none">
+                                    <i class="menu-icon icon-base ti tabler-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button type="button" class="btn btn-outline-secondary" id="addFilter">
+                            Add additional filter
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            Apply
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+
     <!-- Products List Table -->
     <div class="card p-2">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Products</h5>
             <div>
-                <button class="btn btn-danger" id="bulk-delete" data-url="{{ route('products.bulk-delete') }}">
-                    <i class="menu-icon icon-base ti tabler-trash"></i> Delete Selected
-                </button>
+               <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle waves-effect" data-bs-toggle="dropdown" aria-expanded="false">
+                    Bulk Actions
+                    </button>
+                    <ul class="dropdown-menu" style="">
+                        <li><a class="dropdown-item waves-effect" href="javascript:void(0);">Bulk Changes</a></li>
+                        <li><a class="dropdown-item waves-effect" id="bulk-delete" href="javascript:void(0);" data-url="{{ route('products.bulk-delete') }}">Delete</a></li>
+                    </ul>
+                </div>
+                <button type="button" class="btn btn-outline-secondary waves-effect" 
+                          data-bs-toggle="collapse"
+                          data-bs-target="#filter-collapse"
+                          aria-expanded="true"
+                          aria-controls="filter-collapse">Filters</button>
+            </div>
+            <div>
                 <a class="btn btn-primary" href="{{ route('products.create') }}">
                     <i class="menu-icon icon-base ti tabler-plus"></i> Add Product
                 </a>
@@ -61,4 +139,41 @@ let table = $('#products-table').DataTable({
 });
 
 </script>
+<script>
+$(document).ready(function () {
+
+    // Add new filter row
+    $('#addFilter').on('click', function () {
+        let $row = $('.filter-row:first').clone();
+
+        $row.find('select, input').val('');
+        $row.find('.remove-row').removeClass('d-none');
+
+        $('#filterRows').append($row);
+    });
+
+    // Remove filter row (delegated)
+    $(document).on('click', '.remove-row', function () {
+        $(this).closest('.filter-row').remove();
+    });
+
+    // Optional: handle submit
+    $('#filterForm').on('submit', function (e) {
+        e.preventDefault();
+
+        let data = $(this).serializeArray();
+        console.log(data);
+
+        // Example AJAX (Laravel)
+        /*
+        $.get("{{ route('orders.index') }}", data, function (response) {
+            $('#tableData').html(response);
+        });
+        */
+    });
+
+});
+</script>
+
+
 @endpush

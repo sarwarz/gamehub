@@ -50,7 +50,6 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'is_active'         => 'boolean',
-            'is_seller'         => 'boolean',
             'is_verified'       => 'boolean',
         ];
     }
@@ -63,7 +62,7 @@ class User extends Authenticatable
 
     public function isSuperAdmin(): bool
     {
-        return $this->is_super_admin === true;
+        return $this->roles()->where('name', 'superadmin')->exists();
     }
 
 
@@ -103,7 +102,7 @@ class User extends Authenticatable
    public function hasPermission(string $permission): bool
     {
         // Super Admin bypass
-        if ($this->is_super_admin) {
+        if ($this->roles()->where('name', 'superadmin')->exists()) {
             return true;
         }
 

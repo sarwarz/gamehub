@@ -55,7 +55,7 @@
     )
     <li class="menu-item {{ menuItemActive([
         'categories.*','platforms.*','types.*',
-        'regions.*','languages.*','workson.*','developers.*','publishers.*'
+        'regions.*','languages.*','workson.*','developers.*','publishers.*, labels.*'
     ], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -123,6 +123,14 @@
             <li class="menu-item {{ menuItemActive(['publishers.*']) }}">
                 <a href="{{ route('publishers.index') }}" class="menu-link">
                     <div data-i18n="Publishers">Publishers</div>
+                </a>
+            </li>
+            @endif
+
+            @if(auth()->user()->hasPermission('labels') && Route::has('labels.index'))
+            <li class="menu-item {{ menuItemActive(['labels.*']) }}">
+                <a href="{{ route('labels.index') }}" class="menu-link">
+                    <div data-i18n="Labels">Labels</div>
                 </a>
             </li>
             @endif

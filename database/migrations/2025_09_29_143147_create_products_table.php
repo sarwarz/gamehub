@@ -37,8 +37,8 @@ return new class extends Migration
                 ->comment('instant / manual / email / link');
 
             // Visibility
-            $table->enum('status', ['draft','active','inactive','archived'])
-                ->default('draft');
+            $table->enum('status', ['active','inactive'])
+                ->default('active');
 
             $table->boolean('is_featured')->default(false);
             $table->integer('sort_order')->default(0);

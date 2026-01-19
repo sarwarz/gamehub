@@ -21,8 +21,7 @@
             </div>
             <div class="d-flex align-content-center flex-wrap gap-4">
                 <div class="d-flex gap-4">
-                    <a href="{{ route('products.index') }}" class="btn btn-label-secondary">Discard</a>
-                    <button type="submit" name="status" value="draft" class="btn btn-label-primary">Save draft</button>
+                    <a href="{{ route('products.index') }}" class="btn btn-label-secondary">Back</a>
                 </div>
                 <button type="submit" name="status" value="active" class="btn btn-primary">Publish product</button>
             </div>
@@ -30,7 +29,7 @@
 
         <div class="row">
             <!-- Left Column -->
-            <div class="col-12 col-lg-8">
+            <div class="col-12 col-lg-9">
                 <!-- Product Information -->
                 <div class="card mb-6">
                     <div class="card-header">
@@ -288,7 +287,7 @@
             </div>
 
             <!-- Right Column -->
-            <div class="col-12 col-lg-4">
+            <div class="col-12 col-lg-3">
 
                 <!-- Category Card -->
                 <div class="card mb-6">
@@ -434,6 +433,23 @@
                         @error('publisher_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
                     </div>
                 </div>
+                <!-- Label Card --> 
+                <div class="card mb-6">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Product Label</h5>
+                    </div>
+                    <div class="card-body">
+                        <select name="label_id" class="form-select select2 @error('label_id') is-invalid @enderror">
+                            <option value="">-- Select Label --</option>
+                            @foreach($labels as $label)
+                                <option value="{{ $label->id }}" {{ old('label_id') == $label->id ? 'selected' : '' }}>
+                                    {{ $label->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('label_id') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+                </div>
 
                 <!-- Delivery Type Card -->
                 <div class="card mb-6">
@@ -460,10 +476,8 @@
                         <div class="mb-3">
                             <label class="form-label">Status</label>
                             <select name="status" class="form-select select2 @error('status') is-invalid @enderror">
-                                <option value="draft" {{ old('status') == 'draft' ? 'selected' : '' }}>Draft</option>
                                 <option value="active" {{ old('status') == 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status') == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                <option value="archived" {{ old('status') == 'archived' ? 'selected' : '' }}>Archived</option>
                             </select>
                             @error('status') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>

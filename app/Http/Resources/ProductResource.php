@@ -39,6 +39,7 @@ class ProductResource extends JsonResource
                 'works_on'   => $this->worksOn,
                 'developer'  => $this->developer,
                 'publisher'  => $this->publisher,
+                'label'      => $this->label,
             ],
 
             'created_at' => $this->created_at,

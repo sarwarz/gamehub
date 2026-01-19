@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             ProductWorksOnSeeder::class,
             ProductDeveloperSeeder::class,
             ProductPublisherSeeder::class,
+            ProductLabelsSeeder::class,
             ProductSeeder::class,
             ProductReviewSeeder::class,
             PaymentMethodSeeder::class,

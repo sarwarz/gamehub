@@ -20,7 +20,7 @@ class PermissionMiddleware
         }
 
         // 2️⃣ Super Admin bypass
-        if ($user->is_super_admin) {
+        if ($user->roles()->where('name', 'superadmin')->exists()) {
             return $next($request);
         }
 

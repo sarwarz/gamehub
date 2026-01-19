@@ -18,7 +18,7 @@ class RoleMiddleware
     {
         $user = Auth::user();
 
-        if ($user->is_super_admin) {
+        if ($user->roles()->where('name', 'superadmin')->exists()) {
             return $next($request);
         }
 

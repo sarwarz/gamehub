@@ -162,6 +162,7 @@ class ProductController extends Controller
             'worksOn:id,name,slug',
             'developer:id,name,slug',
             'publisher:id,name,slug',
+            'label:id,name,bg_color,text_color',
             'offers.seller:id,store_name,slug,logo,is_verified,rating,total_sales,created_at',
         ])->active()->findOrFail($id);
 

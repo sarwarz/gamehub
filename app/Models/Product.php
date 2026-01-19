@@ -18,6 +18,7 @@ class Product extends Model
         'description',
         'developer_id',
         'publisher_id',
+        'label_id',
         'cover_image',
         'gallery',
         'attributes',
@@ -128,6 +129,12 @@ class Product extends Model
     public function publisher()
     {
         return $this->belongsTo(ProductPublisher::class);
+    }
+
+    // One-to-Many: Product ↔ label
+    public function label()
+    {
+        return $this->belongsTo(ProductLabel::class);
     }
 
     // One-to-Many: Product ↔ Seller Offers
