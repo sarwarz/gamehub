@@ -38,6 +38,8 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])->name('superadmin.login');
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');
