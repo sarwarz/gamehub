@@ -171,44 +171,28 @@ class ProductController extends Controller
             ->map(function ($offer) use ($currencies) {
                 return [
                     'id'     => $offer->id,
-                    'seller' => [
-                        'id'          => $offer->seller->id,
-                        'store_name'  => $offer->seller->store_name,
-                        'slug'        => $offer->seller->slug,
-                        'logo'        => $offer->seller->logo,
-                        'is_verified' => $offer->seller->is_verified,
-                        'rating'      => $offer->seller->rating,
-                        'total_sales' => $offer->seller->total_sales,
-                        'created_at'  => $offer->seller->created_at,
-                    ],
-                    'prices' => $currencies->mapWithKeys(function ($currency) use ($offer) {
-                        return [
-                            $currency->code => [
-                                'symbol' => $currency->symbol,
-                                'price'  => round($offer->retail_price * $currency->rate, 2),
-                            ]
-                        ];
-                    }),
+                    'seller' => $offer->seller,
+                    'prices' => $currencies->mapWithKeys(fn ($currency) => [
+                        $currency->code => [
+                            'symbol' => $currency->symbol,
+                            'price'  => round($offer->retail_price * $currency->rate, 2),
+                        ]
+                    ]),
                     'stock'    => $offer->keys()->where('status', 'available')->count(),
                     'promoted' => $offer->is_promoted,
                 ];
-            })
-            ->values();
+            })->values();
 
         return response()->json([
             'status'  => 'success',
             'message' => 'Product details fetched successfully',
             'data'    => [
-                'id'          => $product->id,
-                'title'       => $product->title,
-                'slug'        => $product->slug,
-                'sku'         => $product->sku,
-                'description' => $product->description,
-                'offers'      => $offers,
-                'currencies'  => $currencies,
+                'product'    => $product,
+                'offers'     => $offers,
             ],
         ]);
     }
+
 
     /**
      * Live product search

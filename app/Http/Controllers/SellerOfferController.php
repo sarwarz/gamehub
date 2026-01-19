@@ -154,40 +154,28 @@ class SellerOfferController extends Controller
      */
     public function destroy($id)
     {
-        $offer = SellerOffer::findOrFail($id);
-        $offer->delete();
-
+        SellerOffer::findOrFail($id)->delete();
         return response()->json(['success' => true]);
     }
 
-    /**
-     * Pending offers (DataTable)
-     */
-    public function pending(Request $request, CurrencyService $currencyService)
+    
+
+
+    public function toggleStatus(Request $request, SellerOffer $offer)
     {
-        if ($request->ajax()) {
-            return $this->offerDataTable(
-                SellerOffer::where('status', 'inactive'),
-                $currencyService
-            );
-        }
+        $request->validate([
+            'status' => 'required|in:active,inactive'
+        ]);
 
-        return view('content.seller_offers.pending');
-    }
+        $offer->update([
+            'status' => $request->status
+        ]);
 
-    /**
-     * Rejected offers (DataTable)
-     */
-    public function rejected(Request $request, CurrencyService $currencyService)
-    {
-        if ($request->ajax()) {
-            return $this->offerDataTable(
-                SellerOffer::where('status', 'suspended'),
-                $currencyService
-            );
-        }
-
-        return view('content.seller_offers.rejected');
+        return response()->json([
+            'success' => true,
+            'message' => 'Offer status updated successfully.',
+            'status'  => $offer->status
+        ]);
     }
 
     private function offerDataTable($query, CurrencyService $currencyService)
@@ -196,16 +184,47 @@ class SellerOfferController extends Controller
         $currencySymbol = $currencyService->symbol();
 
         $query->with([
-            'seller:id,store_name',
+            'seller:id,store_name,email,logo',
             'product:id,title,cover_image'
         ]);
 
         return DataTables::of($query)
+
             ->addColumn('checkbox', fn($o) =>
                 '<input type="checkbox" class="form-check-input bulk-checkbox" value="'.$o->id.'">'
             )
 
-            ->addColumn('seller', fn($o) => e($o->seller->store_name ?? 'N/A'))
+            ->addColumn('seller', function ($o) {
+
+                $seller = $o->seller;
+
+                $avatar = $seller->logo
+                    ? asset($seller->logo)
+                    : 'https://ui-avatars.com/api/?name='.urlencode($seller->store_name).'&background=0D8ABC&color=fff';
+
+                return '
+                    <div class="d-flex align-items-center">
+                        <img src="'.$avatar.'"
+                            class="rounded-circle me-2"
+                            width="36" height="36"
+                            alt="Avatar">
+
+                        <div class="lh-sm">
+                            <div class="fw-semibold">'.e($seller->store_name).'</div>
+                            <small class="text-muted">'.e($seller->email).'</small>
+                        </div>
+                    </div>
+                ';
+            })
+
+
+            ->filterColumn('seller', function ($query, $keyword) {
+                $query->whereHas('seller', function ($q) use ($keyword) {
+                    $q->where('store_name', 'like', "%{$keyword}%")
+                    ->orWhere('email', 'like', "%{$keyword}%");
+                });
+            })
+
 
             ->addColumn('product', function ($o) {
                 return '
@@ -217,16 +236,30 @@ class SellerOfferController extends Controller
                 ';
             })
 
+            ->filterColumn('product', function ($query, $keyword) {
+                $query->whereHas('product', function ($q) use ($keyword) {
+                    $q->where('title', 'like', "%{$keyword}%");
+                });
+            })
+
             ->editColumn('retail_price', fn($o) =>
-                $currencySymbol.' '.number_format($o->retail_price, 2).' '.$currencyCode
+                $this->money($o->retail_price, $currencySymbol, $currencyCode)
             )
+
+            ->editColumn('wholesale_10_99_price', fn($o) =>
+                $this->money($o->wholesale_10_99_price, $currencySymbol, $currencyCode)
+            )
+
+            ->editColumn('wholesale_100_plus_price', fn($o) =>
+                $this->money($o->wholesale_100_plus_price, $currencySymbol, $currencyCode)
+            )
+
 
             ->addColumn('status_badge', function ($o) {
                 $map = [
-                    'active'   => 'success',
-                    'pending'  => 'warning',
+                    'active'    => 'success',
+                    'inactive'  => 'secondary',
                     'suspended' => 'danger',
-                    'inactive' => 'secondary',
                 ];
 
                 return '<span class="badge bg-'.$map[$o->status].'">'
@@ -234,18 +267,33 @@ class SellerOfferController extends Controller
                 '</span>';
             })
 
-            ->addColumn('actions', function ($o) {
-                return '
-                    <a href="'.route('seller-offers.edit', $o->id).'"
-                        class="btn btn-sm btn-primary me-1">Edit</a>
-                    <button data-id="'.$o->id.'"
-                        class="btn btn-sm btn-danger delete-offer">Delete</button>
-                ';
+            ->addColumn('actions', function ($offer) {
+
+
+                return view('partials.action-dropdown', [
+                    'editUrl'          => route('seller-offers.edit', $offer),
+                    'deleteId'         => $offer->id,
+
+                    'showStatusToggle' => true,
+                    'isActive'         => $offer->status === 'active',
+                    'toggleId'         => $offer->id,
+                ])->render();
+
+
             })
 
-            ->rawColumns(['checkbox', 'product', 'status_badge', 'actions'])
+            ->rawColumns(['checkbox', 'seller', 'product', 'status_badge', 'actions'])
             ->make(true);
     }
+
+    private function money($amount, $symbol, $code)
+    {
+        return $amount !== null
+            ? $symbol.' '.number_format($amount, 2).' '.$code
+            : '-';
+    }
+
+
 
 
 }

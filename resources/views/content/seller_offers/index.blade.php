@@ -57,5 +57,102 @@ let table = $('#offers-table').DataTable({
         { data: 'actions', orderable: false, searchable: false }
     ]
 });
+
+$(document).on('click', '.status-toggle-btn', function () {
+
+    const button = $(this);
+    const id = button.data('id');
+    const status = button.data('status');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: `This will mark the offer as ${status}.`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, continue'
+    }).then((result) => {
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: `/dashboard/seller-offers/${id}/toggle-status`,
+            type: 'POST',
+            data: {
+                status: status,
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (res) {
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated',
+                    text: res.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // Reload DataTable
+                $('.dataTable').DataTable().ajax.reload(null, false);
+            },
+            error: function () {
+                Swal.fire(
+                    'Error',
+                    'Failed to update offer status.',
+                    'error'
+                );
+            }
+        });
+    });
+});
+
+window.routes = {
+    sellerOfferDelete: "{{ route('seller-offers.destroy', ':id') }}"
+};
+$(document).on('click', '.delete-btn', function () {
+
+    const id = $(this).data('id');
+
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'This item will be permanently deleted.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        confirmButtonText: 'Yes, delete it',
+        cancelButtonText: 'Cancel'
+    }).then((result) => {
+
+        if (!result.isConfirmed) return;
+
+        $.ajax({
+            url: window.routes.sellerOfferDelete.replace(':id', id),
+            type: 'DELETE',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (res) {
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted',
+                    text: 'Offer deleted successfully.',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+
+                // Reload DataTable without resetting page
+                $('.dataTable').DataTable().ajax.reload(null, false);
+            },
+            error: function () {
+                Swal.fire(
+                    'Error',
+                    'Failed to delete item.',
+                    'error'
+                );
+            }
+        });
+    });
+});
+
+
 </script>
 @endpush
