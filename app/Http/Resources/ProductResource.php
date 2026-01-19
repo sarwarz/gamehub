@@ -15,9 +15,9 @@ class ProductResource extends JsonResource
             'slug'          => $this->slug,
             'sku'           => $this->sku,
             'description'   => $this->description,
-            'cover_image'   => $this->cover_image,
+            'cover_image'   => asset($this->cover_image),
             'gallery'       => $this->gallery,
-            'attributes'    => $this->attributes,
+            'extra_attributes'    => $this->attributes,
             'system_requirements' => $this->system_requirements,
             'delivery_type' => $this->delivery_type,
             'status'        => $this->status,
@@ -30,7 +30,7 @@ class ProductResource extends JsonResource
                 'meta_keywords'    => $this->meta_keywords,
             ],
 
-            'relations' => [
+            'product_attributes' => [
                 'categories' => $this->categories,
                 'platforms'  => $this->platforms,
                 'types'      => $this->types,

@@ -6,9 +6,10 @@ use App\Models\Product;
 use App\Models\Currency;
 use Illuminate\Http\Request;
 use App\Services\CurrencyService;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
+use App\Http\Resources\ProductResource;
 
 class ProductController extends Controller
 {
@@ -187,7 +188,7 @@ class ProductController extends Controller
             'status'  => 'success',
             'message' => 'Product details fetched successfully',
             'data'    => [
-                'product'    => $product,
+                'product'    => new ProductResource($product),
                 'offers'     => $offers,
             ],
         ]);

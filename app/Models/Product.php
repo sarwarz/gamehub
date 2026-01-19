@@ -148,4 +148,23 @@ class Product extends Model
     {
         return $query->where('status', 'active');
     }
+
+    public function getGalleryAttribute($value)
+    {
+        if (!$value) {
+            return [];
+        }
+
+        return collect(json_decode($value, true))
+            ->map(fn ($path) => url($path))
+            ->values()
+            ->toArray();
+    }
+
+    public function getCoverImageAttribute($value)
+    {
+        return $value ? url($value) : null;
+    }
+
+
 }
