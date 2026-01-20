@@ -168,40 +168,39 @@ class CurrencyController extends Controller
     public function updateRates()
     {
         try {
-            $apiKey = config('services.currencyapi.key'); // store in config/services.php
-            $response = Http::get("https://api.currencyapi.com/v3/latest", [
+            $defaultCurrency = Currency::where('is_default', true)->first();
+
+            if (!$defaultCurrency) {
+                return response()->json(['status' => 'error', 'message' => 'No default currency found'], 500);
+            }
+
+            $apiKey = 'cur_live_fYdjC5UCPHaM9jV2VGInUClXCpAAPgHhJ5nNTfnZ'; 
+
+            $response = Http::get('https://api.currencyapi.com/v3/latest', [
                 'apikey' => $apiKey,
-                'base_currency' => 'USD'
+                'base_currency' => $defaultCurrency->code,
             ]);
 
             if ($response->failed()) {
                 return response()->json(['status' => 'error', 'message' => 'Failed to fetch rates'], 500);
             }
 
-            $data = $response->json();
-
-            if (!isset($data['data'])) {
-                return response()->json(['status' => 'error', 'message' => 'Invalid API response'], 500);
-            }
-
-            foreach ($data['data'] as $code => $info) {
+            foreach ($response->json('data') as $code => $info) {
                 Currency::where('code', $code)->update([
                     'rate'       => $info['value'],
                     'fetched_at' => now(),
                 ]);
             }
 
-            // Keep default currency = 1.0
-            $defaultCurrency = Currency::where('is_default', true)->first();
-            if ($defaultCurrency) {
-                $defaultCurrency->update(['rate' => 1.0]);
-            }
+            // Ensure base currency stays 1
+            $defaultCurrency->update(['rate' => 1.0]);
 
             return response()->json(['status' => 'success', 'message' => 'Rates updated successfully']);
         } catch (\Exception $e) {
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
+
 
 
 }

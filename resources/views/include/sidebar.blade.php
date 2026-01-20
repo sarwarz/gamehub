@@ -374,6 +374,7 @@
     @if(
         auth()->user()->hasPermission('coupons') ||
         auth()->user()->hasPermission('taxes') ||
+        auth()->user()->hasPermission('currencies') ||
         auth()->user()->hasPermission('payment-methods')
     )
     <li class="menu-item {{ menuItemActive([
@@ -403,6 +404,14 @@
             <li class="menu-item {{ menuItemActive(['taxes.*']) }}">
                 <a href="{{ route('taxes.index') }}" class="menu-link">
                     <div data-i18n="Taxes">Taxes</div>
+                </a>
+            </li>
+            @endif
+
+            @if(auth()->user()->hasPermission('currencies') && Route::has('currencies.index'))
+            <li class="menu-item {{ menuItemActive(['currencies.index']) }}">
+                <a href="{{ route('currencies.index') }}" class="menu-link">
+                    <div data-i18n="Currencies">Currencies</div>
                 </a>
             </li>
             @endif
@@ -438,13 +447,6 @@
                 </a>
             </li>
 
-            @if(auth()->user()->hasPermission('currencies') && Route::has('currencies.index'))
-            <li class="menu-item {{ menuItemActive(['currencies.index']) }}">
-                <a href="{{ route('currencies.index') }}" class="menu-link">
-                    <div data-i18n="Currencies">Currencies</div>
-                </a>
-            </li>
-            @endif
 
             <li class="menu-item">
                 <a href="#" class="menu-link">
