@@ -33,7 +33,7 @@ class OrderController extends Controller
      * @bodyParam billing object required Billing address details.
      * @bodyParam billing.name string required Customer name. Example: John Doe
      * @bodyParam billing.email string required Email address. Example: john@example.com
-     * @bodyParam billing.phone string required Phone number. Example: +8801712345678
+     * @bodyParam billing.phone string required Phone number. Example: +8801712345679
      * @bodyParam billing.address string required Street address.
      * @bodyParam billing.city string required City name.
      * @bodyParam billing.country string required Country code. Example: BD
