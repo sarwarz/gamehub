@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -43,6 +44,13 @@ class AuthController extends Controller
             'is_active'  => true,
             'is_verified'=> false,
         ]);
+
+        // ✅ Assign default role: customer
+        $customerRole = Role::where('name', 'customer')->first();
+
+        if ($customerRole) {
+            $user->roles()->syncWithoutDetaching([$customerRole->id]);
+        }
 
         return $this->successResponse($this->token($user), 'Registration successful', 201);
     }

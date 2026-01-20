@@ -78,6 +78,7 @@
 
     <!-- Products List Table -->
     <div class="card p-2">
+        
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                <div class="btn-group">
@@ -89,11 +90,7 @@
                         <li><a class="dropdown-item waves-effect" id="bulk-delete" href="javascript:void(0);" data-url="{{ route('products.bulk-delete') }}">Delete</a></li>
                     </ul>
                 </div>
-                <button type="button" class="btn btn-outline-secondary waves-effect" 
-                          data-bs-toggle="collapse"
-                          data-bs-target="#filter-collapse"
-                          aria-expanded="true"
-                          aria-controls="filter-collapse">Filters</button>
+                <button type="button" class="btn btn-outline-secondary waves-effect" data-bs-toggle="collapse" data-bs-target="#filter-collapse" aria-expanded="true" aria-controls="filter-collapse">Filters</button>
             </div>
             <div>
                 <a class="btn btn-primary" href="{{ route('products.create') }}">

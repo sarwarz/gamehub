@@ -240,92 +240,6 @@
     @endcan
 
 
-    <!-- Orders -->
-
-    @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-    <li class="menu-item {{ menuItemActive([
-        'orders.*'
-    ], 'open active') }}">
-
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-sort-ascending-shapes"></i>
-            <div data-i18n="Manage Orders">Manage Orders</div>
-        </a>
-        <ul class="menu-sub">
-            
-            @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
-            <li class="menu-item {{ menuItemActive(['orders.index']) }}">
-                <a href="{{ route('orders.index') }}" class="menu-link">
-                    <div data-i18n="All Orders">All Orders</div>
-                </a>
-            </li>
-            @endif
-
-
-            <li class="menu-item ">
-                <a href="{{ route('orders.index') }}" class="menu-link">
-                    <div data-i18n="Pending Orders">Pending Orders</div>
-                </a>
-            </li>
-
-            <li class="menu-item ">
-                <a href="{{ route('orders.index') }}" class="menu-link">
-                    <div data-i18n="Processing Orders">Processing Orders</div>
-                </a>
-            </li>
-
-
-            <li class="menu-item ">
-                <a href="{{ route('orders.index') }}" class="menu-link">
-                    <div data-i18n="Completed Orders">Completed Orders</div>
-                </a>
-            </li>
-
-
-            <li class="menu-item ">
-                <a href="{{ route('orders.index') }}" class="menu-link">
-                    <div data-i18n="Declined Orders">Declined Orders</div>
-                </a>
-            </li>
-
-        </ul>
-    </li>
-    @endif
-
-    <li class="menu-item {{ menuItemActive(['transactions.*'], 'open active') }}">
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-transaction-dollar"></i>
-            <div data-i18n="Transactions">Transactions</div>
-        </a>
-
-        <ul class="menu-sub">
-            <li class="menu-item {{ menuItemActive(['transactions.index']) }}">
-                <a href="{{ route('transactions.index') }}" class="menu-link">
-                    <div>All Transactions</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ menuItemActive(['transactions.pending']) }}">
-                <a href="{{ route('transactions.pending') }}" class="menu-link">
-                    <div>Pending Transactions</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ menuItemActive(['transactions.failed']) }}">
-                <a href="{{ route('transactions.failed') }}" class="menu-link">
-                    <div>Failed Transactions</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ menuItemActive(['transactions.completed']) }}">
-                <a href="{{ route('transactions.completed') }}" class="menu-link">
-                    <div>Completed Transactions</div>
-                </a>
-            </li>
-        </ul>
-    </li>
-
-
 
     <!-- Sellers -->
     @if(auth()->user()->hasPermission('sellers') && Route::has('sellers.index'))
@@ -372,15 +286,22 @@
 
     <!-- Ecommerce -->
     @if(
+        auth()->user()->hasPermission('orders') ||
+        auth()->user()->hasPermission('transactions') ||
+        auth()->user()->hasPermission('invoices') ||
         auth()->user()->hasPermission('coupons') ||
         auth()->user()->hasPermission('taxes') ||
         auth()->user()->hasPermission('currencies') ||
         auth()->user()->hasPermission('payment-methods')
     )
     <li class="menu-item {{ menuItemActive([
+            'orders.*',
+            'transactions.*',
+            'invoices.*',
             'coupons.*',
             'taxes.*',
-            'payment-methods.*'
+            'currencies.*',
+            'payment-methods.*',
         ], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -389,6 +310,33 @@
         </a>
 
         <ul class="menu-sub">
+
+            {{-- Orders --}}
+            @if(auth()->user()->hasPermission('orders') && Route::has('orders.index'))
+            <li class="menu-item {{ menuItemActive(['orders.*']) }}">
+                <a href="{{ route('orders.index') }}" class="menu-link">
+                    <div data-i18n="Orders">Orders</div>
+                </a>
+            </li>
+            @endif
+
+            {{-- Transactions --}}
+            @if(auth()->user()->hasPermission('transactions') && Route::has('transactions.index'))
+            <li class="menu-item {{ menuItemActive(['transactions.*']) }}">
+                <a href="{{ route('transactions.index') }}" class="menu-link">
+                    <div data-i18n="Transactions">Transactions</div>
+                </a>
+            </li>
+            @endif
+
+            {{-- Invoices --}}
+            @if(auth()->user()->hasPermission('invoices') && Route::has('invoices.index'))
+            <li class="menu-item {{ menuItemActive(['invoices.*']) }}">
+                <a href="{{ route('invoices.index') }}" class="menu-link">
+                    <div data-i18n="Invoices">Invoices</div>
+                </a>
+            </li>
+            @endif
 
             {{-- Coupons --}}
             @if(auth()->user()->hasPermission('coupons') && Route::has('coupons.index'))
@@ -408,8 +356,9 @@
             </li>
             @endif
 
+            {{-- Currencies --}}
             @if(auth()->user()->hasPermission('currencies') && Route::has('currencies.index'))
-            <li class="menu-item {{ menuItemActive(['currencies.index']) }}">
+            <li class="menu-item {{ menuItemActive(['currencies.*']) }}">
                 <a href="{{ route('currencies.index') }}" class="menu-link">
                     <div data-i18n="Currencies">Currencies</div>
                 </a>
@@ -420,7 +369,7 @@
             @if(auth()->user()->hasPermission('payment-methods') && Route::has('payment-methods.index'))
             <li class="menu-item {{ menuItemActive(['payment-methods.*']) }}">
                 <a href="{{ route('payment-methods.index') }}" class="menu-link">
-                    <div data-i18n="Payment Method">Payment Method</div>
+                    <div data-i18n="Payment Methods">Payment Methods</div>
                 </a>
             </li>
             @endif
@@ -431,9 +380,10 @@
 
 
 
+
     <!-- Manage Website -->
-    @if(auth()->user()->hasPermission('currencies') && Route::has('currencies.index'))
-    <li class="menu-item {{ menuItemActive(['currencies.*'], 'open active') }}">
+    @if(auth()->user()->hasPermission('slider'))
+    <li class="menu-item {{ menuItemActive(['slider.*'], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-world"></i>

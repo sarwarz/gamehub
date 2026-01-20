@@ -6,26 +6,22 @@ use Illuminate\Database\Eloquent\Model;
 
 class OrderItem extends Model
 {
-    protected $fillable = ['order_id','seller_id','product_id','seller_offer_id','quantity','unit_price','subtotal','status'];
+    protected $fillable = [
+        'order_id','seller_id','product_id','seller_offer_id',
+        'quantity','unit_price','subtotal',
+        'delivery_type','delivery_status','status'
+    ];
 
-    public function order() {
-        return $this->belongsTo(Order::class);
-    }
+    protected $casts = [
+        'unit_price' => 'decimal:2',
+        'subtotal'   => 'decimal:2',
+    ];
 
-    public function seller() {
-        return $this->belongsTo(Seller::class);
-    }
+    public function order() { return $this->belongsTo(Order::class); }
+    public function seller() { return $this->belongsTo(Seller::class); }
+    public function product() { return $this->belongsTo(Product::class); }
+    public function offer() { return $this->belongsTo(SellerOffer::class); }
 
-    public function product() {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function offer() {
-        return $this->belongsTo(SellerOffer::class, 'seller_offer_id');
-    }
-
-    public function keys() {
-        return $this->hasMany(OrderItemKey::class);
-    }
+    public function deliveries() { return $this->hasMany(OrderDelivery::class); }
+    public function earning() { return $this->hasOne(SellerEarning::class); }
 }
-

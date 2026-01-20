@@ -1,27 +1,25 @@
-name: Pages
+name: Sliders
 description: |-
 
-  CMS APIs for static pages such as About Us,
-  Privacy Policy, Terms & Conditions, etc.
+  APIs for homepage sliders / banners.
+  Used by frontend to render hero sliders.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/pages
+    uri: api/v1/sliders
     metadata:
       custom: []
-      groupName: Pages
+      groupName: Sliders
       groupDescription: |-
 
-        CMS APIs for static pages such as About Us,
-        Privacy Policy, Terms & Conditions, etc.
+        APIs for homepage sliders / banners.
+        Used by frontend to render hero sliders.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List pages'
-      description: |-
-        Retrieve active CMS pages.
-        Supports header/footer filtering.
+      title: 'List active sliders'
+      description: 'Retrieve all active sliders ordered by position.'
       authenticated: true
       deprecated: false
     headers:
@@ -31,31 +29,19 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      header:
+      position:
         custom: []
-        name: header
-        description: 'Optional. Pages shown in header.'
+        name: position
+        description: 'Optional. Filter by position.'
         required: false
-        example: true
-        type: boolean
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      footer:
-        custom: []
-        name: footer
-        description: 'Optional. Pages shown in footer.'
-        required: false
-        example: true
-        type: boolean
+        example: 1
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      header: true
-      footer: true
+      position: 1
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -66,7 +52,7 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Pages fetched successfully",
+            "message": "Sliders fetched successfully",
             "data": []
           }
         headers: []
@@ -83,18 +69,18 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/pages/{page_slug}'
+    uri: 'api/v1/sliders/{id}'
     metadata:
       custom: []
-      groupName: Pages
+      groupName: Sliders
       groupDescription: |-
 
-        CMS APIs for static pages such as About Us,
-        Privacy Policy, Terms & Conditions, etc.
+        APIs for homepage sliders / banners.
+        Used by frontend to render hero sliders.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get page by slug'
-      description: 'Retrieve a CMS page using slug.'
+      title: 'Get slider details'
+      description: 'Retrieve a single slider by ID.'
       authenticated: true
       deprecated: false
     headers:
@@ -102,31 +88,19 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      page_slug:
+      id:
         custom: []
-        name: page_slug
-        description: 'The slug of the page.'
+        name: id
+        description: 'Slider ID.'
         required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
-      page:
-        custom: []
-        name: page
-        description: 'Page slug.'
-        required: true
-        example: privacy-policy
-        type: string
+        example: 3
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      page_slug: consequatur
-      page: privacy-policy
+      id: 3
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -139,9 +113,9 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Page fetched successfully",
+            "message": "Slider details fetched",
             "data": {
-              "title": "Privacy Policy"
+              "title": "Windows 11 Pro"
             }
           }
         headers: []

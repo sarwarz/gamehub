@@ -10,7 +10,9 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SellerController;
 use App\Http\Controllers\SliderController;
+use App\Http\Controllers\SystemController;
 use App\Http\Controllers\WalletController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CurrencyController;
@@ -24,6 +26,7 @@ use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ProductLabelsController;
 use App\Http\Controllers\ProductRegionController;
 use App\Http\Controllers\ProductReviewController;
+use App\Http\Controllers\WalletSettingController;
 use App\Http\Controllers\ProductRequestController;
 use App\Http\Controllers\ProductWorksOnController;
 use App\Http\Controllers\SellerWithdrawController;
@@ -32,7 +35,6 @@ use App\Http\Controllers\ProductLanguageController;
 use App\Http\Controllers\ProductPlatformController;
 use App\Http\Controllers\ProductDeveloperController;
 use App\Http\Controllers\ProductPublisherController;
-use App\Http\Controllers\WalletSettingController;
 
 
 
@@ -49,6 +51,8 @@ use App\Http\Controllers\WalletSettingController;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+Route::get('/system/optimize', [SystemController::class, 'optimize']);
 
 // Super Admin login page (separate from standard user login)
 Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])
@@ -413,6 +417,7 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             Route::delete('{review}', 'destroy')->name('destroy');
 
         });
+    
 
 
 
@@ -420,9 +425,9 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
     |--------------------------------------------------------------------------
     | Transaction Management Routes
     |--------------------------------------------------------------------------
-    | These routes handle viewing and filtering transactions
-    | by status (all, pending, failed, completed).
-    | Access is restricted by the `transactions` permission.
+    | View, filter, and manage transactions.
+    | Includes bulk actions and single record operations.
+    | Access controlled via `transactions` permission.
     |--------------------------------------------------------------------------
     */
 
@@ -431,23 +436,50 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         ->middleware('permission:transactions')
         ->group(function () {
 
-            // View all transactions
+            /* ===============================
+            * Views
+            =============================== */
+
+            // All transactions
             Route::get('/', [TransactionController::class, 'index'])
                 ->name('index');
 
-            // View pending transactions
+            // Pending transactions
             Route::get('pending', [TransactionController::class, 'pending'])
                 ->name('pending');
 
-            // View failed transactions
+            // Failed transactions
             Route::get('failed', [TransactionController::class, 'failed'])
                 ->name('failed');
 
-            // View completed transactions
+            // Completed transactions
             Route::get('completed', [TransactionController::class, 'completed'])
                 ->name('completed');
 
+
+            /* ===============================
+            * Bulk Actions
+            =============================== */
+
+            // Bulk status update (pending → completed / failed / reversed)
+            Route::post('bulk-status', [TransactionController::class, 'bulkStatus'])
+                ->name('bulk-status');
+
+            // Bulk delete (soft delete recommended)
+            Route::post('bulk-delete', [TransactionController::class, 'bulkDelete'])
+                ->name('bulk-delete');
+
+
+            /* ===============================
+            * Single Transaction Actions
+            =============================== */
+
+            // View transaction details
+            Route::get('{transaction}', [TransactionController::class, 'show'])
+                ->name('show');
+
         });
+
 
 
 
@@ -696,6 +728,62 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
     /*
     |--------------------------------------------------------------------------
+    | Invoice Management Routes
+    |--------------------------------------------------------------------------
+    | These routes manage system invoices including:
+    | - Invoice CRUD operations
+    | - Invoice item handling
+    | - Sending invoices
+    | - PDF generation
+    | - Marking invoices as paid
+    | Access is restricted by the `invoices` permission.
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware('permission:invoices')->group(function () {
+
+        // =========================
+        // Invoice CRUD
+        // =========================
+        Route::resource('invoices', InvoiceController::class);
+
+        // =========================
+        // Invoice Actions
+        // =========================
+
+        // Send invoice to customer (email)
+        Route::post('invoices/{invoice}/send', [InvoiceController::class, 'send'])
+            ->name('invoices.send');
+
+        // Mark invoice as paid
+        Route::post('invoices/{invoice}/mark-paid', [InvoiceController::class, 'markPaid'])
+            ->name('invoices.mark-paid');
+
+        // Print invoice (HTML view)
+        Route::get('invoices/{invoice}/print', [InvoiceController::class, 'print'])
+            ->name('invoices.print');
+
+        // Download invoice PDF
+        Route::get('invoices/{invoice}/download', [InvoiceController::class, 'download'])
+            ->name('invoices.download');
+
+        // Generate invoice PDF (preview)
+        Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])
+            ->name('invoices.pdf');
+
+        // =========================
+        // Bulk actions
+        // =========================
+        Route::post('invoices/bulk-delete', [InvoiceController::class, 'bulkDelete'])
+            ->name('invoices.bulk-delete');
+
+    });
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Order Management Routes
     |--------------------------------------------------------------------------
     | These routes manage customer orders including:
@@ -709,6 +797,9 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
         // Order CRUD
         Route::resource('orders', OrderController::class);
+
+        Route::post('orders/bulk-status', [OrderController::class, 'bulkStatus'])
+        ->name('orders.bulk-status');
 
         // Bulk delete orders
         Route::delete('orders/bulk-delete', [OrderController::class, 'bulkDelete'])

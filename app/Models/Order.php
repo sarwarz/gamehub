@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -64,12 +65,20 @@ class Order extends Model
     protected static function booted()
     {
         static::creating(function ($order) {
-            if (empty($order->order_number)) {
-                $order->order_number = 'ORD-' . strtoupper(Str::random(10));
+            if (! $order->order_number) {
+
+                // Lock table to avoid duplicates
+                $lastNumber = DB::table('orders')
+                    ->lockForUpdate()
+                    ->max('order_number');
+
+                $nextNumber = $lastNumber ? ((int) $lastNumber + 1) : 1;
+
+                // Store as string with padding
+                $order->order_number = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
             }
         });
     }
-
     /*
     |--------------------------------------------------------------------------
     | Relationships
@@ -90,6 +99,11 @@ class Order extends Model
     public function items()
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne(Invoice::class);
     }
 
     /**

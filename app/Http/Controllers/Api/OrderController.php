@@ -2,290 +2,291 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
-use App\Models\Currency;
 use App\Models\Order;
-use App\Models\OrderNote;
-use App\Services\OrderService;
-use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use App\Models\OrderItem;
+use App\Models\OrderAddress;
+use App\Models\OrderDelivery;
+use App\Models\SellerOffer;
+use App\Models\SellerEarning;
+use App\Models\Transaction;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreOrderRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 class OrderController extends Controller
 {
-    protected OrderService $orderService;
-
-    public function __construct(OrderService $orderService)
-    {
-        $this->orderService = $orderService;
-    }
-
     /**
-     * List buyer orders
+     * Create Order (Checkout)
      *
-     * Returns paginated orders belonging to the authenticated buyer.
+     * Create a new order for the authenticated user.
+     * This endpoint validates seller offers, creates the order,
+     * billing address, order items, seller earnings, and a payment transaction.
      *
      * @group Orders
      * @authenticated
      *
-     * @queryParam page integer Page number. Example: 1
+     * @bodyParam currency string required Currency code. Example: USD
+     * @bodyParam payment_method string required Payment method. Example: stripe
      *
-     * @response 200 {
-     *   "status": "success",
-     *   "data": {
-     *     "current_page": 1,
-     *     "data": []
-     *   }
-     * }
-     */
-    public function index(Request $request)
-    {
-        
-    }
-
-    /**
-     * Get order details
+     * @bodyParam billing object required Billing address details.
+     * @bodyParam billing.name string required Customer name. Example: John Doe
+     * @bodyParam billing.email string required Email address. Example: john@example.com
+     * @bodyParam billing.phone string required Phone number. Example: +8801712345678
+     * @bodyParam billing.address string required Street address.
+     * @bodyParam billing.city string required City name.
+     * @bodyParam billing.country string required Country code. Example: BD
+     * @bodyParam billing.postcode string required Postal code.
      *
-     * Returns full details of a single order owned by the authenticated user.
-     *
-     * @group Orders
-     * @authenticated
-     *
-     * @urlParam id integer required Order ID. Example: 101
-     *
-     * @response 200 {
-     *   "status": "success",
-     *   "data": {
-     *     "id": 101,
-     *     "status": "pending"
-     *   }
-     * }
-     */
-    public function show(Request $request, $id)
-    {
-        
-    }
-
-    /**
-     * Create a new order
-     *
-     * Creates a new order with products, currency, addresses, and optional note.
-     *
-     * @group Orders
-     * @authenticated
-     *
-     * @bodyParam currency string required Currency code (ISO-3). Example: USD
-     * @bodyParam items array required Order items.
-     * @bodyParam items[].product_id integer required Product ID. Example: 10
-     * @bodyParam items[].offer_id integer Optional Seller offer ID. Example: 5
+     * @bodyParam items array required List of order items.
+     * @bodyParam items[].seller_offer_id integer required Seller offer ID. Example: 15
      * @bodyParam items[].quantity integer required Quantity. Example: 2
      *
-     * @bodyParam addresses array Optional Billing or shipping addresses.
-     * @bodyParam addresses[].type string Example: billing
-     * @bodyParam addresses[].full_name string Example: John Doe
-     * @bodyParam addresses[].address_line1 string Example: 123 Main Street
-     * @bodyParam addresses[].city string Example: New York
-     * @bodyParam addresses[].country string Example: US
-     *
-     * @bodyParam note string Optional Order note.
-     *
      * @response 201 {
-     *   "status": "success",
-     *   "message": "Order created successfully"
+     *  "success": true,
+     *  "message": "Order created successfully.",
+     *  "data": {
+     *      "order_id": 101,
+     *      "order_number": "ORD-20260120-0001",
+     *      "status": "pending",
+     *      "payment_status": "pending"
+     *  }
+     * }
+     *
+     * @response 422 {
+     *  "message": "One or more seller offers are not available."
+     * }
+     *
+     * @response 500 {
+     *  "success": false,
+     *  "message": "Unable to create order. Please try again."
      * }
      */
-
-    public function store(Request $request, OrderService $orderService)
+    public function store(StoreOrderRequest $request): JsonResponse
     {
         try {
-            /**
-             * 1️⃣ Validate request
-             */
-            $validated = $request->validate([
-                'currency' => 'required|string|size:3',
-                'items' => 'required|array|min:1',
-                'items.*.seller_offer_id' => 'required|exists:seller_offers,id',
-                'items.*.quantity' => 'required|integer|min:1',
-            ]);
+            $order = DB::transaction(function () use ($request) {
 
-            /**
-             * 2️⃣ Validate currency
-             */
-            $currency = Currency::where('code', strtoupper($validated['currency']))
-                ->where('is_active', true)
-                ->first();
+                $user  = $request->user();
+                $items = $request->items;
 
-            if (!$currency) {
-                return response()->json([
-                    'status'  => 'error',
-                    'message' => 'Invalid or inactive currency',
-                ], 422);
-            }
+                $subtotal   = 0;
+                $orderItems = [];
 
-            /**
-             * 3️⃣ Create order using service
-             */
-            $order = $orderService->create(
-                $request->user(),
-                $validated['items'],
-                $currency->code
-            );
+                // STEP 1: Validate seller offers & calculate totals
+                foreach ($items as $item) {
 
-            /**
-             * 4️⃣ Save addresses (optional)
-             */
-            if (!empty($validated['addresses'])) {
-                foreach ($validated['addresses'] as $address) {
-                    $order->addresses()->create($address);
+                    $offer = SellerOffer::lockForUpdate()->findOrFail($item['seller_offer_id']);
+
+                    if ($offer->status !== 'active') {
+                        abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'One or more seller offers are not available.');
+                    }
+
+                    $unitPrice = $offer->retail_price;
+                    $lineTotal = bcmul($unitPrice, $item['quantity'], 2);
+
+                    $subtotal = bcadd($subtotal, $lineTotal, 2);
+
+                    $orderItems[] = compact('offer', 'unitPrice', 'lineTotal') + [
+                        'quantity' => $item['quantity'],
+                    ];
                 }
-            }
 
-            /**
-             * 5️⃣ Attach note (optional)
-             */
-            if (!empty($validated['note'])) {
-                $order->update([
-                    'meta' => array_merge($order->meta ?? [], [
-                        'note' => $validated['note']
-                    ])
+                $taxAmount      = 0;
+                $discountAmount = 0;
+
+                $totalAmount = bcadd(
+                    bcadd($subtotal, $taxAmount, 2),
+                    -$discountAmount,
+                    2
+                );
+
+                $customMeta = $request->input('meta', []);
+
+                // STEP 2: Create Order
+               $order = Order::create([
+                    'user_id'          => $user->id,
+                    'currency'         => $request->currency,
+
+                    'subtotal'         => $subtotal,
+                    'tax_amount'       => $taxAmount,
+                    'discount_amount'  => $discountAmount,
+                    'total_amount'     => $totalAmount,
+
+                    'payment_method'   => $request->payment_method,
+                    'payment_reference'=> null, // filled after gateway success
+                    'payment_status'   => 'pending',
+
+                    'status'           => 'pending',
+
+                    'meta' => array_merge( [
+                        'client' => [
+                            'ip'         => $request->ip(),
+                            'user_agent' => $request->userAgent(),
+                            'platform'   => $request->header('X-Platform', 'web'),
+                        ],
+                        'checkout' => [
+                            'source'  => 'api',
+                            'version' => 'v1',
+                        ],
+                        'flags' => [
+                            'guest_checkout' => false,
+                            'auto_delivery'  => true,
+                        ],
+                    ], $customMeta),
+
                 ]);
-            }
 
-            /**
-             * 6️⃣ Success response
-             */
+                // STEP 3: Billing Address
+                OrderAddress::create([
+                    'order_id' => $order->id,
+                    'type'     => 'billing',
+                    ...$request->billing,
+                ]);
+
+                // STEP 4: Order Items, Deliveries & Earnings
+                foreach ($orderItems as $data) {
+
+                    $offer = $data['offer'];
+
+                    $orderItem = OrderItem::create([
+                        'order_id'        => $order->id,
+                        'seller_id'       => $offer->seller_id,
+                        'product_id'      => $offer->product_id,
+                        'seller_offer_id' => $offer->id,
+                        'quantity'        => $data['quantity'],
+                        'unit_price'      => $data['unitPrice'],
+                        'subtotal'        => $data['lineTotal'],
+                        'delivery_type'   => 'auto',
+                        'delivery_status' => 'pending',
+                        'status'          => 'active',
+                    ]);
+
+                    OrderDelivery::create([
+                        'order_item_id'   => $orderItem->id,
+                        'delivery_method' => 'auto',
+                        'status'          => 'pending',
+                    ]);
+
+                    $commission = round($data['lineTotal'] * 0.10, 2);
+                    $netAmount  = $data['lineTotal'] - $commission;
+
+                    SellerEarning::create([
+                        'seller_id'     => $offer->seller_id,
+                        'order_id'      => $order->id,
+                        'order_item_id' => $orderItem->id,
+                        'gross_amount'  => $data['lineTotal'],
+                        'commission'    => $commission,
+                        'net_amount'    => $netAmount,
+                        'status'        => 'pending',
+                    ]);
+                }
+
+                // STEP 5: Transaction
+                Transaction::create([
+                    'user_id'         => $user->id,
+                    'reference_type'  => Order::class,
+                    'reference_id'    => $order->id,
+                    'trx'             => uniqid('trx_'),
+                    'amount'          => $order->total_amount,
+                    'fee'             => 0,
+                    'net_amount'      => $order->total_amount,
+                    'currency'        => $order->currency,
+                    'type'            => 'debit',
+                    'category'        => 'order',
+                    'status'          => 'pending',
+                    'payment_method'  => $request->payment_method,
+                ]);
+
+                return $order;
+            });
+
             return response()->json([
-                'status'  => 'success',
-                'message' => 'Order created successfully',
-                'data'    => [
-                    'order_id'     => $order->id,
-                    'order_number' => $order->order_number,
-                    'currency'     => $order->currency,
-                    'total_amount' => $order->total_amount,
-                    'status'       => $order->status,
+                'success' => true,
+                'message' => 'Order created successfully.',
+                'data' => [
+                    'order_id'      => $order->id,
+                    'order_number'  => $order->order_number,
+                    'status'        => $order->status,
+                    'payment_status'=> $order->payment_status,
                 ],
-            ], 201);
-
-        } catch (ValidationException $e) {
-
-            // ❌ Validation / stock / business rule errors
-            return response()->json([
-                'status'  => 'error',
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
-
-        } catch (HttpException $e) {
-
-            // ❌ Explicit HTTP exceptions
-            return response()->json([
-                'status'  => 'error',
-                'message' => $e->getMessage(),
-            ], $e->getStatusCode());
+            ], Response::HTTP_CREATED);
 
         } catch (\Throwable $e) {
-
-            // ❌ System / unexpected errors
-            \Log::error('Order creation failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
+            report($e);
 
             return response()->json([
-                'status'  => 'error',
-                'message' => 'Order creation failed. Please try again.',
-            ], 500);
+                'success' => false,
+                'message' => 'Unable to create order. Please try again.',
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-
     /**
-     * Update order status
+     * List User Orders
      *
-     * Updates the status of an order (admin or seller action).
+     * Get a paginated list of orders for the authenticated user.
      *
      * @group Orders
      * @authenticated
      *
-     * @urlParam id integer required Order ID. Example: 101
-     * @bodyParam status string required New status. Example: completed
-     *
      * @response 200 {
-     *   "status": "success",
-     *   "message": "Order status updated"
+     *  "success": true,
+     *  "data": {
+     *      "current_page": 1,
+     *      "data": []
+     *  }
      * }
      */
-    public function updateStatus(Request $request, $id)
+    public function index(): JsonResponse
     {
-        
+        $orders = auth()->user()
+            ->orders()
+            ->with('items.product')
+            ->latest()
+            ->paginate(10);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $orders,
+        ]);
     }
 
     /**
-     * Mark order as paid
+     * Show Order Details
      *
-     * Adds a payment transaction and updates invoice status.
+     * Get full details of a specific order.
      *
      * @group Orders
      * @authenticated
      *
-     * @urlParam id integer required Order ID. Example: 101
-     * @bodyParam gateway string required Payment gateway. Example: stripe
-     * @bodyParam amount number required Paid amount. Example: 49.99
+     * @urlParam order integer required Order ID. Example: 101
      *
      * @response 200 {
-     *   "status": "success",
-     *   "message": "Order marked as paid"
+     *  "success": true,
+     *  "data": {
+     *      "id": 101,
+     *      "status": "pending"
+     *  }
+     * }
+     *
+     * @response 403 {
+     *  "message": "This action is unauthorized."
      * }
      */
-    public function markAsPaid(Request $request, $id)
+    public function show(Order $order): JsonResponse
     {
-        
-    }
+        $this->authorize('view', $order);
 
-    /**
-     * Add order note
-     *
-     * Adds a private or public note to an order.
-     *
-     * @group Orders
-     * @authenticated
-     *
-     * @urlParam id integer required Order ID. Example: 101
-     * @bodyParam note string required Note content.
-     * @bodyParam is_private boolean Optional Private note flag.
-     *
-     * @response 200 {
-     *   "status": "success",
-     *   "message": "Note added to order"
-     * }
-     */
-    public function addNote(Request $request, $id)
-    {
-        
+        return response()->json([
+            'success' => true,
+            'data'    => $order->load([
+                'items.product',
+                'items.offer',
+                'items.deliveries',
+                'transactions',
+            ]),
+        ]);
     }
-
-    /**
-     * Refund order
-     *
-     * Refunds an order and records the refund transaction.
-     *
-     * @group Orders
-     * @authenticated
-     *
-     * @urlParam id integer required Order ID. Example: 101
-     * @bodyParam amount number required Refund amount. Example: 20
-     * @bodyParam gateway string required Payment gateway. Example: stripe
-     *
-     * @response 200 {
-     *   "status": "success",
-     *   "message": "Order refunded successfully"
-     * }
-     */
-    public function refund(Request $request, $id)
-    {
-        
-    }
-
-    
 }

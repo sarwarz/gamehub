@@ -9,6 +9,7 @@ class SellerEarning extends Model
     protected $fillable = [
         'seller_id',
         'order_id',
+        'order_item_id',
         'gross_amount',
         'commission',
         'net_amount',

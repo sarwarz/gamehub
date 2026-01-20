@@ -15,6 +15,8 @@ class SellerOfferController extends Controller
      */
     public function index(Request $request, CurrencyService $currencyService)
     {
+
+
         if ($request->ajax()) {
             return $this->offerDataTable(
                 SellerOffer::query(), // all offers

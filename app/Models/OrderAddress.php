@@ -7,24 +7,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class OrderAddress extends Model
 {
-    use HasFactory;
-
     protected $fillable = [
-        'order_id',
-        'type',
-        'full_name',
-        'email',
-        'phone',
-        'address_line1',
-        'address_line2',
-        'city',
-        'state',
-        'postal_code',
-        'country',
+        'order_id','type','name','email','phone',
+        'address','city','state','country','postal_code'
     ];
 
-    public function order()
-    {
+    public function order() {
         return $this->belongsTo(Order::class);
     }
 }

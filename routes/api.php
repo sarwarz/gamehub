@@ -20,11 +20,23 @@ use App\Http\Controllers\Api\UserProfileController;
 use App\Http\Controllers\Api\BlogCategoryController;
 use App\Http\Controllers\Api\PaymentMethodController;
 use App\Http\Controllers\Api\ProductReviewController;
+use App\Http\Controllers\Api\PaymentWebhookController;
 use App\Http\Controllers\Api\ProductRequestController;
 use App\Http\Controllers\Api\SellerWithdrawController;
 use App\Http\Controllers\Api\ProductAttributeController;
 
 Route::prefix('v1')->group(function () {
+
+
+
+     /*
+    |--------------------------------------------------------------------------
+    | Payment Webhooks
+    |--------------------------------------------------------------------------
+    */
+    Route::post('/webhooks/payment/{gateway}', [PaymentWebhookController::class, 'handle'])
+    ->name('payment.webhook');
+    
 
     /*
     |--------------------------------------------------------------------------
@@ -144,13 +156,10 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::middleware('auth:sanctum')->group(function () {
-        Route::get('/orders', [OrderController::class, 'index']);
-        Route::get('/orders/{id}', [OrderController::class, 'show']);
+        
         Route::post('/orders', [OrderController::class, 'store']);
-        Route::put('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-        Route::put('/orders/{id}/pay', [OrderController::class, 'markAsPaid']);
-        Route::post('/orders/{id}/refund', [OrderController::class, 'refund']);
-        Route::post('/orders/{id}/notes', [OrderController::class, 'addNote']);
+        Route::get('/orders/{order}', [OrderController::class, 'show']);
+        Route::get('/my-orders', [OrderController::class, 'index']);
     });
 
     /*

@@ -1,25 +1,177 @@
-name: User
+name: Authentication
 description: |-
 
-  APIs for authenticated user information.
+  APIs for user authentication using Laravel Sanctum.
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/v1/auth/me
+      - POST
+    uri: api/v1/auth/register
     metadata:
       custom: []
-      groupName: User
+      groupName: Authentication
       groupDescription: |-
 
-        APIs for authenticated user information.
+        APIs for user authentication using Laravel Sanctum.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get authenticated user'
-      description: |-
-        Retrieve authenticated user's profile,
-        roles, permissions, wallet, and seller info.
+      title: 'Register user'
+      description: 'Create a new user account.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Full name.'
+        required: true
+        example: 'John Doe'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Email address.'
+        required: true
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'Password (min 8 chars).'
+        required: true
+        example: 'O[2UZ5ij-e/dl4m{o,'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'John Doe'
+      email: john@example.com
+      password: 'O[2UZ5ij-e/dl4m{o,'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+           "status": true,
+           "message": "Registration successful"
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/login
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        APIs for user authentication using Laravel Sanctum.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Login user'
+      description: 'Authenticate user and return API token.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: Email.
+        required: true
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: Password.
+        required: true
+        example: 'O[2UZ5ij-e/dl4m{o,'
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: john@example.com
+      password: 'O[2UZ5ij-e/dl4m{o,'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+           "status": true,
+           "token": "..."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/logout
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        APIs for user authentication using Laravel Sanctum.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Logout user'
+      description: 'Revoke current access token.'
       authenticated: true
       deprecated: false
     headers:
@@ -33,17 +185,7 @@ endpoints:
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 401
-        content: '{"status":"error","message":"Unauthenticated"}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+    responses: []
     responseFields: []
     auth:
       - headers

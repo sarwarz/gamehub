@@ -1,142 +1,95 @@
-name: Authentication
-description: |-
-
-  APIs for user authentication using Laravel Sanctum.
+name: Payments
+description: ''
 endpoints:
   -
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/auth/register
+    uri: 'api/v1/webhooks/payment/{gateway}'
     metadata:
       custom: []
-      groupName: Authentication
-      groupDescription: |-
-
-        APIs for user authentication using Laravel Sanctum.
+      groupName: Payments
+      groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Register user'
-      description: 'Create a new user account.'
+      title: 'Handle Payment Webhook'
+      description: |-
+        Receive and process payment gateway webhooks.
+        This endpoint validates the webhook payload, updates the transaction,
+        marks the order as paid, activates seller earnings, and generates an invoice.
+
+        ⚠️ This endpoint is intended to be called **only by payment gateways**.
       authenticated: true
       deprecated: false
     headers:
       Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      gateway:
+        custom: []
+        name: gateway
+        description: 'Payment gateway code.'
+        required: true
+        example: stripe
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      gateway: stripe
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      name:
+      type:
         custom: []
-        name: name
-        description: 'Full name.'
-        required: true
-        example: 'John Doe'
+        name: type
+        description: 'Webhook event type (Stripe).'
+        required: false
+        example: payment_intent.succeeded
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      email:
+      data:
         custom: []
-        name: email
-        description: 'Email address.'
-        required: true
-        example: john@example.com
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      password:
-        custom: []
-        name: password
-        description: 'Password (min 8 chars).'
-        required: true
-        example: 'O[2UZ5ij-e/dl4m{o,'
-        type: string
+        name: data
+        description: 'Webhook payload data.'
+        required: false
+        example: []
+        type: object
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-    cleanBodyParameters:
-      name: 'John Doe'
-      email: john@example.com
-      password: 'O[2UZ5ij-e/dl4m{o,'
-    fileParameters: []
-    responses:
-      -
+      data.object:
         custom: []
-        status: 201
-        content: |-
-          {
-           "status": true,
-           "message": "Registration successful"
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/login
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: |-
-
-        APIs for user authentication using Laravel Sanctum.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Login user'
-      description: 'Authenticate user and return API token.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters:
-      email:
+        name: data.object
+        description: 'Payment object.'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      data.object.metadata.trx:
         custom: []
-        name: email
-        description: Email.
-        required: true
-        example: john@example.com
+        name: data.object.metadata.trx
+        description: 'Transaction reference.'
+        required: false
+        example: trx_65af8d2c1
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      password:
-        custom: []
-        name: password
-        description: Password.
-        required: true
-        example: 'O[2UZ5ij-e/dl4m{o,'
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
-      email: john@example.com
-      password: 'O[2UZ5ij-e/dl4m{o,'
+      type: payment_intent.succeeded
+      data:
+        object: []
     fileParameters: []
     responses:
       -
@@ -144,48 +97,58 @@ endpoints:
         status: 200
         content: |-
           {
-           "status": true,
-           "token": "..."
+            "success": true,
+            "message": "Payment processed successfully"
           }
         headers: []
         description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - POST
-    uri: api/v1/auth/logout
-    metadata:
-      custom: []
-      groupName: Authentication
-      groupDescription: |-
-
-        APIs for user authentication using Laravel Sanctum.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Logout user'
-      description: 'Revoke current access token.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses: []
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "message": "Already processed"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "message": "Invalid webhook"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "message": "Payment method disabled"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "success": false,
+            "message": "Transaction not found"
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 500
+        content: |-
+          {
+            "success": false,
+            "message": "Webhook error"
+          }
+        headers: []
+        description: ''
     responseFields: []
     auth:
       - headers

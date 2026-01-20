@@ -11,21 +11,29 @@ return new class extends Migration
         Schema::create('order_items', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('order_id')->constrained()->onDelete('cascade');
-            $table->foreignId('seller_id')->constrained()->onDelete('cascade');
-            $table->foreignId('product_id')->constrained()->onDelete('cascade');
-            $table->foreignId('seller_offer_id')->constrained()->onDelete('cascade');
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('seller_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('seller_offer_id')->constrained()->cascadeOnDelete();
 
-            // Pricing details
-            $table->integer('quantity')->default(1);
+            // Price snapshot
+            $table->integer('quantity');
             $table->decimal('unit_price', 12, 2);
             $table->decimal('subtotal', 12, 2);
 
+            // Delivery
+            $table->enum('delivery_type', ['auto','manual'])->default('auto');
+            $table->enum('delivery_status', ['pending','delivered','failed'])->default('pending');
+
             // Status
-            $table->enum('status', ['pending', 'delivered', 'refunded'])->default('pending');
+            $table->enum('status', ['active','refunded','cancelled'])->default('active');
 
             $table->timestamps();
+
+            $table->index(['order_id']);
+            $table->index(['seller_id']);
         });
+
     }
 
     public function down(): void

@@ -98,6 +98,17 @@ class User extends Authenticatable
         return $this->hasOne(Wallet::class);
     }
 
+    // Scope to get only customers
+
+    public function scopeCustomers($query)
+    {
+        return $query->whereHas('roles', function ($q) {
+            $q->where('name', 'customer');
+        });
+    }
+
+
+
 
 
    public function hasPermission(string $permission): bool

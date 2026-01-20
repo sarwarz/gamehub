@@ -1,23 +1,23 @@
-name: Coupons
+name: 'Seller Withdrawals'
 description: |-
 
-  APIs for listing, viewing, and validating discount coupons.
+  APIs for seller withdrawal requests and history.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/coupons
+    uri: api/v1/seller/withdraws
     metadata:
       custom: []
-      groupName: Coupons
+      groupName: 'Seller Withdrawals'
       groupDescription: |-
 
-        APIs for listing, viewing, and validating discount coupons.
+        APIs for seller withdrawal requests and history.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List active coupons'
-      description: 'Retrieve all active coupons.'
+      title: 'List withdrawal requests'
+      description: 'Retrieve withdrawal history for the authenticated seller.'
       authenticated: true
       deprecated: false
     headers:
@@ -27,19 +27,19 @@ endpoints:
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      type:
+      status:
         custom: []
-        name: type
-        description: 'Optional. percent or fixed.'
+        name: status
+        description: 'Optional. pending, approved, rejected, completed.'
         required: false
-        example: percent
+        example: pending
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      type: percent
+      status: pending
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -50,71 +50,10 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Coupons fetched successfully",
-            "data": []
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: 'api/v1/coupons/{id}'
-    metadata:
-      custom: []
-      groupName: Coupons
-      groupDescription: |-
-
-        APIs for listing, viewing, and validating discount coupons.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'Get coupon details'
-      description: 'Retrieve a single coupon by ID.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters:
-      id:
-        custom: []
-        name: id
-        description: 'Coupon ID.'
-        required: true
-        example: 1
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanUrlParameters:
-      id: 1
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Coupon details fetched",
+            "message": "Withdrawals fetched successfully",
             "data": {
-              "code": "START70",
-              "type": "percent",
-              "value": 70
+              "current_page": 1,
+              "data": []
             }
           }
         headers: []
@@ -131,17 +70,17 @@ endpoints:
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/coupons/validate
+    uri: api/v1/seller/withdraws
     metadata:
       custom: []
-      groupName: Coupons
+      groupName: 'Seller Withdrawals'
       groupDescription: |-
 
-        APIs for listing, viewing, and validating discount coupons.
+        APIs for seller withdrawal requests and history.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Validate coupon'
-      description: 'Validate a coupon code against order data.'
+      title: 'Submit withdrawal request'
+      description: 'Create a new withdrawal request for the seller.'
       authenticated: true
       deprecated: false
     headers:
@@ -153,63 +92,105 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      code:
+      amount:
         custom: []
-        name: code
-        description: 'Coupon code.'
+        name: amount
+        description: 'Withdrawal amount.'
         required: true
-        example: START70
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      order_amount:
-        custom: []
-        name: order_amount
-        description: 'Order amount.'
-        required: true
-        example: 100.0
+        example: 150.0
         type: number
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      category_ids:
+      method:
         custom: []
-        name: category_ids
-        description: 'Optional Category IDs.'
-        required: false
-        example:
-          - 1
-          - 2
-        type: 'string[]'
+        name: method
+        description: 'Payment method (bank, paypal, crypto).'
+        required: true
+        example: bank
+        type: string
         enumValues: []
         exampleWasSpecified: true
-        nullable: true
+        nullable: false
         deprecated: false
-      product_ids:
+      note:
         custom: []
-        name: product_ids
-        description: 'Optional Product IDs.'
+        name: note
+        description: 'Optional Additional note.'
         required: false
-        example:
-          - 5
-          - 10
-        type: 'string[]'
+        example: consequatur
+        type: string
         enumValues: []
-        exampleWasSpecified: true
+        exampleWasSpecified: false
         nullable: true
         deprecated: false
     cleanBodyParameters:
-      code: START70
-      order_amount: 100.0
-      category_ids:
-        - 1
-        - 2
-      product_ids:
-        - 5
-        - 10
+      amount: 150.0
+      method: bank
+      note: consequatur
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "status": true,
+            "message": "Withdrawal request submitted successfully",
+            "data": {
+              "status": "pending"
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/seller/withdraws/{id}'
+    metadata:
+      custom: []
+      groupName: 'Seller Withdrawals'
+      groupDescription: |-
+
+        APIs for seller withdrawal requests and history.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get withdrawal details'
+      description: 'Retrieve a single withdrawal request.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'Withdrawal ID.'
+        required: true
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 12
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
     fileParameters: []
     responses:
       -
@@ -218,9 +199,11 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Coupon is valid",
+            "message": "Withdrawal details fetched",
             "data": {
-              "discount": 70
+              "id": 12,
+              "amount": "150.00",
+              "status": "pending"
             }
           }
         headers: []

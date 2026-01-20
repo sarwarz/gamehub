@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('seller_id')->constrained()->cascadeOnDelete();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('order_item_id')->constrained('order_items')->cascadeOnDelete();
 
             $table->decimal('gross_amount', 12, 2);
             $table->decimal('commission', 12, 2);

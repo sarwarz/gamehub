@@ -1,27 +1,22 @@
-name: Transactions
-description: |-
-
-  APIs for viewing user transactions such as payments, earnings,
-  refunds, withdrawals, and system charges.
+name: Orders
+description: ''
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/v1/transactions
+      - POST
+    uri: api/v1/orders
     metadata:
       custom: []
-      groupName: Transactions
-      groupDescription: |-
-
-        APIs for viewing user transactions such as payments, earnings,
-        refunds, withdrawals, and system charges.
+      groupName: Orders
+      groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'List transactions'
+      title: 'Create Order (Checkout)'
       description: |-
-        Retrieve a paginated list of authenticated user's transactions.
-        Supports filtering by type, status, category, and date range.
+        Create a new order for the authenticated user.
+        This endpoint validates seller offers, creates the order,
+        billing address, order items, seller earnings, and a payment transaction.
       authenticated: true
       deprecated: false
     headers:
@@ -30,83 +25,200 @@ endpoints:
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
-    queryParameters:
-      type:
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      currency:
         custom: []
-        name: type
-        description: 'Optional. credit or debit.'
-        required: false
-        example: credit
+        name: currency
+        description: 'Currency code.'
+        required: true
+        example: USD
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      status:
+      items:
         custom: []
-        name: status
-        description: 'Optional. completed, pending, failed.'
-        required: false
-        example: completed
+        name: items
+        description: 'List of order items.'
+        required: true
+        example:
+          - consequatur
+        type: 'string[]'
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      billing:
+        custom: []
+        name: billing
+        description: 'Billing address details.'
+        required: true
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      billing.name:
+        custom: []
+        name: billing.name
+        description: 'Customer name.'
+        required: true
+        example: 'John Doe'
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      category:
+      billing.email:
         custom: []
-        name: category
-        description: 'Optional. order, withdraw, refund.'
-        required: false
-        example: order
+        name: billing.email
+        description: 'Email address.'
+        required: true
+        example: john@example.com
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      from:
+      billing.address:
         custom: []
-        name: from
-        description: 'Optional. Start date (YYYY-MM-DD).'
-        required: false
-        example: '2026-01-01'
+        name: billing.address
+        description: 'Street address.'
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      billing.city:
+        custom: []
+        name: billing.city
+        description: 'City name.'
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      billing.country:
+        custom: []
+        name: billing.country
+        description: 'Country code.'
+        required: true
+        example: BD
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      to:
+      payment_method:
         custom: []
-        name: to
-        description: 'Optional. End date (YYYY-MM-DD).'
-        required: false
-        example: '2026-01-31'
+        name: payment_method
+        description: 'Payment method.'
+        required: true
+        example: stripe
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-    cleanQueryParameters:
-      type: credit
-      status: completed
-      category: order
-      from: '2026-01-01'
-      to: '2026-01-31'
-    bodyParameters: []
-    cleanBodyParameters: []
+      'items[].seller_offer_id':
+        custom: []
+        name: 'items[].seller_offer_id'
+        description: 'Seller offer ID.'
+        required: true
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      'items[].quantity':
+        custom: []
+        name: 'items[].quantity'
+        description: Quantity.
+        required: true
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      billing.phone:
+        custom: []
+        name: billing.phone
+        description: 'Phone number.'
+        required: true
+        example: '+8801712345678'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      billing.postcode:
+        custom: []
+        name: billing.postcode
+        description: 'Postal code.'
+        required: true
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      currency: USD
+      items:
+        - consequatur
+      billing:
+        name: 'John Doe'
+        email: john@example.com
+        address: consequatur
+        city: consequatur
+        country: BD
+        phone: '+8801712345678'
+        postcode: consequatur
+      payment_method: stripe
     fileParameters: []
     responses:
       -
         custom: []
-        status: 200
+        status: 201
         content: |-
           {
-            "status": true,
-            "message": "Transactions fetched successfully",
-            "data": {
-              "current_page": 1,
-              "data": []
-            }
+           "success": true,
+           "message": "Order created successfully.",
+           "data": {
+               "order_id": 101,
+               "order_number": "ORD-20260120-0001",
+               "status": "pending",
+               "payment_status": "pending"
+           }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+           "message": "One or more seller offers are not available."
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 500
+        content: |-
+          {
+           "success": false,
+           "message": "Unable to create order. Please try again."
           }
         headers: []
         description: ''
@@ -122,18 +234,15 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/transactions/{id}'
+    uri: 'api/v1/orders/{order_id}'
     metadata:
       custom: []
-      groupName: Transactions
-      groupDescription: |-
-
-        APIs for viewing user transactions such as payments, earnings,
-        refunds, withdrawals, and system charges.
+      groupName: Orders
+      groupDescription: ''
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get transaction details'
-      description: 'Retrieve details of a single transaction.'
+      title: 'Show Order Details'
+      description: 'Get full details of a specific order.'
       authenticated: true
       deprecated: false
     headers:
@@ -141,19 +250,31 @@ endpoints:
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      id:
+      order_id:
         custom: []
-        name: id
-        description: 'Transaction ID.'
+        name: order_id
+        description: 'The ID of the order.'
         required: true
-        example: 10
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      order:
+        custom: []
+        name: order
+        description: 'Order ID.'
+        required: true
+        example: 101
         type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      id: 10
+      order_id: 1
+      order: 101
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -165,14 +286,68 @@ endpoints:
         status: 200
         content: |-
           {
-            "status": true,
-            "message": "Transaction details fetched",
-            "data": {
-              "id": 10,
-              "trx": "TRX20260119001",
-              "amount": "49.99",
-              "status": "completed"
-            }
+           "success": true,
+           "data": {
+               "id": 101,
+               "status": "pending"
+           }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: |-
+          {
+           "message": "This action is unauthorized."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/my-orders
+    metadata:
+      custom: []
+      groupName: Orders
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List User Orders'
+      description: 'Get a paginated list of orders for the authenticated user.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+           "success": true,
+           "data": {
+               "current_page": 1,
+               "data": []
+           }
           }
         headers: []
         description: ''
