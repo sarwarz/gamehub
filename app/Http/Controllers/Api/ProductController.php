@@ -110,6 +110,7 @@ class ProductController extends Controller
                 'regions'      => $product->regions,
                 'languages'    => $product->languages,
                 'works_on'     => $product->worksOn,
+                'label'        => $product->label,
                 'lowest_price' => $lowestOffer ? [
                     'price_name' => $defaultCurrency->code,
                     'symbol'     => $defaultCurrency->symbol,
