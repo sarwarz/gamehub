@@ -131,3 +131,51 @@ endpoints:
     controller: null
     method: null
     route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/wallet/settings
+    metadata:
+      custom: []
+      groupName: Wallet
+      groupDescription: |-
+
+        APIs for wallet balance and wallet transactions.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get wallet settings'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Wallet settings fetched successfully",
+            "data": {}
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer your_real_test_token_here'
+    controller: null
+    method: null
+    route: null

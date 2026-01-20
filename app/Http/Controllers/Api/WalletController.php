@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
 use Illuminate\Http\Request;
+use App\Models\WalletSetting;
+use App\Models\WalletTransaction;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @group Wallet
@@ -14,6 +16,30 @@ use Illuminate\Http\Request;
  */
 class WalletController extends Controller
 {
+
+    /**
+     * Get wallet settings
+     *
+     * @authenticate
+     * @response 200 {
+     *   "status": true,
+     *   "message": "Wallet settings fetched successfully",
+     *   "data": {}
+     * }
+     */
+    public function settings()
+    {
+        $settings = Cache::rememberForever('wallet_settings', function () {
+            return WalletSetting::global();
+        });
+
+        return $this->successResponse(
+            $this->transformSettings($settings),
+            'Wallet settings fetched successfully'
+        );
+    }
+
+
     /**
      * Get wallet details
      *
@@ -89,6 +115,33 @@ class WalletController extends Controller
     /* --------------------------------
      | Transformers
      |-------------------------------- */
+
+    protected function transformSettings(WalletSetting $settings): array
+    {
+        return [
+            'wallet_enabled' => $settings->wallet_enabled,
+
+            // Deposit
+            'min_topup_amount' => $settings->min_topup_amount,
+            'max_topup_amount' => $settings->max_topup_amount,
+            'allowed_payment_gateways' => $settings->allowed_payment_gateways,
+            'gateway_charge_type' => $settings->gateway_charge_type,
+            'gateway_charge_amount' => $settings->gateway_charge_amount,
+
+            // Wallet usage
+            'partial_payment_enabled' => $settings->partial_payment_enabled,
+            'auto_deduct_wallet_for_partial' => $settings->auto_deduct_wallet_for_partial,
+
+            // Transfer
+            'wallet_transfer_enabled' => $settings->wallet_transfer_enabled,
+            'min_transfer_amount' => $settings->min_transfer_amount,
+            'transfer_charge_type' => $settings->transfer_charge_type,
+            'transfer_charge_amount' => $settings->transfer_charge_amount,
+
+            // Currency
+            'currency' => $settings->currency,
+        ];
+    }
 
     protected function transformWallet(Wallet $wallet): array
     {

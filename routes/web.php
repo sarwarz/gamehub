@@ -32,6 +32,7 @@ use App\Http\Controllers\ProductLanguageController;
 use App\Http\Controllers\ProductPlatformController;
 use App\Http\Controllers\ProductDeveloperController;
 use App\Http\Controllers\ProductPublisherController;
+use App\Http\Controllers\WalletSettingController;
 
 
 
@@ -876,6 +877,12 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Debit user wallet
         Route::post('wallet/{user}/debit', [WalletController::class, 'debit'])
             ->name('wallet.debit');
+
+         Route::get('wallet-settings', [WalletSettingController::class, 'edit'])
+        ->name('wallet-settings.edit');
+
+        Route::put('wallet-settings', [WalletSettingController::class, 'update'])
+            ->name('wallet-settings.update');
 
     });
 

@@ -99,6 +99,7 @@ class User extends Authenticatable
     }
 
 
+
    public function hasPermission(string $permission): bool
     {
         // Super Admin bypass

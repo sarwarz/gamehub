@@ -561,7 +561,8 @@
 
 
     <!-- Wallet Management -->
-    <li class="menu-item {{ request()->routeIs('wallets.*') ? 'active open' : '' }}">
+    <li class="menu-item
+        {{ request()->routeIs('wallets.*') || request()->routeIs('wallet-settings.*') ? 'active open' : '' }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-wallet"></i>
@@ -584,15 +585,16 @@
                 </a>
             </li>
 
-            <!-- Wallet Settings -->
-            <li class="menu-item ">
-                <a href="#" class="menu-link">
+            <!-- Wallet Settings (Global) -->
+            <li class="menu-item {{ request()->routeIs('wallet-settings.*') ? 'active' : '' }}">
+                <a href="{{ route('wallet-settings.edit') }}" class="menu-link">
                     <div data-i18n="Wallet Settings">Wallet Settings</div>
                 </a>
             </li>
 
         </ul>
     </li>
+
 
 
 
