@@ -55,11 +55,18 @@
                     {{-- ================= COUNTRY ================= --}}
                     <div class="mb-3">
                         <label class="form-label">Country</label>
-                        <input type="text"
-                               name="country"
-                               class="form-control"
-                               value="{{ $method->country }}">
+                        <select name="country" class="form-select select2">
+                            <option value="">Select country</option>
+
+                            @foreach(get_countries() as $code => $name)
+                                <option value="{{ $code }}"
+                                    {{ $method->country === $code ? 'selected' : '' }}>
+                                    {{ $name }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
+
 
                     {{-- ================= CURRENCY ================= --}}
                     <div class="mb-3">

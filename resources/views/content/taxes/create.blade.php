@@ -28,7 +28,14 @@
     <div class="row mt-3">
         <div class="col-md-4">
             <label>Country</label>
-            <input type="text" name="country" class="form-control" placeholder="US">
+            <select name="country" class="form-select select2">
+                <option value="">Select country</option>
+                @foreach(get_countries() as $code => $name)
+                    <option value="{{ $code }}">
+                        {{ $name }}
+                    </option>
+                @endforeach
+            </select>
         </div>
         <div class="col-md-4">
             <label>State</label>

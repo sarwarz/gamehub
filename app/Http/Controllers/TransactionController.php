@@ -114,17 +114,17 @@ class TransactionController extends Controller
             )
 
             ->addColumn('amount', fn ($row) =>
-                $row->currency.' '.number_format($row->amount, 2)
+                format_currency($row->amount)
             )
 
             ->addColumn('fee', fn ($row) =>
                 $row->fee > 0
-                    ? $row->currency.' '.number_format($row->fee, 2)
+                    ? format_currency($row->fee)
                     : '-'
             )
 
             ->addColumn('net_amount', fn ($row) =>
-                '<strong>'.$row->currency.' '.number_format($row->net_amount, 2).'</strong>'
+                '<strong>'.format_currency($row->net_amount).'</strong>'
             )
 
             ->addColumn('category', fn ($row) => ucfirst($row->category))

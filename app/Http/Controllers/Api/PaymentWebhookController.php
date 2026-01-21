@@ -7,7 +7,9 @@ use App\Models\Transaction;
 use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
 use App\Models\SellerEarning;
+use App\Models\OrderNote;
 use App\Services\InvoiceService;
+use App\Jobs\AutoDeliverOrderJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -15,51 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class PaymentWebhookController extends Controller
 {
-    /**
-     * Handle Payment Webhook
-     *
-     * Receive and process payment gateway webhooks.
-     * This endpoint validates the webhook payload, updates the transaction,
-     * marks the order as paid, activates seller earnings, and generates an invoice.
-     *
-     * ⚠️ This endpoint is intended to be called **only by payment gateways**.
-     *
-     * @group Payments
-     *
-     * @urlParam gateway string required Payment gateway code. Example: stripe
-     *
-     * @bodyParam type string Webhook event type (Stripe). Example: payment_intent.succeeded
-     * @bodyParam data object Webhook payload data.
-     * @bodyParam data.object object Payment object.
-     * @bodyParam data.object.metadata.trx string Transaction reference. Example: trx_65af8d2c1
-     *
-     * @response 200 {
-     *   "success": true,
-     *   "message": "Payment processed successfully"
-     * }
-     *
-     * @response 200 {
-     *   "message": "Already processed"
-     * }
-     *
-     * @response 400 {
-     *   "message": "Invalid webhook"
-     * }
-     *
-     * @response 404 {
-     *   "message": "Payment method disabled"
-     * }
-     *
-     * @response 404 {
-     *   "success": false,
-     *   "message": "Transaction not found"
-     * }
-     *
-     * @response 500 {
-     *   "success": false,
-     *   "message": "Webhook error"
-     * }
-     */
     public function handle(string $gateway, Request $request)
     {
         $method = PaymentMethod::where('code', $gateway)
@@ -71,14 +28,22 @@ class PaymentWebhookController extends Controller
         }
 
         try {
-            // STEP 1: Normalize & verify payload
+            // STEP 1: Normalize webhook
             $payload = $this->normalize($method, $request);
 
-            if (!$payload['success']) {
+            if (!$payload['success'] || empty($payload['trx'])) {
                 return response()->json(['message' => 'Invalid webhook'], 400);
             }
 
-            return DB::transaction(function () use ($payload, $gateway) {
+            $order = null;
+            $transaction = null;
+
+            DB::transaction(function () use (
+                $payload,
+                $gateway,
+                &$order,
+                &$transaction
+            ) {
 
                 // STEP 2: Lock transaction
                 $transaction = Transaction::where('trx', $payload['trx'])
@@ -86,22 +51,12 @@ class PaymentWebhookController extends Controller
                     ->first();
 
                 if (!$transaction) {
-                    Log::warning('Transaction not found', [
-                        'trx' => $payload['trx'],
-                        'gateway' => $gateway,
-                    ]);
-
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Transaction not found',
-                    ], 404);
+                    throw new \Exception('Transaction not found');
                 }
 
-                // Idempotency protection
+                // Idempotency
                 if ($transaction->status === 'completed') {
-                    return response()->json([
-                        'message' => 'Already processed'
-                    ], 200);
+                    return;
                 }
 
                 // STEP 3: Update transaction
@@ -111,42 +66,73 @@ class PaymentWebhookController extends Controller
                     'meta'    => array_merge($transaction->meta ?? [], $payload['raw']),
                 ]);
 
-                // STEP 4: Update order
+                // STEP 4: Lock order
                 $order = Order::lockForUpdate()->find($transaction->reference_id);
 
                 if (!$order) {
-                    Log::error('Order not found for transaction', [
-                        'trx' => $transaction->trx,
-                        'reference_id' => $transaction->reference_id,
-                    ]);
-
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Order not found',
-                    ], 404);
+                    throw new \Exception('Order not found');
                 }
 
+                // STEP 5: Update order
                 $order->update([
                     'payment_status' => 'paid',
                     'status'         => 'processing',
                     'paid_at'        => now(),
                 ]);
 
-                // STEP 5: Activate seller earnings
+                // STEP 6: Activate seller earnings
                 SellerEarning::where('order_id', $order->id)
                     ->update(['status' => 'available']);
 
-                // STEP 6: Generate invoice
+                // STEP 7: Generate invoice
                 app(InvoiceService::class)->generateFromOrder($order);
-
-                // STEP 7: Dispatch delivery job (optional)
-                // dispatch(new \App\Jobs\DeliverOrderJob($order->id));
-
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Payment processed successfully',
-                ], Response::HTTP_OK);
             });
+
+            /**
+             * 🔥 SAFE SECTION (NO ROLLBACK POSSIBLE)
+             * Runs ONLY after successful commit
+             */
+            DB::afterCommit(function () use ($order, $transaction, $gateway) {
+
+                // Payment success
+                $order->notes()->create([
+                    'note' => "Payment completed successfully via {$gateway}. Transaction ID: {$transaction->trx}",
+                    'type' => 'system',
+                    'is_visible_to_customer' => true,
+                ]);
+
+                // Order processing
+                $order->notes()->create([
+                    'note' => 'Order marked as processing after successful payment.',
+                    'type' => 'system',
+                ]);
+
+                // Seller earnings
+                $order->notes()->create([
+                    'note' => 'Seller earnings activated and marked as available.',
+                    'type' => 'system',
+                ]);
+
+                // Invoice
+                $order->notes()->create([
+                    'note' => 'Invoice generated for the order.',
+                    'type' => 'system',
+                    'is_visible_to_customer' => true,
+                ]);
+
+                // Dispatch delivery AFTER commit
+                dispatch(new AutoDeliverOrderJob($order->id));
+
+                $order->notes()->create([
+                    'note' => 'Auto delivery job dispatched.',
+                    'type' => 'system',
+                ]);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment processed successfully',
+            ], Response::HTTP_OK);
 
         } catch (\Throwable $e) {
 
@@ -158,33 +144,24 @@ class PaymentWebhookController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Webhook error',
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
     /**
      * Normalize & verify webhook payload
-     *
-     * @internal
      */
     protected function normalize(PaymentMethod $method, Request $request): array
     {
         return match ($method->code) {
+            'paypal' => $this->paypal($method, $request),
             'stripe' => $this->stripe($method, $request),
             default  => ['success' => false],
         };
     }
 
-    /**
-     * Stripe webhook normalization
-     *
-     * @internal
-     */
-    protected function stripe(PaymentMethod $method, Request $request): array
+    protected function paypal(PaymentMethod $method, Request $request): array
     {
-        /**
-         * TEST MODE (Local / Postman)
-         */
         if (app()->environment('local', 'testing')) {
             return [
                 'success' => $request->input('type') === 'payment_intent.succeeded',
@@ -193,14 +170,21 @@ class PaymentWebhookController extends Controller
             ];
         }
 
-        /**
-         * PRODUCTION MODE (Real Stripe Webhook)
-         */
-        $secret = $method->config['webhook_secret'] ?? null;
+        return ['success' => false];
+    }
 
-        if (!$secret) {
-            return ['success' => false];
+    protected function stripe(PaymentMethod $method, Request $request): array
+    {
+        if (app()->environment('local', 'testing')) {
+            return [
+                'success' => $request->input('type') === 'payment_intent.succeeded',
+                'trx'     => data_get($request->input('data'), 'object.metadata.trx'),
+                'raw'     => $request->all(),
+            ];
         }
+
+        $secret = $method->config['webhook_secret'] ?? null;
+        if (!$secret) return ['success' => false];
 
         try {
             $event = \Stripe\Webhook::constructEvent(

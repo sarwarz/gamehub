@@ -106,6 +106,12 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function notes()
+    {
+        return $this->hasMany(OrderNote::class)->latest();
+    }
+
+
     /**
      * Order addresses
      */

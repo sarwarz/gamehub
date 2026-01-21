@@ -4,19 +4,24 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderNote;
+use App\Models\SellerOffer;
+use App\Models\Transaction;
 use App\Models\OrderAddress;
 use App\Models\OrderDelivery;
-use App\Models\SellerOffer;
 use App\Models\SellerEarning;
-use App\Models\Transaction;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreOrderRequest;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\OrderDetailResource;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class OrderController extends Controller
 {
+     use AuthorizesRequests;
+
     /**
      * Create Order (Checkout)
      *
@@ -83,6 +88,20 @@ class OrderController extends Controller
                         abort(Response::HTTP_UNPROCESSABLE_ENTITY, 'One or more seller offers are not available.');
                     }
 
+                    //  STOCK CHECK
+                    // $availableStock = $offer->keys()
+                    //     ->where('status', 'available')
+                    //     ->lockForUpdate()
+                    //     ->count();
+
+                    // if ($availableStock < $item['quantity']) {
+                    //     abort(
+                    //         Response::HTTP_UNPROCESSABLE_ENTITY,
+                    //         "Insufficient stock for product ID {$offer->product_id}. Available: {$availableStock}"
+                    //     );
+                    // }
+
+
                     $unitPrice = $offer->retail_price;
                     $lineTotal = bcmul($unitPrice, $item['quantity'], 2);
 
@@ -91,6 +110,7 @@ class OrderController extends Controller
                     $orderItems[] = compact('offer', 'unitPrice', 'lineTotal') + [
                         'quantity' => $item['quantity'],
                     ];
+
                 }
 
                 $taxAmount      = 0;
@@ -138,6 +158,15 @@ class OrderController extends Controller
 
                 ]);
 
+                //  SYSTEM NOTE: Order created
+                $order->notes()->create([
+                    'user_id' => $user->id,
+                    'note'    => 'Order created via API checkout.',
+                    'type'    => 'system',
+                    'is_visible_to_customer' => false,
+                ]);
+
+
                 // STEP 3: Billing Address
                 OrderAddress::create([
                     'order_id' => $order->id,
@@ -181,14 +210,17 @@ class OrderController extends Controller
                         'net_amount'    => $netAmount,
                         'status'        => 'pending',
                     ]);
+
                 }
+
+                $trx = uniqid('trx_');
 
                 // STEP 5: Transaction
                 Transaction::create([
                     'user_id'         => $user->id,
                     'reference_type'  => Order::class,
                     'reference_id'    => $order->id,
-                    'trx'             => uniqid('trx_'),
+                    'trx'             => $trx,
                     'amount'          => $order->total_amount,
                     'fee'             => 0,
                     'net_amount'      => $order->total_amount,
@@ -277,16 +309,19 @@ class OrderController extends Controller
      */
     public function show(Order $order): JsonResponse
     {
-        $this->authorize('view', $order);
+        //$this->authorize('view', $order);
+
+        $order->load([
+            'items.product:id,title,slug,cover_image',
+            'items.offer:id,retail_price',
+            'items.deliveries',
+            'transactions',
+            'addresses',
+        ]);
 
         return response()->json([
             'success' => true,
-            'data'    => $order->load([
-                'items.product',
-                'items.offer',
-                'items.deliveries',
-                'transactions',
-            ]),
+            'data'    => new OrderDetailResource($order),
         ]);
     }
 }

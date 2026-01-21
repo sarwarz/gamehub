@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Invoice;
 use App\Models\Order;
-use App\Services\InvoiceService;
+use App\Models\Invoice;
 use Illuminate\Http\Request;
-use Yajra\DataTables\Facades\DataTables;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\InvoiceService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceController extends Controller
 {
@@ -53,12 +54,12 @@ class InvoiceController extends Controller
                 )
 
                 ->editColumn('subtotal', fn ($row) =>
-                    strtoupper($row->currency) . ' ' . number_format($row->subtotal, 2)
+                    format_currency($row->subtotal)
                 )
 
                 ->editColumn('grand_total', fn ($row) =>
                     '<strong>' .
-                    strtoupper($row->currency) . ' ' . number_format($row->grand_total, 2) .
+                    format_currency($row->grand_total) .
                     '</strong>'
                 )
 
@@ -329,6 +330,41 @@ class InvoiceController extends Controller
             'Invoice-' . $invoice->invoice_number . '.pdf'
         );
     }
+
+    public function generate(Order $order)
+    {
+        if ($order->invoice) {
+            return back()->with('warning', 'Invoice already exists.');
+        }
+
+        DB::transaction(function () use ($order) {
+            $invoice = Invoice::create([
+                'order_id'        => $order->id,
+                'user_id'         => $order->user_id,
+                'invoice_number'  => 'INV-' . now()->format('Ymd') . '-' . $order->id,
+                'subtotal'        => $order->subtotal,
+                'tax_total'       => $order->tax_total ?? 0,
+                'discount_total'  => $order->discount_total ?? 0,
+                'grand_total'     => $order->total_amount,
+                'currency'        => $order->currency,
+                'status'          => 'Paid',
+                'issued_at'       => now(),
+            ]);
+
+            foreach ($order->items as $item) {
+                $invoice->items()->create([
+                    'order_item_id' => $item->id,
+                    'item_name'     => $item->product->title,
+                    'quantity'      => $item->quantity,
+                    'unit_price'    => $item->unit_price,
+                    'subtotal'      => $item->subtotal,
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Invoice generated successfully.');
+    }
+
 
 
     /**

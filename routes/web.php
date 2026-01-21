@@ -16,6 +16,8 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CurrencyController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\OrderNoteController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BlogCommentController;
 use App\Http\Controllers\ProductTypeController;
@@ -74,9 +76,8 @@ Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])
 
 Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+            ->name('dashboard');
 
 });
 
@@ -771,6 +772,10 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         Route::get('invoices/{invoice}/pdf', [InvoiceController::class, 'pdf'])
             ->name('invoices.pdf');
 
+        Route::post('/orders/{order}/invoice/generate', [InvoiceController::class, 'generate'])
+            ->name('invoices.generate');
+
+
         // =========================
         // Bulk actions
         // =========================
@@ -797,6 +802,7 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
         // Order CRUD
         Route::resource('orders', OrderController::class);
+        
 
         Route::post('orders/bulk-status', [OrderController::class, 'bulkStatus'])
         ->name('orders.bulk-status');
@@ -804,6 +810,14 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Bulk delete orders
         Route::delete('orders/bulk-delete', [OrderController::class, 'bulkDelete'])
             ->name('orders.bulk-delete');
+
+        Route::put('/orders/{order}/billing', [OrderController::class, 'updateBilling'])
+        ->name('orders.billing.update');
+
+        Route::post('/orders/{order}/notes', [OrderNoteController::class, 'store'])
+        ->name('orders.notes.store');
+
+
 
     });
 

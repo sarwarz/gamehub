@@ -2,16 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\OrderItem;
 use App\Models\SellerOffer;
-use App\Models\User;
+use App\Models\Transaction;
+use App\Models\OrderAddress;
 use Illuminate\Http\Request;
+use App\Models\OrderDelivery;
+use App\Models\PaymentMethod;
+use App\Models\SellerEarning;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\Facades\DataTables;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Schema;
+use Yajra\DataTables\Facades\DataTables;
+use App\Services\OrderDeliveryService;
+use App\Services\InvoiceService;
 
 class OrderController extends Controller
 {
@@ -100,18 +108,7 @@ class OrderController extends Controller
 
                 ->addColumn('total_formatted', function ($order) {
 
-                    $symbols = [
-                        'USD' => '$',
-                        'EUR' => '€',
-                        'GBP' => '£',
-                        'BDT' => '৳',
-                        'INR' => '₹',
-                    ];
-
-                    $currency = strtoupper($order->currency ?? 'USD');
-                    $symbol   = $symbols[$currency] ?? $currency . ' ';
-
-                    return $symbol . number_format($order->total_amount, 2);
+                    return format_currency($order->total_amount);
                 })
 
 
@@ -190,101 +187,181 @@ class OrderController extends Controller
     public function create()
     {
         $users = User::all();
+        $paymentMethods = PaymentMethod::all();
         $products = Product::active()->get();
 
-        return view('content.orders.create', compact('users','products'));
+        return view('content.orders.create', compact('users','paymentMethods','products'));
     }
 
     /**
      * Store a new order with items + payment.
      */
+    /**
+     * Store manually created admin order
+     */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'buyer_id'        => 'required|exists:users,id',
-            'status'          => 'required|in:pending,processing,delivered,completed,refunded,cancelled',
-            'items'           => 'required|array|min:1',
-            'items.*.product_id'      => 'required|exists:products,id',
-            'items.*.seller_offer_id' => 'required|exists:seller_offers,id',
-            'items.*.unit_price'      => 'required|numeric|min:0',
-            'items.*.quantity'        => 'required|integer|min:1',
-            'address.full_name'       => 'required|string|max:191',
-            'address.address_line1'   => 'required|string|max:191',
-            'address.city'            => 'required|string|max:191',
-            'address.country'         => 'required|string|max:191',
-            'payment_method'  => 'nullable|string|max:100',
-            'transaction_id'  => 'nullable|string|max:191',
-            'payment_status'  => 'nullable|in:pending,processing,paid,failed,refunded',
-            'fees'            => 'nullable|numeric|min:0',
+        $request->validate([
+            'buyer_id'                     => ['required', 'exists:users,id'],
+            'items'                        => ['required', 'array', 'min:1'],
+            'items.*.seller_offer_id'      => ['required', 'exists:seller_offers,id'],
+            'items.*.quantity'             => ['required', 'integer', 'min:1'],
+
+            'billing.name'                 => ['required', 'string'],
+            'billing.email'                => ['nullable', 'email'],
+            'billing.phone'                => ['nullable', 'string'],
+            'billing.country'              => ['required', 'string'],
+            'billing.address'              => ['required', 'string'],
+            'billing.city'                 => ['required', 'string'],
+            'billing.postcode'             => ['nullable', 'string'],
+
+            'payment_method'               => ['required', 'string'],
+            'payment_ref'                  => ['nullable', 'string'],
+            'status'                       => ['required', 'string'],
         ]);
 
-        DB::transaction(function () use ($validated) {
-            $subtotal = 0;
+        DB::transaction(function () use ($request) {
 
-            // Create order
+            $buyer = User::findOrFail($request->buyer_id);
+
+            $subtotal = 0;
+            $orderItems = [];
+
+            /**
+             * STEP 1: Validate offers & calculate totals
+             */
+            foreach ($request->items as $item) {
+
+                $offer = SellerOffer::lockForUpdate()->findOrFail($item['seller_offer_id']);
+
+                if ($offer->status !== 'active') {
+                    abort(422, 'One or more seller offers are inactive.');
+                }
+
+                $unitPrice = $offer->retail_price;
+                $lineTotal = bcmul($unitPrice, $item['quantity'], 2);
+
+                $subtotal = bcadd($subtotal, $lineTotal, 2);
+
+                $orderItems[] = [
+                    'offer'     => $offer,
+                    'quantity'  => $item['quantity'],
+                    'unitPrice' => $unitPrice,
+                    'lineTotal' => $lineTotal,
+                ];
+            }
+
+            $fees            = $request->input('fees', 0);
+            $taxAmount       = 0;
+            $discountAmount  = 0;
+
+            $totalAmount = bcadd(
+                bcadd($subtotal, $fees, 2),
+                -$discountAmount,
+                2
+            );
+
+            /**
+             * STEP 2: Create Order
+             */
             $order = Order::create([
-                'user_id'        => $validated['buyer_id'],
-                'status'         => $validated['status'],
-                'total_amount'   => 0,
-                'commission_fee' => 0,
-                'seller_earning' => 0,
+                'user_id'          => $buyer->id,
+                'currency'         => 'USD',
+
+                'subtotal'         => $subtotal,
+                'tax_amount'       => $taxAmount,
+                'discount_amount'  => $discountAmount,
+                'total_amount'     => $totalAmount,
+
+                'payment_method'   => $request->payment_method,
+                'payment_reference'=> $request->payment_ref,
+                'payment_status'   => 'paid',
+
+                'status'           => $request->status,
+
+                'meta' => [
+                    'created_by' => [
+                        'type' => 'admin',
+                        'id'   => auth()->id(),
+                    ],
+                    'flags' => [
+                        'manual_order' => true,
+                        'auto_delivery'=> true,
+                    ],
+                ],
             ]);
 
-            // Save items
-            foreach ($validated['items'] as $item) {
-                $lineSubtotal = $item['unit_price'] * $item['quantity'];
-                $subtotal += $lineSubtotal;
+            /**
+             * STEP 3: Billing Address
+             */
+            OrderAddress::create([
+                'order_id' => $order->id,
+                'type'     => 'billing',
+                ...$request->billing,
+            ]);
+
+            /**
+             * STEP 4: Items, Deliveries & Seller Earnings
+             */
+            foreach ($orderItems as $data) {
+
+                $offer = $data['offer'];
 
                 $orderItem = OrderItem::create([
                     'order_id'        => $order->id,
-                    'seller_id'       => \App\Models\SellerOffer::find($item['seller_offer_id'])->seller_id,
-                    'product_id'      => $item['product_id'],
-                    'seller_offer_id' => $item['seller_offer_id'],
-                    'quantity'        => $item['quantity'],
-                    'unit_price'      => $item['unit_price'],
-                    'subtotal'        => $lineSubtotal,
+                    'seller_id'       => $offer->seller_id,
+                    'product_id'      => $offer->product_id,
+                    'seller_offer_id' => $offer->id,
+                    'quantity'        => $data['quantity'],
+                    'unit_price'      => $data['unitPrice'],
+                    'subtotal'        => $data['lineTotal'],
+                    'delivery_type'   => 'auto',
+                    'delivery_status' => 'pending',
+                    'status'          => 'active',
+                ]);
+
+                OrderDelivery::create([
+                    'order_item_id'   => $orderItem->id,
+                    'delivery_method' => 'auto',
+                    'status'          => 'pending',
+                ]);
+
+                $commission = round($data['lineTotal'] * ($offer->commission / 100), 2);
+                $netAmount  = $data['lineTotal'] - $commission;
+
+                SellerEarning::create([
+                    'seller_id'     => $offer->seller_id,
+                    'order_id'      => $order->id,
+                    'order_item_id' => $orderItem->id,
+                    'gross_amount'  => $data['lineTotal'],
+                    'commission'    => $commission,
+                    'net_amount'    => $netAmount,
+                    'status'        => 'pending',
                 ]);
             }
 
-            // Commission (from product type %)
-            $commission = 0;
-            foreach ($order->items as $oi) {
-                $productType = $oi->product->types()->first();
-                if ($productType && $productType->commission > 0) {
-                    $commission += ($oi->subtotal * ($productType->commission / 100));
-                }
-            }
-
-            $order->update([
-                'total_amount'   => $subtotal + ($validated['fees'] ?? 0),
-                'commission_fee' => $commission,
-                'seller_earning' => $subtotal - $commission,
+            /**
+             * STEP 5: Transaction Record
+             */
+            Transaction::create([
+                'user_id'         => $buyer->id,
+                'reference_type'  => Order::class,
+                'reference_id'    => $order->id,
+                'trx'             => uniqid('trx_'),
+                'amount'          => $order->total_amount,
+                'fee'             => 0,
+                'net_amount'      => $order->total_amount,
+                'currency'        => $order->currency,
+                'type'            => 'debit',
+                'category'        => 'order',
+                'status'          => 'completed',
+                'payment_method' => $request->payment_method,
             ]);
-
-            // Save address
-            if (isset($validated['address'])) {
-                $order->addresses()->create(array_merge(
-                    $validated['address'],
-                    ['type' => 'billing']
-                ));
-            }
-
-            // Save payment
-            if (!empty($validated['payment_status'])) {
-                Payment::create([
-                    'order_id'       => $order->id,
-                    'user_id'        => $order->user_id,
-                    'payment_method' => $validated['payment_method'] ?? 'manual',
-                    'transaction_id' => $validated['transaction_id'] ?? null,
-                    'status'         => $validated['payment_status'],
-                    'amount'         => $order->total_amount,
-                    'currency'       => 'USD',
-                    'paid_at'        => $validated['payment_status'] === 'paid' ? now() : null,
-                ]);
-            }
         });
 
-        return redirect()->route('orders.index')->with('success','Order created successfully.');
+        return redirect()
+            ->route('orders.index')
+            ->with('success', 'Order created successfully.');
     }
 
 
@@ -333,51 +410,101 @@ class OrderController extends Controller
             'transactions' => fn ($q) => $q->latest(),
         ])->findOrFail($id);
 
-        return view('content.orders.edit', compact('order'));
+        // ✅ Extract addresses
+        $billingAddress  = $order->addresses->firstWhere('type', 'billing');
+        $shippingAddress = $order->addresses->firstWhere('type', 'shipping');
+
+        return view('content.orders.edit', compact(
+            'order',
+            'billingAddress',
+            'shippingAddress'
+        ));
     }
 
 
 
-    /**
-     * Update an order (status + payment).
-     */
-    public function update(Request $request, $id)
-    {
-        $order = Order::findOrFail($id);
 
-        $validated = $request->validate([
-            'status'          => 'nullable|in:pending,processing,delivered,completed,refunded,cancelled',
-            'payment_method'  => 'nullable|string|max:100',
-            'transaction_id'  => 'nullable|string|max:191',
-            'payment_status'  => 'nullable|in:pending,processing,paid,failed,refunded',
-            'amount'          => 'nullable|numeric|min:0',
-            'currency'        => 'nullable|string|max:10',
+
+    public function update(Request $request, Order $order)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,processing,completed,refunded,cancelled',
         ]);
 
-        if (isset($validated['status'])) {
-            $order->status = $validated['status'];
-            $order->save();
+        if (in_array($order->status, ['cancelled'])) {
+            return back()->with('warning', 'Order can no longer be updated.');
         }
 
-        if (isset($validated['payment_status'])) {
-            Payment::updateOrCreate(
-                [
-                    'order_id'       => $order->id,
-                    'transaction_id' => $validated['transaction_id'] ?? null,
-                ],
-                [
-                    'user_id'        => $order->user_id,
-                    'payment_method' => $validated['payment_method'] ?? 'manual',
-                    'status'         => $validated['payment_status'],
-                    'amount'         => $validated['amount'] ?? $order->total,
-                    'currency'       => $validated['currency'] ?? 'USD',
-                    'paid_at'        => $validated['payment_status'] === 'paid' ? now() : null,
-                ]
-            );
+        if (
+            in_array($request->status, ['completed','refunded']) &&
+            $order->payment_status !== 'paid'
+        ) {
+            return back()->with('warning', 'Order must be paid first.');
         }
 
-        return redirect()->route('orders.index')->with('success', 'Order updated successfully.');
+        $order->update(['status' => $request->status]);
+
+        /**
+         * 🔁 RE-TRIGGER DELIVERY IF NOT COMPLETED
+         */
+        if ($request->status === 'completed') {
+
+            $order->load('items.deliveries');
+
+            foreach ($order->items as $item) {
+                foreach ($item->deliveries as $delivery) {
+
+                    // Only retry pending or failed deliveries
+                    if (in_array($delivery->status, ['pending','failed'])) {
+
+                        // Auto delivery
+                        if ($delivery->delivery_method === 'auto') {
+                            app(OrderDeliveryService::class)
+                                ->autoDeliver($delivery);
+                        }
+
+                        // Manual delivery → do nothing (admin must deliver manually)
+                    }
+                }
+            }
+
+            // Generate invoice if missing
+            if (
+                $request->status === 'completed' &&
+                $order->payment_status === 'paid' &&
+                !$order->invoice
+            ) {
+                app(InvoiceService::class)->generateFromOrder($order);
+            }
+            
+
+        }
+
+        return back()->with('success', 'Order status updated.');
     }
+
+
+
+    public function updateBilling(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'name'    => 'required|string|max:255',
+            'email'   => 'required|email',
+            'address' => 'required|string',
+            'city'    => 'required|string',
+            'state'   => 'nullable|string',
+            'postal_code' => 'nullable|string',
+            'phone'   => 'nullable|string',
+            'country' => 'required|string',
+        ]);
+
+        $order->addresses()
+            ->where('type', 'billing')
+            ->update($data);
+
+        return back()->with('success', 'Billing address updated successfully.');
+    }
+
 
     public function destroy($id)
     {
