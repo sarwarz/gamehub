@@ -8,7 +8,6 @@ use App\Models\SellerOffer;
 use Illuminate\Support\Str;
 use App\Models\ProductLabel;
 use Illuminate\Http\Request;
-use App\Models\ProductLabels;
 use App\Models\ProductRegion;
 use App\Models\ProductWorksOn;
 use App\Models\ProductCategory;
@@ -23,6 +22,7 @@ use Yajra\DataTables\Facades\DataTables;
 
 class ProductController extends Controller
 {
+
     /**
      * Display a listing of the products.
      */
@@ -30,16 +30,135 @@ class ProductController extends Controller
     {
         if ($request->ajax()) {
 
-            $products = Product::with([
-                'categories', 'platforms', 'types', 'regions',
-                'languages', 'worksOn', 'developer', 'publisher'
-            ]);
+            $products = Product::query()
+                ->with([
+                    'categories',
+                    'platforms',
+                    'types',
+                    'regions',
+                    'languages',
+                    'worksOn',
+                    'developer',
+                    'publisher',
+                ]);
+
+            /**
+             * ===============================
+             * APPLY DYNAMIC FILTERS (Orders-style)
+             * ===============================
+             */
+            foreach ($request->filters ?? [] as $filter) {
+
+                if (
+                    empty($filter['field']) ||
+                    !array_key_exists('value', $filter) ||
+                    $filter['value'] === ''
+                ) {
+                    continue;
+                }
+
+                $field    = $filter['field'];
+                $operator = $filter['operator'] ?? '=';
+                $value    = $filter['value'];
+
+                switch ($field) {
+
+                    /* ===============================
+                    * BASIC PRODUCT FIELDS
+                    * =============================== */
+
+                    case 'title':
+                    case 'sku':
+                        if ($operator === 'like') {
+                            $products->where($field, 'LIKE', "%{$value}%");
+                        } else {
+                            $products->where($field, $operator, $value);
+                        }
+                        break;
+
+                    case 'status':
+                        $products->where('status', $value);
+                        break;
+
+                    case 'is_featured':
+                        $products->where('is_featured', (bool) $value);
+                        break;
+
+                    case 'created_at':
+                        $products->whereDate('created_at', $value);
+                        break;
+
+
+                    /* ===============================
+                    * RELATION FILTERS
+                    * =============================== */
+
+                    case 'category_id':
+                        $products->whereHas('categories', function ($q) use ($value) {
+                            $q->where('product_categories.id', $value);
+                        });
+                        break;
+
+                    case 'platform_id':
+                        $products->whereHas('platforms', function ($q) use ($value) {
+                            $q->where('product_platforms.id', $value);
+                        });
+                        break;
+
+                    case 'type_id':
+                        $products->whereHas('types', function ($q) use ($value) {
+                            $q->where('product_types.id', $value);
+                        });
+                        break;
+
+                    case 'region_id':
+                        $products->whereHas('regions', function ($q) use ($value) {
+                            $q->where('product_regions.id', $value);
+                        });
+                        break;
+
+                    case 'language_id':
+                        $products->whereHas('languages', function ($q) use ($value) {
+                            $q->where('product_languages.id', $value);
+                        });
+                        break;
+
+                    case 'works_on_id':
+                        $products->whereHas('worksOn', function ($q) use ($value) {
+                            $q->where('product_works_on.id', $value);
+                        });
+                        break;
+
+                    case 'developer_id':
+                        $products->where('developer_id', $value);
+                        break;
+
+                    case 'publisher_id':
+                        $products->where('publisher_id', $value);
+                        break;
+                }
+            }
 
             return $this->productDataTable($products);
         }
 
-        return view('content.products.index');
+        /**
+         * ===============================
+         * NORMAL PAGE LOAD
+         * ===============================
+         */
+        return view('content.products.index', [
+            'categories' => ProductCategory::where('status', 'active')->get(),
+            'platforms'  => ProductPlatform::where('status', 'active')->get(),
+            'types'      => ProductType::where('status', 'active')->get(),
+            'regions'    => ProductRegion::where('status', 'active')->get(),
+            'languages'  => ProductLanguage::where('status', 'active')->get(),
+            'worksOn'    => ProductWorksOn::where('status', 'active')->get(),
+            'developers' => ProductDeveloper::where('status', 'active')->get(),
+            'publishers' => ProductPublisher::where('status', 'active')->get(),
+        ]);
     }
+
 
 
 
@@ -386,6 +505,22 @@ class ProductController extends Controller
         }
     }
 
+    public function bulkStatus(Request $request)
+    {
+        Product::whereIn('id', $request->ids)
+            ->update(['status' => $request->status]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bulkFeatured(Request $request)
+    {
+        Product::whereIn('id', $request->ids)
+            ->update(['is_featured' => (bool) $request->value]);
+
+        return response()->json(['success' => true]);
+    }
+
     /**
      * Bulk Delete products.
      */
@@ -471,33 +606,7 @@ class ProductController extends Controller
         return response()->json($offers);
     }
 
-    public function inactive(Request $request)
-    {
-        if ($request->ajax()) {
-            $query = Product::with([
-                'categories', 'platforms', 'types', 'regions',
-                'languages', 'worksOn', 'developer', 'publisher'
-            ])->where('status', 'inactive');
 
-            return $this->productDataTable($query);
-        }
-
-        return view('content.products.inactive');
-    }
-
-    public function featured(Request $request)
-    {
-        if ($request->ajax()) {
-            $query = Product::with([
-                'categories', 'platforms', 'types', 'regions',
-                'languages', 'worksOn', 'developer', 'publisher'
-            ])->where('is_featured', true);
-
-            return $this->productDataTable($query);
-        }
-
-        return view('content.products.featured');
-    }
 
     private function productDataTable($products)
     {

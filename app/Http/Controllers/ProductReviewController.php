@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProductReview;
+use App\Models\User;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use App\Models\ProductReview;
 use Yajra\DataTables\Facades\DataTables;
 
 class ProductReviewController extends Controller
@@ -15,27 +17,110 @@ class ProductReviewController extends Controller
     {
         if ($request->ajax()) {
 
-            $reviews = ProductReview::with([
-                'product:id,title',
-                'user:id,name,email'
-            ]);
+            $reviews = ProductReview::query()
+                ->with([
+                    'product:id,title',
+                    'user:id,name,email'
+                ]);
 
+            /*
+            |--------------------------------------------------------------------------
+            | APPLY DYNAMIC FILTERS (Orders / Products Style)
+            |--------------------------------------------------------------------------
+            */
+            foreach ($request->filters ?? [] as $filter) {
+
+                if (
+                    empty($filter['field']) ||
+                    !array_key_exists('value', $filter) ||
+                    $filter['value'] === ''
+                ) {
+                    continue;
+                }
+
+                $field    = $filter['field'];
+                $operator = $filter['operator'] ?? '=';
+                $value    = $filter['value'];
+
+                switch ($field) {
+
+                    /* ===============================
+                    * BASIC FIELDS
+                    * =============================== */
+
+                    case 'status':
+                        $reviews->where('status', $value);
+                        break;
+
+                    case 'rating':
+                        $reviews->where('rating', $operator, $value);
+                        break;
+
+                    case 'is_verified_purchase':
+                        $reviews->where('is_verified_purchase', (bool) $value);
+                        break;
+
+                    case 'created_at':
+                        $reviews->whereDate('created_at', $value);
+                        break;
+
+                    /* ===============================
+                    * RELATION FIELDS
+                    * =============================== */
+
+                    case 'product_id':
+                        $reviews->where('product_id', $value);
+                        break;
+
+                    case 'user_id':
+                        $reviews->where('user_id', $value);
+                        break;
+
+                    case 'product_title':
+                        if ($operator === 'like') {
+                            $reviews->whereHas('product', function ($q) use ($value) {
+                                $q->where('title', 'LIKE', "%{$value}%");
+                            });
+                        }
+                        break;
+
+                    case 'user_name':
+                        if ($operator === 'like') {
+                            $reviews->whereHas('user', function ($q) use ($value) {
+                                $q->where('name', 'LIKE', "%{$value}%");
+                            });
+                        }
+                        break;
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | DATATABLE RESPONSE
+            |--------------------------------------------------------------------------
+            */
             return DataTables::of($reviews)
                 ->addIndexColumn()
 
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox"
+                        class="bulk-checkbox form-check-input"
+                        value="'.$row->id.'">';
+                })
+
+
                 ->addColumn('review_info', function ($row) {
-                    $stars = str_repeat('⭐', $row->rating);
+                    $stars = str_repeat('⭐', (int) $row->rating);
 
                     return '
-                        <strong>'.$row->product->title.'</strong><br>
-                        <small>By: '.$row->user->name.'</small><br>
+                        <strong>'.e($row->product->title).'</strong><br>
+                        <small>By: '.e($row->user->name).'</small><br>
                         <span class="text-warning">'.$stars.'</span>
                     ';
                 })
 
-                // ✅ IP Address column
                 ->addColumn('ip_address', function ($row) {
-                    return $row->ip_address ?? '-';
+                    return $row->ip_address ?: '-';
                 })
 
                 ->addColumn('verified', function ($row) {
@@ -96,10 +181,9 @@ class ProductReviewController extends Controller
 
                     return '
                         <div class="dropdown">
-                            <button
-                                type="button"
-                                class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
-                                data-bs-toggle="dropdown">
+                            <button type="button"
+                                    class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
+                                    data-bs-toggle="dropdown">
                                 <i class="ti tabler-dots-vertical"></i>
                             </button>
 
@@ -114,8 +198,8 @@ class ProductReviewController extends Controller
                     ';
                 })
 
-
                 ->rawColumns([
+                    'checkbox',
                     'review_info',
                     'verified',
                     'status_badge',
@@ -124,8 +208,19 @@ class ProductReviewController extends Controller
                 ->make(true);
         }
 
-        return view('content.product_reviews.index');
+        /*
+        |--------------------------------------------------------------------------
+        | NORMAL PAGE LOAD
+        |--------------------------------------------------------------------------
+        */
+        return view('content.product_reviews.index', [
+        'products' =>  Product::select('id', 'title')->orderBy('title')->get(),
+        'users'    =>  User::select('id', 'name')->orderBy('name')->get(),
+    ]);
+
+
     }
+
 
     /**
      * Show full review details (AJAX)
@@ -178,4 +273,21 @@ class ProductReviewController extends Controller
 
         return response()->json(['message' => 'Review deleted successfully']);
     }
+
+    public function bulkStatus(Request $request)
+    {
+        ProductReview::whereIn('id', $request->ids)
+            ->update(['status' => $request->status]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        ProductReview::whereIn('id', $request->ids)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+
 }

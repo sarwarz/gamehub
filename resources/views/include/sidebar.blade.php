@@ -164,24 +164,6 @@
             </li>
             @endif
 
-            {{-- Inactive Products --}}
-            @if(Route::has('products.inactive'))
-            <li class="menu-item {{ menuItemActive(['products.inactive']) }}">
-                <a href="{{ route('products.inactive') }}" class="menu-link">
-                    <div data-i18n="Inactive Product">Inactive Product</div>
-                </a>
-            </li>
-            @endif
-
-            {{-- Featured Products --}}
-            @if(Route::has('products.featured'))
-            <li class="menu-item {{ menuItemActive(['products.featured']) }}">
-                <a href="{{ route('products.featured') }}" class="menu-link">
-                    <div data-i18n="Featured Product">Featured Product</div>
-                </a>
-            </li>
-            @endif
-
             {{-- Request Product --}}
             <li class="menu-item {{ menuItemActive(['product-requests.index']) }}">
                 <a href="{{ route('product-requests.index') }}" class="menu-link">
@@ -215,22 +197,6 @@
             <li class="menu-item {{ menuItemActive(['seller-offers.index']) }}">
                 <a href="{{ route('seller-offers.index') }}" class="menu-link">
                     <div data-i18n="All Offers">All Offers</div>
-                </a>
-            </li>
-            @endif
-
-            @if(Route::has('seller-offers.pending'))
-            <li class="menu-item {{ menuItemActive(['seller-offers.pending']) }}">
-                <a href="{{ route('seller-offers.pending') }}" class="menu-link">
-                    <div data-i18n="Pending Offers">Pending Offers</div>
-                </a>
-            </li>
-            @endif
-
-            @if(Route::has('seller-offers.rejected'))
-            <li class="menu-item {{ menuItemActive(['seller-offers.rejected']) }}">
-                <a href="{{ route('seller-offers.rejected') }}" class="menu-link">
-                    <div data-i18n="Rejected Offers">Rejected Offers</div>
                 </a>
             </li>
             @endif

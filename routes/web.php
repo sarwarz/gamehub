@@ -335,9 +335,9 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         Route::resource('products', ProductController::class)
             ->except(['show']);
 
-        // Bulk delete multiple products
-        Route::delete('products/bulk-delete', [ProductController::class, 'bulkDelete'])
-            ->name('products.bulk-delete');
+        Route::post('products/bulk-status',   [ProductController::class, 'bulkStatus'])->name('products.bulk-status');
+        Route::post('products/bulk-featured', [ProductController::class, 'bulk-featured'])->name('products.bulk-featured');
+        Route::post('products/bulk-delete',   [ProductController::class, 'bulkDelete'])->name('products.bulk-delete');
 
         // Preview a product (admin/internal view)
         Route::get('products/{id}/preview', [ProductController::class, 'preview'])
@@ -346,14 +346,6 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // View offers related to a specific product
         Route::get('products/{product}/offers', [ProductController::class, 'offers'])
             ->name('products.offers');
-
-        // List inactive products
-        Route::get('products/inactive', [ProductController::class, 'inactive'])
-            ->name('products.inactive');
-
-        // List featured products
-        Route::get('products/featured', [ProductController::class, 'featured'])
-            ->name('products.featured');
 
     });
 
@@ -376,8 +368,11 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         Route::resource('product-requests', ProductRequestController::class)
             ->except(['show']);
 
-        // Bulk delete multiple product requests
-        Route::delete('product-requests/bulk-delete', [ProductRequestController::class, 'bulkDelete'])
+        // 🔥 BULK ACTIONS
+        Route::post('/bulk-status', [ProductRequestController::class, 'bulkStatus'])
+            ->name('product-requests.bulk-status');
+
+        Route::post('/bulk-delete', [ProductRequestController::class, 'bulkDelete'])
             ->name('product-requests.bulk-delete');
 
     });
@@ -418,6 +413,17 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             Route::delete('{review}', 'destroy')->name('destroy');
 
         });
+
+        // ======================
+        // BULK ACTIONS
+        // ======================
+        Route::post('product-reviews/bulk-status', 
+            [ProductReviewController::class, 'bulkStatus']
+        )->name('product-reviews.bulk-status');
+
+        Route::post('product-reviews/bulk-delete', 
+            [ProductReviewController::class, 'bulkDelete']
+        )->name('product-reviews.bulk-delete');
     
 
 
@@ -589,15 +595,6 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             Route::get('/', [SellerOfferController::class, 'index'])
                 ->name('index');
 
-            // List pending seller offers
-            Route::get('pending', [SellerOfferController::class, 'pending'])
-                ->name('pending');
-
-            // List rejected seller offers
-            Route::get('rejected', [SellerOfferController::class, 'rejected'])
-                ->name('rejected');
-
-
             /*
             |------------------------------------------------------------------
             | CRUD Operations
@@ -624,11 +621,19 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             Route::delete('{offer}', [SellerOfferController::class, 'destroy'])
                 ->name('destroy');
 
-            // Bulk delete seller offers
-            Route::delete('bulk-delete', [SellerOfferController::class, 'bulkDelete'])
-                ->name('bulk-delete');
 
         });
+
+        /* ===============================
+         | BULK ACTIONS
+         =============================== */
+        Route::post('seller-offers/bulk-status',
+            [SellerOfferController::class, 'bulkStatus']
+        )->name('seller-offers.bulk-status');
+
+        Route::post('seller-offers/bulk-delete',
+            [SellerOfferController::class, 'bulkDelete']
+        )->name('seller-offers.bulk-delete');
 
 
     /*

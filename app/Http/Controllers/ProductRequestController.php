@@ -22,44 +22,130 @@ class ProductRequestController extends Controller
     {
         if ($request->ajax()) {
 
-            $requests = ProductRequest::with([
-                'user',
-                'category',
-                'platform',
-                'type',
-                'region',
-                'language',
-                'worksOn',
-            ]);
+            $requests = ProductRequest::query()
+                ->with([
+                    'user',
+                    'category',
+                    'platform',
+                    'type',
+                    'region',
+                    'language',
+                    'worksOn',
+                ]);
 
+            /*
+            |--------------------------------------------------------------------------
+            | Apply Dynamic Filters (Orders / Products Style)
+            |--------------------------------------------------------------------------
+            */
+            foreach ($request->filters ?? [] as $filter) {
+
+                if (
+                    empty($filter['field']) ||
+                    !array_key_exists('value', $filter) ||
+                    $filter['value'] === ''
+                ) {
+                    continue;
+                }
+
+                $field    = $filter['field'];
+                $operator = $filter['operator'] ?? '=';
+                $value    = $filter['value'];
+
+                switch ($field) {
+
+                    /* ===============================
+                    * BASIC FIELDS
+                    * =============================== */
+
+                    case 'title':
+                        if ($operator === 'like') {
+                            $requests->where('title', 'LIKE', "%{$value}%");
+                        } else {
+                            $requests->where('title', $operator, $value);
+                        }
+                        break;
+
+                    case 'status':
+                        $requests->where('status', $value);
+                        break;
+
+                    case 'created_at':
+                        $requests->whereDate('created_at', $value);
+                        break;
+
+                    /* ===============================
+                    * RELATION (FK) FIELDS
+                    * =============================== */
+
+                    case 'category_id':
+                        $requests->where('category_id', $value);
+                        break;
+
+                    case 'platform_id':
+                        $requests->where('platform_id', $value);
+                        break;
+
+                    case 'type_id':
+                        $requests->where('type_id', $value);
+                        break;
+
+                    case 'region_id':
+                        $requests->where('region_id', $value);
+                        break;
+
+                    case 'language_id':
+                        $requests->where('language_id', $value);
+                        break;
+
+                    case 'works_on_id':
+                        $requests->where('works_on_id', $value);
+                        break;
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | DataTable Response
+            |--------------------------------------------------------------------------
+            */
             return DataTables::of($requests)
                 ->addIndexColumn()
 
+                ->addColumn('checkbox', function ($row) {
+                    return '<input type="checkbox"
+                                class="bulk-checkbox form-check-input"
+                                value="'.$row->id.'">';
+                })
+
                 ->addColumn('request_info', function ($row) {
                     return '
-                        <strong>'.$row->title.'</strong><br>
+                        <strong>'.e($row->title).'</strong><br>
                         <small class="text-muted">
-                            By: '.$row->user->name.'
+                            By: '.e($row->user->name).'
                         </small>
                     ';
                 })
 
                 ->addColumn('meta', function ($row) {
                     return implode('<br>', [
-                        'Category: '.$row->category->name,
-                        'Platform: '.$row->platform->name,
-                        'Type: '.$row->type->name,
-                        'Region: '.$row->region->name,
+                        'Category: '.e($row->category->name),
+                        'Platform: '.e($row->platform->name),
+                        'Type: '.e($row->type->name),
+                        'Region: '.e($row->region->name),
                     ]);
                 })
 
                 ->addColumn('source', function ($row) {
                     return $row->source_url
-                        ? '<a href="'.$row->source_url.'" target="_blank" class="text-primary">View</a>'
+                        ? '<a href="'.e($row->source_url).'"
+                            target="_blank"
+                            class="text-primary">View</a>'
                         : '-';
                 })
 
                 ->addColumn('status_badge', function ($row) {
+
                     $map = [
                         'pending'   => 'warning',
                         'approved'  => 'success',
@@ -75,16 +161,17 @@ class ProductRequestController extends Controller
                 ->addColumn('actions', function ($row) {
                     return '
                         <a href="'.route('product-requests.edit', $row->id).'"
-                           class="btn btn-sm btn-warning">Edit</a>
+                        class="btn btn-sm btn-warning">Edit</a>
 
                         <button class="btn btn-sm btn-danger btn-delete"
-                            data-url="'.route('product-requests.destroy', $row->id).'">
+                                data-url="'.route('product-requests.destroy', $row->id).'">
                             Delete
                         </button>
                     ';
                 })
 
                 ->rawColumns([
+                    'checkbox',
                     'request_info',
                     'meta',
                     'source',
@@ -94,8 +181,21 @@ class ProductRequestController extends Controller
                 ->make(true);
         }
 
-        return view('content.product_requests.index');
+        /*
+        |--------------------------------------------------------------------------
+        | Normal Page Load
+        |--------------------------------------------------------------------------
+        */
+        return view('content.product_requests.index', [
+            'categories' => ProductCategory::all(),
+            'platforms'  => ProductPlatform::all(),
+            'types'      => ProductType::all(),
+            'regions'    => ProductRegion::all(),
+            'languages'  => ProductLanguage::all(),
+            'workson'    => ProductWorksOn::all(),
+        ]);
     }
+
 
     /**
      * Show create form
@@ -190,4 +290,21 @@ class ProductRequestController extends Controller
             'message' => 'Product request deleted successfully'
         ]);
     }
+
+    // BULK STATUS
+    public function bulkStatus(Request $request)
+    {
+        ProductRequest::whereIn('id', $request->ids)
+            ->update(['status' => $request->status]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // BULK DELETE
+    public function bulkDelete(Request $request)
+    {
+        ProductRequest::whereIn('id', $request->ids)->delete();
+        return response()->json(['success' => true]);
+    }
+
 }

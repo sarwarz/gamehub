@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Seller;
+use App\Models\Product;
 use App\Models\SellerOffer;
 use Illuminate\Http\Request;
 use App\Models\SellerOfferKey;
-use App\Services\CurrencyService;
 use Yajra\DataTables\DataTables;
 
 class SellerOfferController extends Controller
@@ -13,19 +14,83 @@ class SellerOfferController extends Controller
     /**
      * Display all offers (DataTable).
      */
-    public function index(Request $request, CurrencyService $currencyService)
+    public function index(Request $request)
     {
-
-
         if ($request->ajax()) {
-            return $this->offerDataTable(
-                SellerOffer::query(), // all offers
-                $currencyService
-            );
+
+            $query = SellerOffer::query()
+                ->with([
+                    'seller:id,store_name,email,logo',
+                    'product:id,title,cover_image'
+                ]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | APPLY DYNAMIC FILTERS (Orders-style)
+            |--------------------------------------------------------------------------
+            */
+            foreach ($request->filters ?? [] as $filter) {
+
+                if (
+                    empty($filter['field']) ||
+                    !array_key_exists('value', $filter) ||
+                    $filter['value'] === '' ||
+                    $filter['value'] === null
+                ) {
+                    continue;
+                }
+
+                $field    = $filter['field'];
+                $operator = $filter['operator'] ?? '=';
+                $value    = $filter['value'];
+
+                switch ($field) {
+
+                    /* ===============================
+                    | DIRECT FIELDS
+                    =============================== */
+                    case 'status':
+                    case 'sale_mode':
+                    case 'retail_price':
+                    case 'wholesale_10_99_price':
+                    case 'wholesale_100_plus_price':
+                        $this->applyOperator($query, $field, $operator, $value);
+                        break;
+
+                    case 'is_verified':
+                    case 'is_promoted':
+                        $query->where($field, (bool) $value);
+                        break;
+
+                    case 'created_at':
+                        $query->whereDate('created_at', $value);
+                        break;
+
+                    /* ===============================
+                    | RELATIONS
+                    =============================== */
+                    case 'seller_id':
+                    case 'product_id':
+                        $query->where($field, $value);
+                        break;
+                }
+            }
+
+
+            return $this->offerDataTable($query);
         }
 
-        return view('content.seller_offers.index');
+        /*
+        |--------------------------------------------------------------------------
+        | NORMAL PAGE LOAD
+        |--------------------------------------------------------------------------
+        */
+        return view('content.seller_offers.index', [
+            'sellers'  => Seller::select('id', 'store_name')->orderBy('store_name')->get(),
+            'products' => Product::select('id', 'title')->orderBy('title')->get(),
+        ]);
     }
+
 
 
     /**
@@ -160,6 +225,31 @@ class SellerOfferController extends Controller
         return response()->json(['success' => true]);
     }
 
+    public function bulkStatus(Request $request)
+    {
+        $request->validate([
+            'ids'    => 'required|array',
+            'status' => 'required|in:active,inactive'
+        ]);
+
+        SellerOffer::whereIn('id', $request->ids)
+            ->update(['status' => $request->status]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array'
+        ]);
+
+        SellerOffer::whereIn('id', $request->ids)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+
     
 
 
@@ -180,10 +270,8 @@ class SellerOfferController extends Controller
         ]);
     }
 
-    private function offerDataTable($query, CurrencyService $currencyService)
+    private function offerDataTable($query, )
     {
-        $currencyCode   = $currencyService->code();
-        $currencySymbol = $currencyService->symbol();
 
         $query->with([
             'seller:id,store_name,email,logo',
@@ -245,15 +333,15 @@ class SellerOfferController extends Controller
             })
 
             ->editColumn('retail_price', fn($o) =>
-                $this->money($o->retail_price, $currencySymbol, $currencyCode)
+                format_currency($o->retail_price)
             )
 
             ->editColumn('wholesale_10_99_price', fn($o) =>
-                $this->money($o->wholesale_10_99_price, $currencySymbol, $currencyCode)
+                format_currency($o->wholesale_10_99_price)
             )
 
             ->editColumn('wholesale_100_plus_price', fn($o) =>
-                $this->money($o->wholesale_100_plus_price, $currencySymbol, $currencyCode)
+                format_currency($o->wholesale_100_plus_price)
             )
 
 
@@ -288,12 +376,37 @@ class SellerOfferController extends Controller
             ->make(true);
     }
 
-    private function money($amount, $symbol, $code)
+
+
+
+    private function applyOperator($query, $field, $operator, $value)
     {
-        return $amount !== null
-            ? $symbol.' '.number_format($amount, 2).' '.$code
-            : '-';
+        return match ($operator) {
+
+            '='  => $query->where($field, '=', $value),
+            '!=' => $query->where($field, '!=', $value),
+
+            '>'  => $query->where($field, '>', $value),
+            '<'  => $query->where($field, '<', $value),
+            '>=' => $query->where($field, '>=', $value),
+            '<=' => $query->where($field, '<=', $value),
+
+            'like' =>
+                $query->where($field, 'LIKE', "%{$value}%"),
+
+            'not_like' =>
+                $query->where($field, 'NOT LIKE', "%{$value}%"),
+
+            'in' =>
+                $query->whereIn($field, array_map('trim', explode(',', $value))),
+
+            'not_in' =>
+                $query->whereNotIn($field, array_map('trim', explode(',', $value))),
+
+            default => $query
+        };
     }
+
 
 
 
