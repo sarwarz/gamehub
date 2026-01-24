@@ -107,6 +107,12 @@ class User extends Authenticatable
         });
     }
 
+    public function media()
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
+
 
 
 

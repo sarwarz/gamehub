@@ -363,9 +363,9 @@
             </li>
             @endif
 
-             @if(Route::has('media.add'))
-            <li class="menu-item {{ menuItemActive(['media.add']) }}">
-                <a href="{{ route('media.add') }}" class="menu-link">
+             @if(Route::has('media.create'))
+            <li class="menu-item {{ menuItemActive(['media.create']) }}">
+                <a href="{{ route('media.create') }}" class="menu-link">
                     <div data-i18n="Add Media File">Add Media File</div>
                 </a>
             </li>

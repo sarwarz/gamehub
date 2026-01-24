@@ -25,10 +25,6 @@ return new class extends Migration
             $table->foreignId('publisher_id')->nullable()
                 ->constrained('product_publishers')->nullOnDelete();
 
-            // Media
-            $table->string('cover_image')->nullable();
-            $table->json('gallery')->nullable();
-
             // Metadata
             $table->json('attributes')->nullable();
             $table->json('system_requirements')->nullable();

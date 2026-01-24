@@ -5,62 +5,23 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
         $products = [
-            [
-                'title' => 'Grand Theft Auto V (PC)',
-                'sku'   => 'GTA5-PC',
-                'image' => 'gta5.jpg',
-            ],
-            [
-                'title' => 'Red Dead Redemption 2 (PC)',
-                'sku'   => 'RDR2-PC',
-                'image' => 'rdr2.jpg',
-            ],
-            [
-                'title' => 'Cyberpunk 2077 (PC)',
-                'sku'   => 'CYBERPUNK-2077-PC',
-                'image' => 'cyberpunk2077.jpg',
-            ],
-            [
-                'title' => 'Elden Ring (PC)',
-                'sku'   => 'ELDEN-RING-PC',
-                'image' => 'eldenring.jpg',
-            ],
-            [
-                'title' => 'Call of Duty: Modern Warfare III (PC)',
-                'sku'   => 'COD-MW3-PC',
-                'image' => 'cod-mw3.jpg',
-            ],
-            [
-                'title' => 'EA Sports FC 24 (PC)',
-                'sku'   => 'EA-FC24-PC',
-                'image' => 'fc24.jpg',
-            ],
-            [
-                'title' => 'Minecraft Java Edition',
-                'sku'   => 'MINECRAFT-JAVA-PC',
-                'image' => 'minecraft.jpg',
-            ],
-            [
-                'title' => 'Assassin’s Creed Valhalla (PC)',
-                'sku'   => 'AC-VALHALLA-PC',
-                'image' => 'ac-valhalla.jpg',
-            ],
-            [
-                'title' => 'Forza Horizon 5 (PC)',
-                'sku'   => 'FORZA-H5-PC',
-                'image' => 'forza5.jpg',
-            ],
-            [
-                'title' => 'The Witcher 3: Wild Hunt (PC)',
-                'sku'   => 'WITCHER3-PC',
-                'image' => 'witcher3.jpg',
-            ],
+            ['title' => 'Grand Theft Auto V (PC)', 'sku' => 'GTA5-PC', 'image' => 'gta5.jpg'],
+            ['title' => 'Red Dead Redemption 2 (PC)', 'sku' => 'RDR2-PC', 'image' => 'rdr2.jpg'],
+            ['title' => 'Cyberpunk 2077 (PC)', 'sku' => 'CYBERPUNK-2077-PC', 'image' => 'cyberpunk2077.jpg'],
+            ['title' => 'Elden Ring (PC)', 'sku' => 'ELDEN-RING-PC', 'image' => 'eldenring.jpg'],
+            ['title' => 'Call of Duty: Modern Warfare III (PC)', 'sku' => 'COD-MW3-PC', 'image' => 'cod-mw3.jpg'],
+            ['title' => 'EA Sports FC 24 (PC)', 'sku' => 'EA-FC24-PC', 'image' => 'fc24.jpg'],
+            ['title' => 'Minecraft Java Edition', 'sku' => 'MINECRAFT-JAVA-PC', 'image' => 'minecraft.jpg'],
+            ['title' => 'Assassin’s Creed Valhalla (PC)', 'sku' => 'AC-VALHALLA-PC', 'image' => 'ac-valhalla.jpg'],
+            ['title' => 'Forza Horizon 5 (PC)', 'sku' => 'FORZA-H5-PC', 'image' => 'forza5.jpg'],
+            ['title' => 'The Witcher 3: Wild Hunt (PC)', 'sku' => 'WITCHER3-PC', 'image' => 'witcher3.jpg'],
         ];
 
         foreach ($products as $p) {
@@ -70,7 +31,7 @@ class ProductSeeder extends Seeder
                 [
                     'title'         => $p['title'],
                     'sku'           => $p['sku'],
-                    'description'   => $p['title'].' description.',
+                    'description'   => $p['title'] . ' description.',
                     'developer_id'  => 1,
                     'publisher_id'  => 1,
                     'label_id'      => rand(1, 3),
@@ -94,7 +55,7 @@ class ProductSeeder extends Seeder
                     ],
 
                     'meta_title'       => $p['title'],
-                    'meta_description' => $p['title'].' buy online.',
+                    'meta_description' => $p['title'] . ' buy online.',
                     'meta_keywords'    => strtolower($p['title']),
                 ]
             );
@@ -103,13 +64,24 @@ class ProductSeeder extends Seeder
              | Primary Image (Media)
              ============================ */
             if (!$product->primaryImage) {
-                $product->media()->create([
-                    'disk'       => 'public',
-                    'directory'  => 'products/cover',
-                    'filename'   => $p['image'],
-                    'type'       => 'image',
-                    'is_primary' => true,
-                ]);
+
+                $directory = 'uploads/products/cover';
+                $fullPath  = public_path($directory . '/' . $p['image']);
+
+                if (File::exists($fullPath)) {
+
+                    $product->media()->create([
+                        'disk'          => 'public',
+                        'directory'     => $directory,
+                        'filename'      => $p['image'],
+                        'original_name' => $p['image'],
+                        'mime_type'     => File::mimeType($fullPath),
+                        'extension'     => pathinfo($p['image'], PATHINFO_EXTENSION),
+                        'size'          => File::size($fullPath),
+                        'type'          => 'image',
+                        'is_primary'    => true,
+                    ]);
+                }
             }
 
             /* ============================

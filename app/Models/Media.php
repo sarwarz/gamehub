@@ -48,8 +48,9 @@ class Media extends Model
 
     public function getUrlAttribute(): string
     {
-        return Storage::disk($this->disk)->url($this->path);
+        return asset($this->path);
     }
+
 
     
 

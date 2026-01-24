@@ -3,15 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Media;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use App\Services\MediaService;
+use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Storage;
 
 class MediaController extends Controller
 {
-
-
     /* ==================================================
      | Media Library
      ================================================== */
@@ -27,7 +27,10 @@ class MediaController extends Controller
             $query->where('original_name', 'like', '%' . $request->search . '%');
         }
 
-        $media = $query->latest()->paginate(30)->withQueryString();
+        $media = $query
+            ->latest()
+            ->paginate(30)
+            ->withQueryString();
 
         return view('content.media.index', compact('media'));
     }
@@ -37,61 +40,34 @@ class MediaController extends Controller
      ================================================== */
     public function create()
     {
-        return view('media.create');
+        return view('content.media.create');
     }
 
     /* ==================================================
      | Store Media
      ================================================== */
-    public function store(Request $request)
+    public function store(Request $request, MediaService $mediaService)
     {
         $request->validate([
-            'files'   => ['required', 'array'],
-            'files.*' => ['file', 'max:51200'], // 50MB
+            'files'   => ['required', 'array', 'min:1'],
+            'files.*' => [
+                'file',
+                'max:51200', // 50MB
+                'mimetypes:image/*,video/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ],
         ]);
 
         DB::beginTransaction();
 
         try {
+            $directory = 'uploads/' . now()->format('Y/m');
 
             foreach ($request->file('files') as $file) {
-
-                $disk      = 'public';
-                $directory = 'uploads/' . now()->format('Y/m');
-
-                $originalName = $file->getClientOriginalName();
-                $extension    = $file->getClientOriginalExtension();
-                $mime         = $file->getMimeType();
-                $size         = $file->getSize();
-
-                $filename = Str::uuid() . '.' . $extension;
-
-                Storage::disk($disk)->putFileAs(
-                    $directory,
+                $mediaService->upload(
                     $file,
-                    $filename
+                    auth()->user(), // owner
+                    $directory
                 );
-
-                $type = $this->detectType($mime);
-
-                $meta = [];
-
-                if ($type === 'image') {
-                    [$width, $height] = getimagesize($file->getRealPath());
-                    $meta = compact('width', 'height');
-                }
-
-                Media::create([
-                    'disk'          => $disk,
-                    'directory'     => $directory,
-                    'filename'      => $filename,
-                    'original_name' => $originalName,
-                    'mime_type'     => $mime,
-                    'extension'     => $extension,
-                    'type'          => $type,
-                    'size'          => $size,
-                    'meta'          => $meta,
-                ]);
             }
 
             DB::commit();
@@ -103,12 +79,16 @@ class MediaController extends Controller
         } catch (\Throwable $e) {
 
             DB::rollBack();
+            report($e);
 
             return back()
-                ->withErrors(['upload' => $e->getMessage()])
+                ->withErrors([
+                    'upload' => 'Upload failed. Please try again.',
+                ])
                 ->withInput();
         }
     }
+
 
     /* ==================================================
      | Delete Media
@@ -118,8 +98,6 @@ class MediaController extends Controller
         DB::beginTransaction();
 
         try {
-
-            // Delete file
             if (Storage::disk($media->disk)->exists($media->path)) {
                 Storage::disk($media->disk)->delete($media->path);
             }
@@ -133,8 +111,11 @@ class MediaController extends Controller
         } catch (\Throwable $e) {
 
             DB::rollBack();
+            report($e);
 
-            return back()->withErrors(['delete' => $e->getMessage()]);
+            return back()->withErrors([
+                'delete' => 'Failed to delete media.',
+            ]);
         }
     }
 
@@ -157,4 +138,6 @@ class MediaController extends Controller
             default => 'other',
         };
     }
+
+    
 }

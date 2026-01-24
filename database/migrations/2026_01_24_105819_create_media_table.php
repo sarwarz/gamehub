@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
 
             // Polymorphic relation
-            $table->morphs('mediable'); 
+            $table->nullableMorphs('mediable'); 
             // mediable_id | mediable_type
 
             // File info

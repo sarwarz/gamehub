@@ -657,8 +657,10 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
         Route::get('/{media}', [MediaController::class, 'show'])->name('show');
         Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+        
 
     });
+    
 
 
     /*

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\Media;
+use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\SellerOffer;
 use Illuminate\Support\Str;
@@ -11,6 +11,7 @@ use App\Models\ProductLabel;
 use Illuminate\Http\Request;
 use App\Models\ProductRegion;
 use App\Models\ProductWorksOn;
+use App\Services\MediaService;
 use App\Models\ProductCategory;
 use App\Models\ProductLanguage;
 use App\Models\ProductPlatform;
@@ -177,7 +178,7 @@ class ProductController extends Controller
     /**
      * Store a newly created product.
      */
-    public function store(Request $request)
+    public function store(Request $request, MediaService $mediaService)
     {
         //  Validate
          $validated = $request->validate([
@@ -259,47 +260,32 @@ class ProductController extends Controller
         // Save product
         $product = Product::create($validated);
 
-        /* ============================
-         | Cover Image
-         ============================ */
+         /* ============================
+        | Cover Image (PRIMARY)
+        ============================ */
         if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-
-            $path = $file->store('products/cover', 'public');
-
-            $product->media()->create([
-                'disk'          => 'public',
-                'directory'     => dirname($path),
-                'filename'      => basename($path),
-                'original_name' => $file->getClientOriginalName(),
-                'mime_type'     => $file->getMimeType(),
-                'extension'     => $file->getClientOriginalExtension(),
-                'size'          => $file->getSize(),
-                'type'          => 'image',
-                'is_primary'    => true,
-            ]);
+            $mediaService->upload(
+                $request->file('cover_image'),
+                $product,
+                'uploads/products/cover',
+                true // is primary
+            );
         }
 
 
-        /* ============================
-         | Gallery Images
-         ============================ */
+       /* ============================
+        | Gallery Images
+        ============================ */
         if ($request->hasFile('gallery')) {
             foreach ($request->file('gallery') as $index => $file) {
+                $media = $mediaService->upload(
+                    $file,
+                    $product,
+                    'uploads/products/gallery'
+                );
 
-                $path = $file->store('products/gallery', 'public');
-
-                $product->media()->create([
-                    'disk'          => 'public',
-                    'directory'     => dirname($path),
-                    'filename'      => basename($path),
-                    'original_name' => $file->getClientOriginalName(),
-                    'mime_type'     => $file->getMimeType(),
-                    'extension'     => $file->getClientOriginalExtension(),
-                    'size'          => $file->getSize(),
-                    'type'          => 'image',
-                    'sort_order'    => $index + 1,
-                ]);
+                // set sort order
+                $media->update(['sort_order' => $index + 1]);
             }
         }
 

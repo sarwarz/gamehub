@@ -82,6 +82,8 @@
                     </div>
                 </div>
 
+                
+
                 <div class="card mb-6">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title mb-0">System Requirements</h5>
