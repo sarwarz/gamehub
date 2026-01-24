@@ -207,6 +207,8 @@
                             <label class="form-label">Expiry Date</label>
                             <input type="date"
                                 name="expires_at"
+                                id="flatpickr-date"
+                                placeholder="YYYY-MM-DD"
                                 class="form-control @error('expires_at') is-invalid @enderror"
                                 value="{{ old('expires_at') }}">
                             @error('expires_at')

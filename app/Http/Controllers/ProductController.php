@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\Media;
 use App\Models\ProductType;
 use App\Models\SellerOffer;
 use Illuminate\Support\Str;
@@ -32,21 +33,21 @@ class ProductController extends Controller
 
             $products = Product::query()
                 ->with([
-                    'categories',
-                    'platforms',
-                    'types',
-                    'regions',
-                    'languages',
-                    'worksOn',
-                    'developer',
-                    'publisher',
+                    'categories:id,name',
+                    'platforms:id,name',
+                    'types:id,name,commission',
+                    'regions:id,name',
+                    'languages:id,name',
+                    'worksOn:id,name',
+                    'developer:id,name',
+                    'publisher:id,name',
+                    'media:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
+                    'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
                 ]);
 
-            /**
-             * ===============================
-             * APPLY DYNAMIC FILTERS (Orders-style)
-             * ===============================
-             */
+            /* ===============================
+            | APPLY DYNAMIC FILTERS
+            =============================== */
             foreach ($request->filters ?? [] as $filter) {
 
                 if (
@@ -64,9 +65,8 @@ class ProductController extends Controller
                 switch ($field) {
 
                     /* ===============================
-                    * BASIC PRODUCT FIELDS
-                    * =============================== */
-
+                    | BASIC FIELDS
+                    =============================== */
                     case 'title':
                     case 'sku':
                         if ($operator === 'like') {
@@ -88,45 +88,43 @@ class ProductController extends Controller
                         $products->whereDate('created_at', $value);
                         break;
 
-
                     /* ===============================
-                    * RELATION FILTERS
-                    * =============================== */
-
+                    | RELATION FILTERS
+                    =============================== */
                     case 'category_id':
-                        $products->whereHas('categories', function ($q) use ($value) {
-                            $q->where('product_categories.id', $value);
-                        });
+                        $products->whereHas('categories', fn ($q) =>
+                            $q->where('product_categories.id', $value)
+                        );
                         break;
 
                     case 'platform_id':
-                        $products->whereHas('platforms', function ($q) use ($value) {
-                            $q->where('product_platforms.id', $value);
-                        });
+                        $products->whereHas('platforms', fn ($q) =>
+                            $q->where('product_platforms.id', $value)
+                        );
                         break;
 
                     case 'type_id':
-                        $products->whereHas('types', function ($q) use ($value) {
-                            $q->where('product_types.id', $value);
-                        });
+                        $products->whereHas('types', fn ($q) =>
+                            $q->where('product_types.id', $value)
+                        );
                         break;
 
                     case 'region_id':
-                        $products->whereHas('regions', function ($q) use ($value) {
-                            $q->where('product_regions.id', $value);
-                        });
+                        $products->whereHas('regions', fn ($q) =>
+                            $q->where('product_regions.id', $value)
+                        );
                         break;
 
                     case 'language_id':
-                        $products->whereHas('languages', function ($q) use ($value) {
-                            $q->where('product_languages.id', $value);
-                        });
+                        $products->whereHas('languages', fn ($q) =>
+                            $q->where('product_languages.id', $value)
+                        );
                         break;
 
                     case 'works_on_id':
-                        $products->whereHas('worksOn', function ($q) use ($value) {
-                            $q->where('product_works_on.id', $value);
-                        });
+                        $products->whereHas('worksOn', fn ($q) =>
+                            $q->where('product_works_on.id', $value)
+                        );
                         break;
 
                     case 'developer_id':
@@ -142,11 +140,6 @@ class ProductController extends Controller
             return $this->productDataTable($products);
         }
 
-        /**
-         * ===============================
-         * NORMAL PAGE LOAD
-         * ===============================
-         */
         return view('content.products.index', [
             'categories' => ProductCategory::where('status', 'active')->get(),
             'platforms'  => ProductPlatform::where('status', 'active')->get(),
@@ -158,6 +151,7 @@ class ProductController extends Controller
             'publishers' => ProductPublisher::where('status', 'active')->get(),
         ]);
     }
+
 
 
 
@@ -261,35 +255,58 @@ class ProductController extends Controller
             $validated['slug'] = Str::slug($validated['title']);
         }
 
-        // Handle cover image
-        if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-            $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
-
-            $file->move(public_path('uploads/products/cover'), $filename);
-
-            $validated['cover_image'] = 'uploads/products/cover/'.$filename;
-        }
-
-
-        // Handle gallery images
-        if ($request->hasFile('gallery')) {
-            $galleryPaths = [];
-
-            foreach ($request->file('gallery') as $file) {
-                $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
-                $file->move(public_path('uploads/products/gallery'), $filename);
-
-                $galleryPaths[] = 'uploads/products/gallery/'.$filename;
-            }
-
-            $validated['gallery'] = $galleryPaths;
-        }
-
-
 
         // Save product
         $product = Product::create($validated);
+
+        /* ============================
+         | Cover Image
+         ============================ */
+        if ($request->hasFile('cover_image')) {
+            $file = $request->file('cover_image');
+
+            $path = $file->store('products/cover', 'public');
+
+            $product->media()->create([
+                'disk'          => 'public',
+                'directory'     => dirname($path),
+                'filename'      => basename($path),
+                'original_name' => $file->getClientOriginalName(),
+                'mime_type'     => $file->getMimeType(),
+                'extension'     => $file->getClientOriginalExtension(),
+                'size'          => $file->getSize(),
+                'type'          => 'image',
+                'is_primary'    => true,
+            ]);
+        }
+
+
+        /* ============================
+         | Gallery Images
+         ============================ */
+        if ($request->hasFile('gallery')) {
+            foreach ($request->file('gallery') as $index => $file) {
+
+                $path = $file->store('products/gallery', 'public');
+
+                $product->media()->create([
+                    'disk'          => 'public',
+                    'directory'     => dirname($path),
+                    'filename'      => basename($path),
+                    'original_name' => $file->getClientOriginalName(),
+                    'mime_type'     => $file->getMimeType(),
+                    'extension'     => $file->getClientOriginalExtension(),
+                    'size'          => $file->getSize(),
+                    'type'          => 'image',
+                    'sort_order'    => $index + 1,
+                ]);
+            }
+        }
+
+
+
+
+        
 
         // Sync many-to-many
         $product->categories()->sync($request->input('category_ids', []));
@@ -311,7 +328,18 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $product = Product::findOrFail($id);
+        $product = Product::with([
+            'primaryImage',
+            'galleryImages',
+            'categories:id,name',
+            'platforms:id,name',
+            'types:id,name',
+            'regions:id,name',
+            'languages:id,name',
+            'worksOn:id,name',
+            'developer:id,name',
+            'publisher:id,name',
+        ])->findOrFail($id);
 
         return view('content.products.edit', [
             'product'    => $product,
@@ -323,9 +351,10 @@ class ProductController extends Controller
             'workson'    => ProductWorksOn::all(),
             'developers' => ProductDeveloper::all(),
             'publishers' => ProductPublisher::all(),
-            'labels'     => ProductLabel::all( ),
+            'labels'     => ProductLabel::all(),
         ]);
     }
+
 
 
     /**
@@ -405,47 +434,71 @@ class ProductController extends Controller
                 $validated['slug'] = Str::slug($validated['title']);
             }
 
-            // Cover image
-            if ($request->hasFile('cover_image')) {
-                // delete old image
-                if ($product->cover_image && file_exists(public_path($product->cover_image))) {
-                    unlink(public_path($product->cover_image));
-                }
-
-                $file = $request->file('cover_image');
-                $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
-                $file->move(public_path('uploads/products/cover'), $filename);
-
-                $validated['cover_image'] = 'uploads/products/cover/'.$filename;
-            }
-
-
-            // Gallery
-            if ($request->hasFile('gallery')) {
-
-                // delete old gallery
-                if (!empty($product->gallery)) {
-                    foreach ($product->gallery as $img) {
-                        if (file_exists(public_path($img))) {
-                            unlink(public_path($img));
-                        }
-                    }
-                }
-
-                $galleryPaths = [];
-                foreach ($request->file('gallery') as $file) {
-                    $filename = time().'_'.Str::random(10).'.'.$file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/products/gallery'), $filename);
-
-                    $galleryPaths[] = 'uploads/products/gallery/'.$filename;
-                }
-
-                $validated['gallery'] = $galleryPaths;
-            }
-
 
             // Update product
             $product->update($validated);
+
+            // Cover image
+           if ($request->hasFile('cover_image')) {
+
+                // delete old primary image
+                $product->media()->where('is_primary', true)->each(function ($media) {
+                    Storage::disk($media->disk)->delete($media->path);
+                    $media->delete();
+                });
+
+                $file = $request->file('cover_image');
+                $path = $file->store('products/cover', 'public');
+
+                $product->media()->create([
+                    'disk'       => 'public',
+                    'directory'  => dirname($path),
+                    'filename'   => basename($path),
+                    'type'       => 'image',
+                    'is_primary' => true,
+                ]);
+            }
+
+
+
+            // Gallery
+            // ============================
+            // Gallery (Media-based)
+            // ============================
+            if ($request->hasFile('gallery')) {
+
+                // 1️⃣ Delete existing gallery media (non-primary images)
+                $product->media()
+                    ->where('type', 'image')
+                    ->where('is_primary', false)
+                    ->each(function ($media) {
+                        Storage::disk($media->disk)->delete($media->path);
+                        $media->delete();
+                    });
+
+                // 2️⃣ Upload new gallery images
+                foreach ($request->file('gallery') as $index => $file) {
+
+                    $path = $file->store('products/gallery', 'public');
+
+                    $product->media()->create([
+                        'disk'          => 'public',
+                        'directory'     => dirname($path),
+                        'filename'      => basename($path),
+                        'original_name' => $file->getClientOriginalName(),
+                        'mime_type'     => $file->getMimeType(),
+                        'extension'     => $file->getClientOriginalExtension(),
+                        'size'          => $file->getSize(),
+                        'type'          => 'image',
+                        'is_primary'    => false,
+                        'sort_order'    => $index + 1,
+                    ]);
+                }
+            }
+
+
+
+            
 
             // Sync many-to-many
             $product->categories()->sync($request->input('category_ids', []));
@@ -472,7 +525,8 @@ class ProductController extends Controller
             $product = Product::findOrFail($id);
 
             DB::transaction(function () use ($product) {
-                // Detach many-to-many relationships
+
+                // detach relations
                 $product->categories()->detach();
                 $product->platforms()->detach();
                 $product->types()->detach();
@@ -480,21 +534,12 @@ class ProductController extends Controller
                 $product->languages()->detach();
                 $product->worksOn()->detach();
 
-                // Delete cover image
-                if ($product->cover_image && Storage::disk('public')->exists($product->cover_image)) {
-                    Storage::disk('public')->delete($product->cover_image);
-                }
+                // delete media files + records
+                $product->media->each(function ($media) {
+                    Storage::disk($media->disk)->delete($media->path);
+                    $media->delete();
+                });
 
-                // Delete gallery images
-                if (!empty($product->gallery)) {
-                    foreach ($product->gallery as $img) {
-                        if (Storage::disk('public')->exists($img)) {
-                            Storage::disk('public')->delete($img);
-                        }
-                    }
-                }
-
-                // Delete product
                 $product->delete();
             });
 
@@ -504,6 +549,7 @@ class ProductController extends Controller
             return response()->json(['message' => 'Failed to delete product.'], 500);
         }
     }
+
 
     public function bulkStatus(Request $request)
     {
@@ -545,19 +591,10 @@ class ProductController extends Controller
                     $product->languages()->detach();
                     $product->worksOn()->detach();
 
-                    // Delete cover image
-                    if ($product->cover_image && file_exists(public_path($product->cover_image))) {
-                        unlink(public_path($product->cover_image));
-                    }
-
-                    // Delete gallery
-                    if (!empty($product->gallery)) {
-                        foreach ($product->gallery as $img) {
-                            if (file_exists(public_path($img))) {
-                                unlink(public_path($img));
-                            }
-                        }
-                    }
+                    $product->media->each(function ($media) {
+                        Storage::disk($media->disk)->delete($media->path);
+                        $media->delete();
+                    });
 
                     $product->delete();
                 }
@@ -578,7 +615,7 @@ class ProductController extends Controller
         return response()->json([
             'id'       => $product->id,
             'title'    => $product->title,
-            'cover'    => $product->cover_image ? asset($product->cover_image) : asset('assets/img/default-product.png'),
+            'cover'    => $product->primaryImage?->url ?? asset('assets/img/default-product.png'),
             'types'  => $product->types->pluck('name')->toArray(),
             'regions'  => $product->regions->pluck('name')->toArray(),
             'languages'=> $product->languages->pluck('name')->toArray(),
@@ -618,9 +655,9 @@ class ProductController extends Controller
             })
 
             ->addColumn('product_column', function ($row) {
-                $image = $row->cover_image
-                        ? asset($row->cover_image)
-                        : asset('assets/img/default-product.png');
+                $image = $row->primaryImage
+                    ? $row->primaryImage->url
+                    : asset('assets/img/default-product.png');
 
                 $title = e($row->title);
                 $developer = $row->developer?->name ?? 'Unknown Dev';

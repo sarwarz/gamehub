@@ -38,6 +38,7 @@
 
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/node-waves/node-waves.css') }}" />
 
+    <link rel="stylesheet" href="{{ asset('assets/vendor/libs/flatpickr/flatpickr.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/pickr/pickr-themes.css') }}" />
 
     <link rel="stylesheet" href="{{ asset('assets/vendor/css/core.css') }}" />
@@ -154,10 +155,13 @@
     <script src="{{ asset('assets/vendor/libs/quill/quill.js') }}"></script>
 
     <script src="{{ asset('assets/vendor/libs/sweetalert2/sweetalert2.js') }}"></script>
+    <script src="{{ asset('assets/vendor/libs/flatpickr/flatpickr.js') }}"></script>
 
     <!-- Main JS -->
 
     <script src="{{ asset('assets/js/main.js') }}"></script>
+
+     <script src="{{ asset('assets/js/forms-pickers.js') }}"></script>
 
     <!-- Page JS -->
     <script src="{{ asset('assets/js/app-ecommerce-dashboard.js') }}"></script>

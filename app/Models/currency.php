@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
+
 
 class Currency extends Model
 {
@@ -26,6 +28,16 @@ class Currency extends Model
         static::updated(function ($currency) {
             //  if "is_default" changed to true → clear cache
             if ($currency->isDirty('is_default') && $currency->is_default) {
+
+                 // 🔥 Ensure only one default currency exists
+                static::where('id', '!=', $currency->id)
+                    ->where('is_default', true)
+                    ->update(['is_default' => false]);
+
+                // 🔁 Sync with settings table
+                Setting::set('general', 'currency', $currency->code);
+
+
                 app(\App\Services\CurrencyService::class)->clearCache();
             }
         });

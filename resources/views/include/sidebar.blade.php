@@ -625,7 +625,7 @@
      <!-- Ecommerce -->
     <li class="menu-item">
 
-        <a href="javascript:void(0);" class="menu-link">
+        <a href="{{ route('settings.edit') }}" class="menu-link">
             <i class="menu-icon icon-base ti tabler-settings"></i>
             <div data-i18n="Settings">Settings</div>
         </a>

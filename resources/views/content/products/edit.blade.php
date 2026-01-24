@@ -75,29 +75,64 @@
 
                 <!-- Media -->
                 <div class="card mb-6">
-                    <div class="card-header"><h5 class="mb-0 card-title">Product Image</h5></div>
-                    <div class="card-body">
-                        <label>Current Cover:</label><br>
-                        @if($product->cover_image)
-                            <img src="{{ asset($product->cover_image) }}" class="mb-3" width="150">
-                        @else
-                            <p>-</p>
-                        @endif
-                        <input type="file" name="cover_image" class="form-control mb-3 @error('cover_image') is-invalid @enderror" />
-                        @error('cover_image') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="card-header">
+                        <h5 class="mb-0 card-title">Product Images</h5>
+                    </div>
 
-                        <label>Current Gallery:</label><br>
-                        @if($product->gallery)
-                            @foreach($product->gallery as $img)
-                                <img src="{{ asset($img) }}" class="me-2 mb-2" width="100">
-                            @endforeach
-                        @else
-                            <p>-</p>
-                        @endif
-                        <input type="file" name="gallery[]" class="form-control @error('gallery') is-invalid @enderror" multiple />
-                        @error('gallery') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    <div class="card-body">
+
+                        {{-- Cover Image --}}
+                        <div class="mb-4">
+                            <label class="form-label">Current Cover Image</label><br>
+
+                            @if($product->primaryImage)
+                                <img src="{{ $product->primaryImage->url }}"
+                                    class="img-thumbnail mb-2"
+                                    width="150">
+                            @else
+                                <p class="text-muted">No cover image</p>
+                            @endif
+
+                            <input type="file"
+                                name="cover_image"
+                                class="form-control @error('cover_image') is-invalid @enderror">
+
+                            @error('cover_image')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        {{-- Gallery Images --}}
+                        <div class="mb-2">
+                            <label class="form-label">Current Gallery Images</label><br>
+
+                            @if($product->galleryImages->count())
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    @foreach($product->galleryImages as $media)
+                                        <img src="{{ $media->url }}"
+                                            class="img-thumbnail"
+                                            width="100"
+                                            height="100">
+                                    @endforeach
+                                </div>
+                            @else
+                                <p class="text-muted">No gallery images</p>
+                            @endif
+
+                            <input type="file"
+                                name="gallery[]"
+                                class="form-control @error('gallery') is-invalid @enderror"
+                                multiple>
+
+                            @error('gallery')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
                     </div>
                 </div>
+
+
 
                 <div class="card mb-6">
                     <div class="card-header d-flex justify-content-between align-items-center">

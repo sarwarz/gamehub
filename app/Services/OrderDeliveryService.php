@@ -6,6 +6,8 @@ use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderNote;
 use Illuminate\Support\Facades\DB;
+use App\Mail\OrderDeliveredMail;
+use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class OrderDeliveryService
@@ -111,6 +113,8 @@ class OrderDeliveryService
             return;
         }
 
+        
+
         $order->notes()->create([
             'note' => 'Order auto-completed after successful delivery of all items.',
             'type' => 'system',
@@ -118,8 +122,19 @@ class OrderDeliveryService
         ]);
 
 
-        $order->update([
-            'status' => 'completed',
-        ]);
+        if (!$hasPendingItems) {
+
+            $order->update(['status' => 'completed']);
+
+            DB::afterCommit(function () use ($order) {
+                Mail::to(
+                    $order->addresses
+                        ->where('type', 'billing')
+                        ->first()?->email
+                )->queue(new OrderDeliveredMail($order));
+            });
+        }
+
+        
     }
 }

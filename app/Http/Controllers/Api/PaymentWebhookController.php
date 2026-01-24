@@ -13,6 +13,8 @@ use App\Jobs\AutoDeliverOrderJob;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderConfirmedMail;
 use Symfony\Component\HttpFoundation\Response;
 
 class PaymentWebhookController extends Controller
@@ -119,6 +121,11 @@ class PaymentWebhookController extends Controller
                     'type' => 'system',
                     'is_visible_to_customer' => true,
                 ]);
+
+                Mail::to($order->addresses
+                    ->where('type', 'billing')
+                    ->first()?->email
+                )->queue(new OrderConfirmedMail($order));
 
                 // Dispatch delivery AFTER commit
                 dispatch(new AutoDeliverOrderJob($order->id));

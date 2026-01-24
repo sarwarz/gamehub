@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Product extends Model
 {
@@ -19,8 +21,6 @@ class Product extends Model
         'developer_id',
         'publisher_id',
         'label_id',
-        'cover_image',
-        'gallery',
         'attributes',
         'system_requirements',
         'delivery_type',
@@ -33,7 +33,6 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'gallery'             => 'array',
         'attributes'          => 'array',
         'system_requirements' => 'array',
         'is_featured'         => 'boolean',
@@ -148,6 +147,31 @@ class Product extends Model
         return $this->hasMany(Slider::class);
     }
 
+    /* ============================
+     | Media Relations
+     ============================ */
+
+    public function media(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'mediable');
+    }
+
+    public function primaryImage(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'mediable')
+            ->where('type', 'image')
+            ->where('is_primary', true);
+    }
+
+    public function galleryImages(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'mediable')
+            ->where('type', 'image')
+            ->where('is_primary', false)
+            ->orderBy('sort_order');
+    }
+
+
 
 
     // Scope: Active Products
@@ -156,22 +180,6 @@ class Product extends Model
         return $query->where('status', 'active');
     }
 
-    public function getGalleryAttribute($value)
-    {
-        if (!$value) {
-            return [];
-        }
-
-        return collect(json_decode($value, true))
-            ->map(fn ($path) => url($path))
-            ->values()
-            ->toArray();
-    }
-
-    public function getCoverImageAttribute($value)
-    {
-        return $value ? url($value) : null;
-    }
 
 
 }

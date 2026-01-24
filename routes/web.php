@@ -15,6 +15,7 @@ use App\Http\Controllers\WalletController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\OrderNoteController;
@@ -1072,6 +1073,19 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Bulk delete users
         Route::post('users/bulk-delete', [UserController::class, 'bulkDelete'])
             ->name('users.bulk-delete');
+
+    });
+
+
+
+     Route::middleware('permission:settings')->group(function () {
+
+        // Global Settings
+        Route::get('/settings', [SettingController::class, 'edit'])
+            ->name('settings.edit');
+
+        Route::put('/settings', [SettingController::class, 'update'])
+            ->name('settings.update');
 
     });
 

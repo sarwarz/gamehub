@@ -409,6 +409,8 @@
 
                 created_at: `
                     <input type="date"
+                            id="flatpickr-date"
+                            placeholder="YYYY-MM-DD"
                            class="form-control"
                            name="value[]">`
             };

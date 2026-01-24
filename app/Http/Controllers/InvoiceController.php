@@ -29,7 +29,7 @@ class InvoiceController extends Controller
                 ->addIndexColumn()
 
                 ->editColumn('invoice_number', fn ($row) =>
-                    '<code>'.e($row->invoice_number).'</code>'
+                    '<code>' . e($row->invoice_number) . '</code>'
                 )
 
                 ->addColumn('customer', function ($row) {
@@ -58,9 +58,7 @@ class InvoiceController extends Controller
                 )
 
                 ->editColumn('grand_total', fn ($row) =>
-                    '<strong>' .
-                    format_currency($row->grand_total) .
-                    '</strong>'
+                    '<strong>' . format_currency($row->grand_total) . '</strong>'
                 )
 
                 ->editColumn('status', function ($row) {
@@ -96,7 +94,6 @@ class InvoiceController extends Controller
         return view('content.invoices.index');
     }
 
-
     /**
      * Show invoice
      */
@@ -105,14 +102,14 @@ class InvoiceController extends Controller
         $invoice->load([
             'items.orderItem.product:id,title',
             'user:id,name,email',
-            'order:id,order_number,currency'
+            'order:id,order_number'
         ]);
 
         return view('content.invoices.show', compact('invoice'));
     }
 
     /**
-     * Generate invoice manually from order (ADMIN ONLY – optional)
+     * Generate invoice manually from order
      */
     public function generateFromOrder(Order $order, InvoiceService $service)
     {
@@ -123,150 +120,58 @@ class InvoiceController extends Controller
             ->with('success', 'Invoice generated successfully.');
     }
 
-
     /**
      * Print invoice (browser print)
      */
-
     public function print(Invoice $invoice)
     {
-        $invoice->load([
-            'items.orderItem.product',
-            'user',
-            'order'
-        ]);
-
-        // ✅ Billing address snapshot
-        $billing = $invoice->order->billingAddress;
-
-
-
-        // 1️⃣ Load pure HTML template
-        $html = File::get(
-            resource_path('views/content/invoices/print.html')
-        );
-
-        // 2️⃣ Build invoice items rows
-        $itemsHtml = '';
-
-        foreach ($invoice->items as $item) {
-            $itemsHtml .= '
-            <tr>
-                <td>' . e($item->item_name) . '</td>
-                <td>' . e($item->orderItem->product->title ?? '-') . '</td>
-                <td>' . strtoupper($invoice->currency) . ' ' . number_format($item->unit_price, 2) . '</td>
-                <td>' . $item->quantity . '</td>
-                <td>' . strtoupper($invoice->currency) . ' ' . number_format($item->subtotal, 2) . '</td>
-            </tr>';
-        }
-
-        // 3️⃣ Replace ALL placeholders (USING billingAddress())
-        $html = str_replace([
-            '{{company_name}}',
-            '{{company_address}}',
-            '{{company_location}}',
-            '{{company_phone}}',
-
-            '{{invoice_number}}',
-            '{{issued_date}}',
-            '{{due_date}}',
-
-            '{{customer_name}}',
-            '{{customer_company}}',
-            '{{customer_address}}',
-            '{{customer_phone}}',
-            '{{customer_email}}',
-
-            '{{currency}}',
-            '{{subtotal}}',
-            '{{discount}}',
-            '{{tax}}',
-            '{{grand_total}}',
-
-            '{{items}}',
-
-            '{{salesperson}}',
-            '{{footer_message}}',
-            '{{note}}',
-        ], [
-            // Company info
-            config('app.name'),
-            'Office 149, 450 South Brand Brooklyn',
-            'San Diego County, CA 91905, USA',
-            '+1 (123) 456 7891',
-
-            // Invoice info
-            $invoice->invoice_number,
-            $invoice->issued_at->format('d M Y'),
-            optional($invoice->due_at)->format('d M Y') ?? '-',
-
-            // ✅ CUSTOMER (FROM billingAddress())
-            $billing->name ?? $invoice->user->name,
-            $billing->company ?? '-',
-            $billing->address ?? '-',
-            $billing->phone ?? '-',
-            $billing->email ?? $invoice->user->email,
-
-            // Totals
-            strtoupper($invoice->currency),
-            number_format($invoice->subtotal, 2),
-            number_format($invoice->discount_total, 2),
-            number_format($invoice->tax_total, 2),
-            number_format($invoice->grand_total, 2),
-
-            // Items
-            $itemsHtml,
-
-            // Footer
-            auth()->user()->name ?? '-',
-            'Thanks for your business',
-            $invoice->meta['note'] ?? '-',
-        ], $html);
-
-        // 4️⃣ Return rendered HTML
-        return response($html);
+        return $this->renderInvoiceHtml($invoice);
     }
 
-
-
-
+    /**
+     * Download invoice PDF
+     */
     public function download(Invoice $invoice)
+    {
+        $html = $this->renderInvoiceHtml($invoice, true);
+
+        $pdf = Pdf::loadHTML($html)->setPaper('a4');
+
+        return $pdf->download('Invoice-' . $invoice->invoice_number . '.pdf');
+    }
+
+    /**
+     * Shared HTML renderer (PRINT + PDF)
+     */
+    private function renderInvoiceHtml(Invoice $invoice, bool $returnHtmlOnly = false)
     {
         $invoice->load([
             'items.orderItem.product',
             'user',
-            'order'
+            'order.billingAddress'
         ]);
 
-        // ✅ Correct hasOne access
         $billing = $invoice->order->billingAddress;
 
-        // 1️⃣ Load pure HTML template
         $html = File::get(
             resource_path('views/content/invoices/print.html')
         );
 
-        // 2️⃣ Build invoice items rows
+        // Build items rows
         $itemsHtml = '';
-
         foreach ($invoice->items as $item) {
             $itemsHtml .= '
             <tr>
                 <td>' . e($item->item_name) . '</td>
                 <td>' . e($item->orderItem->product->title ?? '-') . '</td>
-                <td>' . strtoupper($invoice->currency) . ' ' . number_format($item->unit_price, 2) . '</td>
+                <td>' . format_currency($item->unit_price) . '</td>
                 <td>' . $item->quantity . '</td>
-                <td>' . strtoupper($invoice->currency) . ' ' . number_format($item->subtotal, 2) . '</td>
+                <td>' . format_currency($item->subtotal) . '</td>
             </tr>';
         }
 
-        // 3️⃣ Replace ALL placeholders (same as print)
+        // Replace placeholders
         $html = str_replace([
-            '{{company_name}}',
-            '{{company_address}}',
-            '{{company_location}}',
-            '{{company_phone}}',
-
             '{{invoice_number}}',
             '{{issued_date}}',
             '{{due_date}}',
@@ -277,7 +182,6 @@ class InvoiceController extends Controller
             '{{customer_phone}}',
             '{{customer_email}}',
 
-            '{{currency}}',
             '{{subtotal}}',
             '{{discount}}',
             '{{tax}}',
@@ -289,48 +193,34 @@ class InvoiceController extends Controller
             '{{footer_message}}',
             '{{note}}',
         ], [
-            // Company
-            config('app.name'),
-            'Office 149, 450 South Brand Brooklyn',
-            'San Diego County, CA 91905, USA',
-            '+1 (123) 456 7891',
-
-            // Invoice
             $invoice->invoice_number,
             $invoice->issued_at->format('d M Y'),
             optional($invoice->due_at)->format('d M Y') ?? '-',
 
-            // ✅ Customer (billing address snapshot)
             $billing?->name ?? $invoice->user->name,
             $billing?->company ?? '-',
             $billing?->address ?? '-',
             $billing?->phone ?? '-',
             $billing?->email ?? $invoice->user->email,
 
-            // Totals
-            strtoupper($invoice->currency),
-            number_format($invoice->subtotal, 2),
-            number_format($invoice->discount_total, 2),
-            number_format($invoice->tax_total, 2),
-            number_format($invoice->grand_total, 2),
+            format_currency($invoice->subtotal),
+            format_currency($invoice->discount_total),
+            format_currency($invoice->tax_total),
+            format_currency($invoice->grand_total),
 
-            // Items
             $itemsHtml,
 
-            // Footer
             auth()->user()->name ?? '-',
             'Thanks for your business',
             $invoice->meta['note'] ?? '-',
         ], $html);
 
-        // 4️⃣ Generate PDF from HTML
-        $pdf = Pdf::loadHTML($html)->setPaper('a4');
-
-        return $pdf->download(
-            'Invoice-' . $invoice->invoice_number . '.pdf'
-        );
+        return $returnHtmlOnly ? $html : response($html);
     }
 
+    /**
+     * Generate invoice from order
+     */
     public function generate(Order $order)
     {
         if ($order->invoice) {
@@ -339,16 +229,16 @@ class InvoiceController extends Controller
 
         DB::transaction(function () use ($order) {
             $invoice = Invoice::create([
-                'order_id'        => $order->id,
-                'user_id'         => $order->user_id,
-                'invoice_number'  => 'INV-' . now()->format('Ymd') . '-' . $order->id,
-                'subtotal'        => $order->subtotal,
-                'tax_total'       => $order->tax_total ?? 0,
-                'discount_total'  => $order->discount_total ?? 0,
-                'grand_total'     => $order->total_amount,
-                'currency'        => $order->currency,
-                'status'          => 'Paid',
-                'issued_at'       => now(),
+                'order_id'       => $order->id,
+                'user_id'        => $order->user_id,
+                'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . $order->id,
+                'subtotal'       => $order->subtotal,
+                'tax_total'      => $order->tax_total ?? 0,
+                'discount_total' => $order->discount_total ?? 0,
+                'grand_total'    => $order->total_amount,
+                'currency'       => $order->currency,
+                'status'         => 'paid',
+                'issued_at'      => now(),
             ]);
 
             foreach ($order->items as $item) {
@@ -365,10 +255,8 @@ class InvoiceController extends Controller
         return back()->with('success', 'Invoice generated successfully.');
     }
 
-
-
     /**
-     * Mark invoice as paid (admin override)
+     * Mark invoice as paid
      */
     public function markPaid(Invoice $invoice)
     {

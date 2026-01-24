@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SellerController;
 use App\Http\Controllers\Api\SliderController;
 use App\Http\Controllers\Api\WalletController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\SettingController;
 use App\Http\Controllers\Api\CurrencyController;
 use App\Http\Controllers\Api\TaxonomyController;
 use App\Http\Controllers\Api\BlogCommentController;
@@ -333,9 +334,17 @@ Route::prefix('v1')->group(function () {
 
 
 
+     /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/settings', [SettingController::class, 'index']);
 
 
 
+    
 
 
 

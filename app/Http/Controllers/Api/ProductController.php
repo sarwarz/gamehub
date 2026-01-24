@@ -57,6 +57,8 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with([
+            'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
+            'galleryImages:id,mediable_id,mediable_type,disk,directory,filename,sort_order',
             'categories:id,name,slug',
             'platforms:id,name,slug',
             'types:id,name,slug',
@@ -101,7 +103,7 @@ class ProductController extends Controller
                 'id'           => $product->id,
                 'title'        => $product->title,
                 'slug'         => $product->slug,
-                'cover_image'  => $product->cover_image,
+                'image'        => $product->primaryImage?->url,
                 'developer'    => $product->developer,
                 'publisher'    => $product->publisher,
                 'categories'   => $product->categories,
