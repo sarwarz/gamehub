@@ -168,6 +168,8 @@ class ProductController extends Controller
             'publisher:id,name,slug',
             'label:id,name,bg_color,text_color',
             'offers.seller:id,store_name,slug,logo,is_verified,rating,total_sales,created_at',
+            'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
+            'galleryImages:id,mediable_id,mediable_type,disk,directory,filename,sort_order',
         ])->active()->findOrFail($id);
 
         $currencies = Currency::where('is_active', true)->get();
@@ -259,8 +261,8 @@ class ProductController extends Controller
                         'products.id',
                         'products.title',
                         'products.slug',
-                        'products.cover_image',
                     ])
+                    ->with('primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary')
                     ->where('products.status', 'active');
 
                 /** 
@@ -289,7 +291,7 @@ class ProductController extends Controller
                         'id'    => $p->id,
                         'title' => $p->title,
                         'slug'  => $p->slug,
-                        'image' => $p->cover_image,
+                        'image' => $p->primaryImage?->url,
                         'price' => $p->price ? round($p->price, 2) : null,
                     ]);
             }
@@ -348,42 +350,47 @@ class ProductController extends Controller
         $platformIds = $product->platforms()->pluck('product_platforms.id');
         $typeIds     = $product->types()->pluck('product_types.id');
 
-
         $products = Product::query()
-        ->active()
-        ->where('products.id', '!=', $product->id)
-        ->where(function ($q) use ($categoryIds, $platformIds, $typeIds) {
+            ->active()
+            ->where('products.id', '!=', $product->id)
+            ->where(function ($q) use ($categoryIds, $platformIds, $typeIds) {
 
-            if ($categoryIds->isNotEmpty()) {
-                $q->whereHas('categories', function ($q) use ($categoryIds) {
-                    $q->whereIn('product_categories.id', $categoryIds);
-                });
-            }
+                if ($categoryIds->isNotEmpty()) {
+                    $q->whereHas('categories', function ($q) use ($categoryIds) {
+                        $q->whereIn('product_categories.id', $categoryIds);
+                    });
+                }
 
-            if ($platformIds->isNotEmpty()) {
-                $q->orWhereHas('platforms', function ($q) use ($platformIds) {
-                    $q->whereIn('product_platforms.id', $platformIds);
-                });
-            }
+                if ($platformIds->isNotEmpty()) {
+                    $q->orWhereHas('platforms', function ($q) use ($platformIds) {
+                        $q->whereIn('product_platforms.id', $platformIds);
+                    });
+                }
 
-            if ($typeIds->isNotEmpty()) {
-                $q->orWhereHas('types', function ($q) use ($typeIds) {
-                    $q->whereIn('product_types.id', $typeIds);
-                });
-            }
-        })
-        ->withMin(['offers as lowest_price' => function ($q) {
-            $q->where('seller_offers.status', 'active');
-        }], 'retail_price')
-        ->orderBy('lowest_price')
-        ->limit($limit)
-        ->get([
-            'products.id',
-            'products.title',
-            'products.slug',
-            'products.cover_image',
-        ]);
-
+                if ($typeIds->isNotEmpty()) {
+                    $q->orWhereHas('types', function ($q) use ($typeIds) {
+                        $q->whereIn('product_types.id', $typeIds);
+                    });
+                }
+            })
+            ->with([
+                'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
+            ])
+            ->withMin(['offers as lowest_price' => function ($q) {
+                $q->where('seller_offers.status', 'active');
+            }], 'retail_price')
+            ->orderBy('lowest_price')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($p) => [
+                'id'           => $p->id,
+                'title'        => $p->title,
+                'slug'         => $p->slug,
+                'image'        => $p->primaryImage?->url, // 🔥 unified image logic
+                'lowest_price' => $p->lowest_price
+                    ? round($p->lowest_price, 2)
+                    : null,
+            ]);
 
         return response()->json([
             'status'  => 'success',
@@ -391,6 +398,7 @@ class ProductController extends Controller
             'data'    => $products,
         ]);
     }
+
 
         /**
      * Get trending products
@@ -425,17 +433,24 @@ class ProductController extends Controller
         $products = Product::query()
             ->active()
             ->where('is_featured', true)
+            ->with([
+                'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
+            ])
             ->withMin(['offers as lowest_price' => function ($q) {
                 $q->where('status', 'active');
             }], 'retail_price')
             ->orderByDesc('sort_order')
             ->orderBy('lowest_price')
             ->limit($limit)
-            ->get([
-                'id',
-                'title',
-                'slug',
-                'cover_image',
+            ->get()
+            ->map(fn ($p) => [
+                'id'           => $p->id,
+                'title'        => $p->title,
+                'slug'         => $p->slug,
+                'image'        => $p->primaryImage?->url, // ✅ unified media logic
+                'lowest_price' => $p->lowest_price
+                    ? round($p->lowest_price, 2)
+                    : null,
             ]);
 
         return response()->json([
@@ -444,6 +459,7 @@ class ProductController extends Controller
             'data'    => $products,
         ]);
     }
+
 
 
 

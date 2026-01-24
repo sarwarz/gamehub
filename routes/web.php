@@ -6,6 +6,7 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SellerController;
@@ -635,6 +636,29 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         Route::post('seller-offers/bulk-delete',
             [SellerOfferController::class, 'bulkDelete']
         )->name('seller-offers.bulk-delete');
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manage Media
+    |--------------------------------------------------------------------------
+    | These routes manage discount coupons including
+    | creation, editing, updating, and deletion.
+    | Access is restricted by the `coupons` permission.
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('media')->name('media.')->group(function () {
+
+        Route::get('/', [MediaController::class, 'index'])->name('index');
+        Route::get('/create', [MediaController::class, 'create'])->name('create');
+        Route::post('/', [MediaController::class, 'store'])->name('store');
+
+        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
+        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
+
+    });
 
 
     /*
