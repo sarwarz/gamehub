@@ -41,6 +41,10 @@ class Setting extends Model
      */
     public static function get(string $group, string $key, $default = null)
     {
+        if (!Schema::hasTable('settings')) {
+            return $default;
+        }
+
         return Cache::rememberForever("setting.{$group}.{$key}", function () use ($group, $key, $default) {
             return static::where('group', $group)
                 ->where('key', $key)
