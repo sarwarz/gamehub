@@ -21,7 +21,8 @@ class SellerOfferController extends Controller
             $query = SellerOffer::query()
                 ->with([
                     'seller:id,store_name,email,logo',
-                    'product:id,title,cover_image'
+                    'product:id,title',
+                    'product.primaryImage'
                 ]);
 
             /*
@@ -275,7 +276,7 @@ class SellerOfferController extends Controller
 
         $query->with([
             'seller:id,store_name,email,logo',
-            'product:id,title,cover_image'
+            'product:id,title'
         ]);
 
         return DataTables::of($query)
@@ -317,9 +318,12 @@ class SellerOfferController extends Controller
 
 
             ->addColumn('product', function ($o) {
+                $image = optional($o->product->primaryImage)->path
+                    ? asset($o->product->primaryImage->path)
+                    : 'https://via.placeholder.com/40x40?text=No+Image';
                 return '
                     <div class="d-flex align-items-center">
-                        <img src="'.asset($o->product->cover_image).'"
+                        <img src="'.$image.'"
                             class="rounded me-2" width="40" height="40">
                         <span>'.e($o->product->title).'</span>
                     </div>
