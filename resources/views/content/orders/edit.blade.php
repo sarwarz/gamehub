@@ -64,12 +64,15 @@
                         <td>
                            <div class="d-flex align-items-start gap-3">
                               {{-- Product Image --}}
-                              <img 
-                                 src="{{ $item->product->cover_image ?? asset('assets/img/placeholder/product.png') }}"
+                              <img
+                                 src="{{ $item->product->image
+                                    ? asset($item->product->image)
+                                    : asset('assets/img/placeholder/product.png') }}"
                                  alt="{{ $item->product->title }}"
                                  class="rounded border"
                                  style="width:80px; height:80px; object-fit:cover;"
-                                 >
+                              >
+
                               <div>
                                  <strong>{{ $item->product->title }}</strong>
                                  <br>
