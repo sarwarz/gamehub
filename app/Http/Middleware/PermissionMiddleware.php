@@ -10,6 +10,7 @@ class PermissionMiddleware
 {
     public function handle(Request $request, Closure $next, string $permission)
     {
+
         $user = auth()->user();
 
         // 1️⃣ Not logged in

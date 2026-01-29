@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Media;
 use App\Models\Product;
 use App\Models\ProductType;
 use App\Models\SellerOffer;
@@ -11,7 +10,6 @@ use App\Models\ProductLabel;
 use Illuminate\Http\Request;
 use App\Models\ProductRegion;
 use App\Models\ProductWorksOn;
-use App\Services\MediaService;
 use App\Models\ProductCategory;
 use App\Models\ProductLanguage;
 use App\Models\ProductPlatform;
@@ -19,7 +17,6 @@ use App\Models\ProductDeveloper;
 use App\Models\ProductPublisher;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Yajra\DataTables\Facades\DataTables;
 
 class ProductController extends Controller
@@ -42,8 +39,6 @@ class ProductController extends Controller
                     'worksOn:id,name',
                     'developer:id,name',
                     'publisher:id,name',
-                    'media:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
-                    'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
                 ]);
 
             /* ===============================
@@ -178,7 +173,7 @@ class ProductController extends Controller
     /**
      * Store a newly created product.
      */
-    public function store(Request $request, MediaService $mediaService)
+    public function store(Request $request)
     {
         //  Validate
          $validated = $request->validate([
@@ -260,39 +255,37 @@ class ProductController extends Controller
         // Save product
         $product = Product::create($validated);
 
-         /* ============================
-        | Cover Image (PRIMARY)
-        ============================ */
+         /* ===== Cover Image ===== */
         if ($request->hasFile('cover_image')) {
-            $mediaService->upload(
-                $request->file('cover_image'),
-                $product,
-                'uploads/products/cover',
-                true // is primary
-            );
+            $file = $request->file('cover_image');
+            $filename = time().'_'.$file->getClientOriginalName();
+            $dir = public_path('uploads/products/cover');
+
+            if (!file_exists($dir)) mkdir($dir, 0755, true);
+
+            $file->move($dir, $filename);
+            $product->image = 'uploads/products/cover/'.$filename;
         }
 
 
-       /* ============================
-        | Gallery Images
-        ============================ */
-        if ($request->hasFile('gallery')) {
-            foreach ($request->file('gallery') as $index => $file) {
-                $media = $mediaService->upload(
-                    $file,
-                    $product,
-                    'uploads/products/gallery'
-                );
 
-                // set sort order
-                $media->update(['sort_order' => $index + 1]);
+       /* ===== Gallery ===== */
+        $gallery = [];
+        if ($request->hasFile('gallery')) {
+            $dir = public_path('uploads/products/gallery');
+            if (!file_exists($dir)) mkdir($dir, 0755, true);
+
+            foreach ($request->file('gallery') as $file) {
+                $filename = uniqid().'_'.$file->getClientOriginalName();
+                $file->move($dir, $filename);
+                $gallery[] = 'uploads/products/gallery/'.$filename;
             }
         }
 
+        $product->gallery = $gallery;
+        $product->save();
 
 
-
-        
 
         // Sync many-to-many
         $product->categories()->sync($request->input('category_ids', []));
@@ -315,8 +308,6 @@ class ProductController extends Controller
     public function edit($id)
     {
         $product = Product::with([
-            'primaryImage',
-            'galleryImages',
             'categories:id,name',
             'platforms:id,name',
             'types:id,name',
@@ -343,14 +334,11 @@ class ProductController extends Controller
 
 
 
-    /**
-     * Update the specified product in storage.
-     */
+
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
 
-        // 1. Validate (let Laravel handle validation exceptions automatically)
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'slug'        => 'nullable|string|max:255|unique:products,slug,' . $product->id,
@@ -358,7 +346,7 @@ class ProductController extends Controller
             'short_description' => 'nullable|string',
             'description' => 'nullable|string',
 
-            // Many-to-many
+            // Relations
             'category_ids'   => 'nullable|array',
             'category_ids.*' => 'exists:product_categories,id',
             'platform_ids'   => 'nullable|array',
@@ -372,7 +360,6 @@ class ProductController extends Controller
             'works_on_ids'   => 'nullable|array',
             'works_on_ids.*' => 'exists:product_works_on,id',
 
-            // Single relations
             'developer_id' => 'nullable|exists:product_developers,id',
             'publisher_id' => 'nullable|exists:product_publishers,id',
             'label_id'     => 'nullable|exists:product_labels,id',
@@ -381,7 +368,7 @@ class ProductController extends Controller
             'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
             'gallery.*'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
 
-            // JSON fields
+            // JSON
             'attributes'          => 'nullable|array',
             'system_requirements' => 'nullable|array',
 
@@ -396,145 +383,113 @@ class ProductController extends Controller
         ]);
 
         try {
-            // Clean attributes
+            /* ============================
+            | CLEAN JSON FIELDS
+            ============================ */
             if (!empty($validated['attributes'])) {
                 $validated['attributes'] = collect($validated['attributes'])
-                    ->filter(fn($attr) => !empty($attr['key']) && !empty($attr['value']))
+                    ->filter(fn($a) => !empty($a['key']) && !empty($a['value']))
                     ->values()
                     ->toArray();
             }
 
-            // Clean system requirements
             if (!empty($validated['system_requirements'])) {
                 $validated['system_requirements'] = collect($validated['system_requirements'])
                     ->map(fn($group) => collect($group)
-                        ->filter(fn($item) => !empty($item['key']) && !empty($item['value']))
+                        ->filter(fn($i) => !empty($i['key']) && !empty($i['value']))
                         ->values()
                         ->toArray()
-                    )
-                    ->toArray();
+                    )->toArray();
             }
 
-            // Slug
-            if (empty($validated['slug'])) {
-                $validated['slug'] = Str::slug($validated['title']);
-            }
+            /* ============================
+            | SLUG
+            ============================ */
+            $validated['slug'] ??= Str::slug($validated['title']);
 
-
-            // Update product
-            $product->update($validated);
-
-            // Cover image
-           if ($request->hasFile('cover_image')) {
-
-                // delete old primary image
-                $product->media()->where('is_primary', true)->each(function ($media) {
-                    Storage::disk($media->disk)->delete($media->path);
-                    $media->delete();
-                });
+            //* ===== Replace Cover ===== */
+            if ($request->hasFile('cover_image')) {
+                if ($product->image && file_exists(public_path($product->image))) {
+                    unlink(public_path($product->image));
+                }
 
                 $file = $request->file('cover_image');
-                $path = $file->store('products/cover', 'public');
+                $filename = time().'_'.$file->getClientOriginalName();
+                $dir = public_path('uploads/products/cover');
+                if (!file_exists($dir)) mkdir($dir, 0755, true);
 
-                $product->media()->create([
-                    'disk'       => 'public',
-                    'directory'  => dirname($path),
-                    'filename'   => basename($path),
-                    'type'       => 'image',
-                    'is_primary' => true,
-                ]);
+                $file->move($dir, $filename);
+                $validated['image'] = 'uploads/products/cover/'.$filename;
             }
 
-
-
-            // Gallery
-            // ============================
-            // Gallery (Media-based)
-            // ============================
+            /* ===== Replace Gallery ===== */
             if ($request->hasFile('gallery')) {
-
-                // 1️⃣ Delete existing gallery media (non-primary images)
-                $product->media()
-                    ->where('type', 'image')
-                    ->where('is_primary', false)
-                    ->each(function ($media) {
-                        Storage::disk($media->disk)->delete($media->path);
-                        $media->delete();
-                    });
-
-                // 2️⃣ Upload new gallery images
-                foreach ($request->file('gallery') as $index => $file) {
-
-                    $path = $file->store('products/gallery', 'public');
-
-                    $product->media()->create([
-                        'disk'          => 'public',
-                        'directory'     => dirname($path),
-                        'filename'      => basename($path),
-                        'original_name' => $file->getClientOriginalName(),
-                        'mime_type'     => $file->getMimeType(),
-                        'extension'     => $file->getClientOriginalExtension(),
-                        'size'          => $file->getSize(),
-                        'type'          => 'image',
-                        'is_primary'    => false,
-                        'sort_order'    => $index + 1,
-                    ]);
+                foreach ($product->gallery ?? [] as $img) {
+                    if (file_exists(public_path($img))) unlink(public_path($img));
                 }
+
+                $gallery = [];
+                $dir = public_path('uploads/products/gallery');
+                if (!file_exists($dir)) mkdir($dir, 0755, true);
+
+                foreach ($request->file('gallery') as $file) {
+                    $filename = uniqid().'_'.$file->getClientOriginalName();
+                    $file->move($dir, $filename);
+                    $gallery[] = 'uploads/products/gallery/'.$filename;
+                }
+
+                $validated['gallery'] = $gallery;
             }
 
+            $product->update($validated);
 
+            /* ============================
+            | SYNC RELATIONS
+            ============================ */
+            $product->categories()->sync($request->category_ids ?? []);
+            $product->platforms()->sync($request->platform_ids ?? []);
+            $product->types()->sync($request->type_ids ?? []);
+            $product->regions()->sync($request->region_ids ?? []);
+            $product->languages()->sync($request->language_ids ?? []);
+            $product->worksOn()->sync($request->works_on_ids ?? []);
 
-            
+            return redirect()
+                ->route('products.index')
+                ->with('success', 'Product updated successfully.');
 
-            // Sync many-to-many
-            $product->categories()->sync($request->input('category_ids', []));
-            $product->platforms()->sync($request->input('platform_ids', []));
-            $product->types()->sync($request->input('type_ids', []));
-            $product->regions()->sync($request->input('region_ids', []));
-            $product->languages()->sync($request->input('language_ids', []));
-            $product->worksOn()->sync($request->input('works_on_ids', []));
-
-            return redirect()->route('products.index')->with('success', 'Product updated successfully.');
         } catch (\Exception $e) {
-            \Log::error('Product update failed: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to update product. Please try again.');
+            \Log::error('Product update failed: '.$e->getMessage());
+
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Failed to update product.');
         }
     }
 
 
-    /**
-     * Remove the specified product.
-     */
+
+
+     /* ======================================================
+     | DELETE
+     ====================================================== */
     public function destroy($id)
     {
-        try {
-            $product = Product::findOrFail($id);
+        $product = Product::findOrFail($id);
 
-            DB::transaction(function () use ($product) {
-
-                // detach relations
-                $product->categories()->detach();
-                $product->platforms()->detach();
-                $product->types()->detach();
-                $product->regions()->detach();
-                $product->languages()->detach();
-                $product->worksOn()->detach();
-
-                // delete media files + records
-                $product->media->each(function ($media) {
-                    Storage::disk($media->disk)->delete($media->path);
-                    $media->delete();
-                });
-
-                $product->delete();
-            });
-
-            return response()->json(['message' => 'Product deleted successfully.']);
-        } catch (\Exception $e) {
-            Log::error('Product delete failed: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to delete product.'], 500);
+        if ($product->image && file_exists(public_path($product->image))) {
+            unlink(public_path($product->image));
         }
+
+        foreach ($product->gallery ?? [] as $img) {
+            if (file_exists(public_path($img))) unlink(public_path($img));
+        }
+
+        $product->delete();
+
+        return response()->json(['message' => 'Product deleted']);
     }
+
 
 
     public function bulkStatus(Request $request)
@@ -553,23 +508,26 @@ class ProductController extends Controller
         return response()->json(['success' => true]);
     }
 
-    /**
-     * Bulk Delete products.
-     */
-    public function bulkDelete(Request $request)
+   public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids');
 
-        if (!$ids || !is_array($ids)) {
-            return response()->json(['message' => 'No products selected'], 400);
+        if (!is_array($ids) || empty($ids)) {
+            return response()->json([
+                'message' => 'No products selected'
+            ], 400);
         }
 
         try {
             DB::transaction(function () use ($ids) {
+
                 $products = Product::whereIn('id', $ids)->get();
 
                 foreach ($products as $product) {
-                    // Detach many-to-many
+
+                    /* ============================
+                    | DETACH RELATIONS
+                    ============================ */
                     $product->categories()->detach();
                     $product->platforms()->detach();
                     $product->types()->detach();
@@ -577,21 +535,44 @@ class ProductController extends Controller
                     $product->languages()->detach();
                     $product->worksOn()->detach();
 
-                    $product->media->each(function ($media) {
-                        Storage::disk($media->disk)->delete($media->path);
-                        $media->delete();
-                    });
+                    /* ============================
+                    | DELETE COVER IMAGE (PUBLIC)
+                    ============================ */
+                    if ($product->image && file_exists(public_path($product->image))) {
+                        unlink(public_path($product->image));
+                    }
 
+                    /* ============================
+                    | DELETE GALLERY IMAGES (PUBLIC)
+                    ============================ */
+                    if (!empty($product->gallery)) {
+                        foreach ($product->gallery as $img) {
+                            if (file_exists(public_path($img))) {
+                                unlink(public_path($img));
+                            }
+                        }
+                    }
+
+                    /* ============================
+                    | DELETE PRODUCT
+                    ============================ */
                     $product->delete();
                 }
             });
 
-            return response()->json(['message' => 'Selected products deleted successfully']);
+            return response()->json([
+                'message' => 'Selected products deleted successfully'
+            ]);
+
         } catch (\Exception $e) {
             Log::error('Bulk product delete failed: ' . $e->getMessage());
-            return response()->json(['message' => 'Failed to delete products'], 500);
+
+            return response()->json([
+                'message' => 'Failed to delete products'
+            ], 500);
         }
     }
+
 
     public function preview($id)
     {
@@ -601,8 +582,10 @@ class ProductController extends Controller
         return response()->json([
             'id'       => $product->id,
             'title'    => $product->title,
-            'cover'    => $product->primaryImage?->url ?? asset('assets/img/default-product.png'),
-            'types'  => $product->types->pluck('name')->toArray(),
+            'image'    => $product->image
+                        ? asset($product->image)
+                        : asset('assets/img/default-product.png'),
+            'types'    => $product->types->pluck('name')->toArray(),
             'regions'  => $product->regions->pluck('name')->toArray(),
             'languages'=> $product->languages->pluck('name')->toArray(),
             'platforms'=> $product->platforms->pluck('name')->toArray(),
@@ -641,9 +624,10 @@ class ProductController extends Controller
             })
 
             ->addColumn('product_column', function ($row) {
-                $image = $row->primaryImage
-                    ? $row->primaryImage->url
-                    : asset('assets/img/default-product.png');
+                $image = $row->image
+                        ? asset($row->image)
+                        : asset('assets/img/default-product.png');
+
 
                 $title = e($row->title);
                 $developer = $row->developer?->name ?? 'Unknown Dev';

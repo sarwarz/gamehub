@@ -2,10 +2,11 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Product;
 use Illuminate\Support\Str;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class ProductSeeder extends Seeder
 {
@@ -26,11 +27,17 @@ class ProductSeeder extends Seeder
 
         foreach ($products as $p) {
 
-            $product = Product::firstOrCreate(
+
+
+            $imagePath = 'uploads/products/cover/' . $p['image'];
+
+            $product = Product::updateOrCreate(
                 ['slug' => Str::slug($p['title'])],
                 [
                     'title'         => $p['title'],
                     'sku'           => $p['sku'],
+                    'image'         => $imagePath, // ✅ WILL UPDATE
+                    'gallery'       => [],
                     'description'   => $p['title'] . ' description.',
                     'developer_id'  => 1,
                     'publisher_id'  => 1,
@@ -60,29 +67,8 @@ class ProductSeeder extends Seeder
                 ]
             );
 
-            /* ============================
-             | Primary Image (Media)
-             ============================ */
-            if (!$product->primaryImage) {
 
-                $directory = 'uploads/products/cover';
-                $fullPath  = public_path($directory . '/' . $p['image']);
-
-                if (File::exists($fullPath)) {
-
-                    $product->media()->create([
-                        'disk'          => 'public',
-                        'directory'     => $directory,
-                        'filename'      => $p['image'],
-                        'original_name' => $p['image'],
-                        'mime_type'     => File::mimeType($fullPath),
-                        'extension'     => pathinfo($p['image'], PATHINFO_EXTENSION),
-                        'size'          => File::size($fullPath),
-                        'type'          => 'image',
-                        'is_primary'    => true,
-                    ]);
-                }
-            }
+           
 
             /* ============================
              | Relations

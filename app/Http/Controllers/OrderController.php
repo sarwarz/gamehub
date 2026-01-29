@@ -402,7 +402,7 @@ class OrderController extends Controller
     {
         $order = Order::with([
             'user:id,name,email',
-            'items.product:id,title,cover_image',
+            'items.product:id,title,image',
             'items.seller:id,store_name',
             'items.deliveries',
             'items.earning',

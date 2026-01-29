@@ -346,36 +346,6 @@
     @endif
 
 
-    <li class="menu-item {{ menuItemActive(['media.*'], 'open active') }}">
-
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-photo-edit"></i>
-            <div data-i18n="Manage Media">Manage Media</div>
-        </a>
-
-        <ul class="menu-sub">
-
-            @if(Route::has('media.index'))
-            <li class="menu-item {{ menuItemActive(['media.index']) }}">
-                <a href="{{ route('media.index') }}" class="menu-link">
-                    <div data-i18n="Library">Library</div>
-                </a>
-            </li>
-            @endif
-
-             @if(Route::has('media.create'))
-            <li class="menu-item {{ menuItemActive(['media.create']) }}">
-                <a href="{{ route('media.create') }}" class="menu-link">
-                    <div data-i18n="Add Media File">Add Media File</div>
-                </a>
-            </li>
-            @endif
-
-        </ul>
-    </li>
-
-
-
 
     <!-- Manage Website -->
     @if(auth()->user()->hasPermission('slider'))

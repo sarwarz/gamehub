@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('sku')->nullable()->unique();
             $table->longText('description')->nullable();
 
+            // Media
+            $table->string('image')->nullable();
+            $table->json('gallery')->nullable();
+
             // Relations
             $table->foreignId('developer_id')->nullable()
                 ->constrained('product_developers')->nullOnDelete();

@@ -81,48 +81,62 @@
 
                     <div class="card-body">
 
-                        {{-- Cover Image --}}
+                        {{-- =======================
+                        | Cover Image
+                        ======================= --}}
                         <div class="mb-4">
                             <label class="form-label">Current Cover Image</label><br>
 
-                            @if($product->primaryImage)
-                                <img src="{{ $product->primaryImage->url }}"
+                            @if(!empty($product->image))
+                                <img
+                                    src="{{ asset($product->image) }}"
                                     class="img-thumbnail mb-2"
-                                    width="150">
+                                    width="150"
+                                    alt="Cover Image"
+                                >
                             @else
                                 <p class="text-muted">No cover image</p>
                             @endif
 
-                            <input type="file"
+                            <input
+                                type="file"
                                 name="cover_image"
-                                class="form-control @error('cover_image') is-invalid @enderror">
+                                class="form-control @error('cover_image') is-invalid @enderror"
+                            >
 
                             @error('cover_image')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>
 
-                        {{-- Gallery Images --}}
+                        {{-- =======================
+                        | Gallery Images
+                        ======================= --}}
                         <div class="mb-2">
                             <label class="form-label">Current Gallery Images</label><br>
 
-                            @if($product->galleryImages->count())
+                            @if(!empty($product->gallery) && count($product->gallery))
                                 <div class="d-flex flex-wrap gap-2 mb-3">
-                                    @foreach($product->galleryImages as $media)
-                                        <img src="{{ $media->url }}"
+                                    @foreach($product->gallery as $img)
+                                        <img
+                                            src="{{ asset($img) }}"
                                             class="img-thumbnail"
                                             width="100"
-                                            height="100">
+                                            height="100"
+                                            alt="Gallery Image"
+                                        >
                                     @endforeach
                                 </div>
                             @else
                                 <p class="text-muted">No gallery images</p>
                             @endif
 
-                            <input type="file"
+                            <input
+                                type="file"
                                 name="gallery[]"
                                 class="form-control @error('gallery') is-invalid @enderror"
-                                multiple>
+                                multiple
+                            >
 
                             @error('gallery')
                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -131,6 +145,7 @@
 
                     </div>
                 </div>
+
 
 
 

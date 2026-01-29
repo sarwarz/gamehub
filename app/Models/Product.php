@@ -18,6 +18,8 @@ class Product extends Model
         'sku',
         'short_description',
         'description',
+        'image',
+        'gallery',
         'developer_id',
         'publisher_id',
         'label_id',
@@ -33,6 +35,7 @@ class Product extends Model
     ];
 
     protected $casts = [
+        'gallery'             => 'array',
         'attributes'          => 'array',
         'system_requirements' => 'array',
         'is_featured'         => 'boolean',
@@ -147,29 +150,6 @@ class Product extends Model
         return $this->hasMany(Slider::class);
     }
 
-    /* ============================
-     | Media Relations
-     ============================ */
-
-    public function media(): MorphMany
-    {
-        return $this->morphMany(Media::class, 'mediable');
-    }
-
-    public function primaryImage(): MorphOne
-    {
-        return $this->morphOne(Media::class, 'mediable')
-            ->where('type', 'image')
-            ->where('is_primary', true);
-    }
-
-    public function galleryImages(): MorphMany
-    {
-        return $this->morphMany(Media::class, 'mediable')
-            ->where('type', 'image')
-            ->where('is_primary', false)
-            ->orderBy('sort_order');
-    }
 
 
 

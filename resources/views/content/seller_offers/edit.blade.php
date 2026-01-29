@@ -58,7 +58,7 @@
                 <div id="product-preview" class="card mt-2 mb-4">
                     <div class="card-body d-flex align-items-center">
                         <div class="me-3">
-                            <img id="preview-cover" src="{{ $offer->product->cover_image ? asset('storage/'.$offer->product->cover_image) : asset('assets/img/default-product.png') }}" 
+                            <img id="preview-cover" src="{{ $offer->product->image ? asset($offer->product->image) : asset('assets/img/default-product.png') }}" 
                                  alt="Cover" class="rounded" width="120">
                         </div>
                         <div>

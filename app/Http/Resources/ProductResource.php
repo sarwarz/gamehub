@@ -15,8 +15,13 @@ class ProductResource extends JsonResource
             'slug'          => $this->slug,
             'sku'           => $this->sku,
             'description'   => $this->description,
-            'image'         => $this->primaryImage?->url,
-            'gallery'       => $this->galleryImages->map(fn ($m) => $m->url),
+            'image' => $this->image
+                ? asset($this->image)
+                : asset('assets/img/default-product.png'),
+
+            'gallery' => collect($this->gallery ?? [])
+                ->map(fn ($img) => asset($img))
+                ->values(),
             'extra_attributes'    => $this->attributes,
             'system_requirements' => $this->system_requirements,
             'delivery_type' => $this->delivery_type,

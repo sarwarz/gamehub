@@ -57,8 +57,6 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $query = Product::with([
-            'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
-            'galleryImages:id,mediable_id,mediable_type,disk,directory,filename,sort_order',
             'categories:id,name,slug',
             'platforms:id,name,slug',
             'types:id,name,slug',
@@ -103,7 +101,7 @@ class ProductController extends Controller
                 'id'           => $product->id,
                 'title'        => $product->title,
                 'slug'         => $product->slug,
-                'image'        => $product->primaryImage?->url,
+                'image'        => asset($product->image),
                 'developer'    => $product->developer,
                 'publisher'    => $product->publisher,
                 'categories'   => $product->categories,
@@ -168,8 +166,6 @@ class ProductController extends Controller
             'publisher:id,name,slug',
             'label:id,name,bg_color,text_color',
             'offers.seller:id,store_name,slug,logo,is_verified,rating,total_sales,created_at',
-            'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
-            'galleryImages:id,mediable_id,mediable_type,disk,directory,filename,sort_order',
         ])->active()->findOrFail($id);
 
         $currencies = Currency::where('is_active', true)->get();
@@ -262,7 +258,6 @@ class ProductController extends Controller
                         'products.title',
                         'products.slug',
                     ])
-                    ->with('primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary')
                     ->where('products.status', 'active');
 
                 /** 
@@ -291,7 +286,7 @@ class ProductController extends Controller
                         'id'    => $p->id,
                         'title' => $p->title,
                         'slug'  => $p->slug,
-                        'image' => $p->primaryImage?->url,
+                        'image' => asset($p->image),
                         'price' => $p->price ? round($p->price, 2) : null,
                     ]);
             }
@@ -373,9 +368,6 @@ class ProductController extends Controller
                     });
                 }
             })
-            ->with([
-                'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
-            ])
             ->withMin(['offers as lowest_price' => function ($q) {
                 $q->where('seller_offers.status', 'active');
             }], 'retail_price')
@@ -386,7 +378,7 @@ class ProductController extends Controller
                 'id'           => $p->id,
                 'title'        => $p->title,
                 'slug'         => $p->slug,
-                'image'        => $p->primaryImage?->url, // 🔥 unified image logic
+                'image'        => asset($p->image), // 🔥 unified image logic
                 'lowest_price' => $p->lowest_price
                     ? round($p->lowest_price, 2)
                     : null,
@@ -433,9 +425,6 @@ class ProductController extends Controller
         $products = Product::query()
             ->active()
             ->where('is_featured', true)
-            ->with([
-                'primaryImage:id,mediable_id,mediable_type,disk,directory,filename,is_primary',
-            ])
             ->withMin(['offers as lowest_price' => function ($q) {
                 $q->where('status', 'active');
             }], 'retail_price')
@@ -447,7 +436,7 @@ class ProductController extends Controller
                 'id'           => $p->id,
                 'title'        => $p->title,
                 'slug'         => $p->slug,
-                'image'        => $p->primaryImage?->url, // ✅ unified media logic
+                'image'        => asset($p->image), // ✅ unified media logic
                 'lowest_price' => $p->lowest_price
                     ? round($p->lowest_price, 2)
                     : null,
