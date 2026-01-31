@@ -266,7 +266,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     Route::get('/blogs', [BlogController::class, 'index']);
-    Route::get('/blogs/{slug}', [BlogController::class, 'show']);
+    Route::get('/blog/{slug}', [BlogController::class, 'show']);
 
 
 

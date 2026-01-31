@@ -97,8 +97,17 @@ class BlogController extends Controller
         $data['is_published'] = $request->has('is_published');
 
         if ($request->hasFile('featured_image')) {
-            $data['featured_image'] =
-                $request->file('featured_image')->store('blogs', 'public');
+
+            $image = $request->file('featured_image');
+
+            // Unique file name
+            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+
+            // Move to public/uploads/blogs
+            $image->move(public_path('uploads/blogs'), $filename);
+
+            // Save path in DB
+            $data['featured_image'] = 'uploads/blogs/' . $filename;
         }
 
         Blog::create($data);
@@ -140,6 +149,23 @@ class BlogController extends Controller
             }
             $data['featured_image'] =
                 $request->file('featured_image')->store('blogs', 'public');
+        }
+
+        if ($request->hasFile('featured_image')) {
+
+            //  Delete old image if exists
+            if ($blog->featured_image && File::exists(public_path($blog->featured_image))) {
+                File::delete(public_path($blog->featured_image));
+            }
+
+            $image = $request->file('featured_image');
+            $filename = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+
+            //  Move to public/uploads/blogs
+            $image->move(public_path('uploads/blogs'), $filename);
+
+            //  Save new path
+            $data['featured_image'] = 'uploads/blogs/' . $filename;
         }
 
         $blog->update($data);

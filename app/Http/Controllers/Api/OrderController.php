@@ -312,7 +312,7 @@ class OrderController extends Controller
         //$this->authorize('view', $order);
 
         $order->load([
-            'items.product:id,title,slug,cover_image',
+            'items.product:id,title,slug,image',
             'items.offer:id,retail_price',
             'items.deliveries',
             'transactions',

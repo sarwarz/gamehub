@@ -101,7 +101,7 @@ class BlogController extends Controller
             'slug'     => $blog->slug,
             'excerpt'  => $full ? null : str(strip_tags($blog->content))->limit(160),
             'content'  => $full ? $blog->content : null,
-            'image'    => $blog->featured_image,
+            'image'    => asset($blog->featured_image),
             'views'    => $blog->views,
             'published_at' => $blog->published_at,
             'category' => $blog->category ? [

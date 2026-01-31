@@ -82,7 +82,7 @@ class SliderController extends Controller
             'id'        => $slider->id,
             'title'     => $slider->display_title,
             'subtitle'  => $slider->display_subtitle,
-            'image'     => $slider->image,
+            'image'     => asset($slider->image),
             'button'    => [
                 'text' => $slider->button_text,
                 'url'  => $slider->display_url,

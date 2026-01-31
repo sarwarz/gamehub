@@ -78,13 +78,15 @@
                         Recommended size: 1200×630px
                     </small>
 
-                    @isset($blog)
+                   <div>
+                     @isset($blog)
                         @if($blog->featured_image)
-                            <img src="{{ asset('storage/'.$blog->featured_image) }}"
+                            <img src="{{ asset($blog->featured_image) }}"
                                  class="img-fluid rounded mt-2"
                                  alt="Featured Image">
                         @endif
                     @endisset
+                   </div>
                 </div>
 
                 <hr>

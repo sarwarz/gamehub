@@ -24,8 +24,11 @@ class SliderController extends Controller
                 ->addColumn('slider_column', function ($slider) {
                     return '
                         <div class="d-flex align-items-center gap-2">
-                            <img src="'.asset('storage/'.$slider->image).'"
-                                class="rounded" width="50">
+                            <img src="'.asset($slider->image).'"
+                                class="rounded"
+                                width="50"
+                                height="50"
+                                style="object-fit:cover;">
                             <div>
                                 <strong>'.$slider->display_title.'</strong><br>
                                 <small class="text-muted">'.$slider->display_subtitle.'</small>
@@ -91,10 +94,22 @@ class SliderController extends Controller
 
         $data['is_active'] = $request->has('is_active');
 
-
-
         if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('sliders', 'public');
+            $image      = $request->file('image');
+            $fileName   = time() . '_' . uniqid() . '.' . $image->getClientOriginalExtension();
+
+            // Destination: public/uploads/sliders
+            $destinationPath = public_path('uploads/sliders');
+
+            // Create directory if not exists
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $image->move($destinationPath, $fileName);
+
+            // Save relative path in DB
+            $data['image'] = 'uploads/sliders/' . $fileName;
         }
 
         Slider::create($data);
@@ -102,6 +117,7 @@ class SliderController extends Controller
         return redirect()->route('sliders.index')
             ->with('success', 'Slider created successfully');
     }
+
 
     public function edit(Slider $slider)
     {
