@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Support\Facades\File;
 
 class BlogController extends Controller
 {
@@ -143,13 +144,6 @@ class BlogController extends Controller
         $data['slug'] = $data['slug'] ?? Str::slug($data['title']);
         $data['is_published'] = $request->has('is_published');
 
-        if ($request->hasFile('featured_image')) {
-            if ($blog->featured_image) {
-                Storage::disk('public')->delete($blog->featured_image);
-            }
-            $data['featured_image'] =
-                $request->file('featured_image')->store('blogs', 'public');
-        }
 
         if ($request->hasFile('featured_image')) {
 
