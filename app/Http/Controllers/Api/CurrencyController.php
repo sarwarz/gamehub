@@ -24,7 +24,8 @@ class CurrencyController extends Controller
      * @group Currencies
      *
      * @response 200 {
-     *   "status": "success",
+     *   "status": true,
+     *   "message": "Currencies fetched successfully",
      *   "data": [
      *     {
      *       "id": 1,
@@ -39,14 +40,16 @@ class CurrencyController extends Controller
      */
     public function index()
     {
-        $currencies = Currency::where('is_active', true)
-            ->select('id', 'code', 'name', 'symbol', 'rate', 'is_default')
-            ->get();
+        try {
+            $currencies = Currency::where('is_active', true)
+                ->select('id', 'code', 'name', 'symbol', 'rate', 'is_default')
+                ->get();
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $currencies
-        ]);
+            return $this->success($currencies, 'Currencies fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch currencies', 500);
+        }
     }
 
     /**
@@ -57,7 +60,8 @@ class CurrencyController extends Controller
      * @group Currencies
      *
      * @response 200 {
-     *   "status": "success",
+     *   "status": true,
+     *   "message": "Default currency fetched successfully",
      *   "data": {
      *     "code": "USD",
      *     "name": "US Dollar",
@@ -67,12 +71,18 @@ class CurrencyController extends Controller
      */
     public function default()
     {
-        $currency = $this->currencyService->getDefaultCurrency();
+        try {
+            $currency = $this->currencyService->getDefaultCurrency();
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $currency
-        ]);
+            if (!$currency) {
+                return $this->error('No default currency configured', 404);
+            }
+
+            return $this->success($currency, 'Default currency fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch default currency', 500);
+        }
     }
 
     /**
@@ -85,7 +95,8 @@ class CurrencyController extends Controller
      * @urlParam code string required ISO currency code. Example: USD
      *
      * @response 200 {
-     *   "status": "success",
+     *   "status": true,
+     *   "message": "Currency fetched successfully",
      *   "data": {
      *     "code": "EUR",
      *     "name": "Euro",
@@ -94,20 +105,26 @@ class CurrencyController extends Controller
      * }
      *
      * @response 404 {
-     *   "status": "error",
-     *   "message": "Not found"
+     *   "status": false,
+     *   "message": "Currency not found"
      * }
      */
     public function show(string $code)
     {
-        $currency = Currency::where('code', strtoupper($code))
-            ->where('is_active', true)
-            ->firstOrFail();
+        try {
+            $currency = Currency::where('code', strtoupper($code))
+                ->where('is_active', true)
+                ->first();
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => $currency
-        ]);
+            if (!$currency) {
+                return $this->error('Currency not found', 404);
+            }
+
+            return $this->success($currency, 'Currency fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch currency', 500);
+        }
     }
 
     /**
@@ -121,7 +138,8 @@ class CurrencyController extends Controller
      * @queryParam to string required Target currency code (3 letters). Example: EUR
      *
      * @response 200 {
-     *   "status": "success",
+     *   "status": true,
+     *   "message": "Currency converted successfully",
      *   "data": {
      *     "amount": 100,
      *     "from": "USD",
@@ -133,7 +151,7 @@ class CurrencyController extends Controller
      * }
      *
      * @response 404 {
-     *   "status": "error",
+     *   "status": false,
      *   "message": "Currency EUR not found or inactive"
      * }
      */
@@ -144,32 +162,31 @@ class CurrencyController extends Controller
             'to'     => 'required|string|size:3',
         ]);
 
-        $amount = $validated['amount'];
-        $to     = strtoupper($validated['to']);
+        try {
+            $amount = $validated['amount'];
+            $to     = strtoupper($validated['to']);
 
-        $converted = $this->currencyService->convert($amount, $to);
+            $currency = Currency::where('code', $to)
+                ->where('is_active', true)
+                ->first();
 
-        $currency = Currency::where('code', $to)
-            ->where('is_active', true)
-            ->first();
+            if (!$currency) {
+                return $this->error("Currency {$to} not found or inactive", 404);
+            }
 
-        if (! $currency) {
-            return response()->json([
-                'status'  => 'error',
-                'message' => "Currency {$to} not found or inactive"
-            ], 404);
-        }
+            $converted = $this->currencyService->convert($amount, $to);
 
-        return response()->json([
-            'status' => 'success',
-            'data'   => [
+            return $this->success([
                 'amount'    => (float) $amount,
                 'from'      => $this->currencyService->code(),
                 'to'        => $currency->code,
                 'converted' => $converted,
                 'symbol'    => $currency->symbol,
                 'rate'      => $currency->rate,
-            ]
-        ]);
+            ], 'Currency converted successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to convert currency', 500);
+        }
     }
 }

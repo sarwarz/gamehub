@@ -33,20 +33,29 @@ class TaxController extends Controller
      */
     public function index(Request $request)
     {
-        $taxes = Tax::where('is_active', true)
-            ->when($request->seller_id, function ($q) use ($request) {
-                $q->where(function ($q) use ($request) {
-                    $q->whereNull('seller_id')
-                      ->orWhere('seller_id', $request->seller_id);
-                });
-            })
-            ->when($request->country, fn ($q) => $q->where('country', $request->country))
-            ->when($request->state, fn ($q) => $q->where('state', $request->state))
-            ->when($request->city, fn ($q) => $q->where('city', $request->city))
-            ->orderBy('priority')
-            ->get();
+        $request->validate([
+            'seller_id' => 'nullable|integer',
+        ]);
 
-        return $this->successResponse($taxes, 'Taxes fetched successfully');
+        try {
+            $taxes = Tax::where('is_active', true)
+                ->when($request->seller_id, function ($q) use ($request) {
+                    $q->where(function ($q) use ($request) {
+                        $q->whereNull('seller_id')
+                          ->orWhere('seller_id', $request->seller_id);
+                    });
+                })
+                ->when($request->country, fn ($q) => $q->where('country', $request->country))
+                ->when($request->state, fn ($q) => $q->where('state', $request->state))
+                ->when($request->city, fn ($q) => $q->where('city', $request->city))
+                ->orderBy('priority')
+                ->get();
+
+            return $this->success($taxes, 'Taxes fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch taxes', 500);
+        }
     }
 
     /**
@@ -80,33 +89,38 @@ class TaxController extends Controller
             'city'      => 'nullable|string|max:100',
         ]);
 
-        $taxes = Tax::where('is_active', true)
-            ->where(function ($q) use ($data) {
-                $q->whereNull('seller_id')
-                  ->orWhere('seller_id', $data['seller_id'] ?? null);
-            })
-            ->where('country', $data['country'])
-            ->when($data['state'], fn ($q) => $q->where('state', $data['state']))
-            ->when($data['city'], fn ($q) => $q->where('city', $data['city']))
-            ->orderBy('priority')
-            ->get();
+        try {
+            $taxes = Tax::where('is_active', true)
+                ->where(function ($q) use ($data) {
+                    $q->whereNull('seller_id')
+                      ->orWhere('seller_id', $data['seller_id'] ?? null);
+                })
+                ->where('country', $data['country'])
+                ->when($data['state'] ?? null, fn ($q) => $q->where('state', $data['state']))
+                ->when($data['city'] ?? null, fn ($q) => $q->where('city', $data['city']))
+                ->orderBy('priority')
+                ->get();
 
-        $taxTotal = 0;
+            $taxTotal = 0;
 
-        foreach ($taxes as $tax) {
-            $base = $tax->is_compound ? ($data['amount'] + $taxTotal) : $data['amount'];
+            foreach ($taxes as $tax) {
+                $base = $tax->is_compound ? ($data['amount'] + $taxTotal) : $data['amount'];
 
-            $taxAmount = $tax->type === 'percent'
-                ? ($base * $tax->rate / 100)
-                : $tax->rate;
+                $taxAmount = $tax->type === 'percent'
+                    ? ($base * $tax->rate / 100)
+                    : $tax->rate;
 
-            $taxTotal += round($taxAmount, 2);
+                $taxTotal += round($taxAmount, 2);
+            }
+
+            return $this->success([
+                'tax_total' => round($taxTotal, 2),
+                'taxes'     => $taxes,
+            ], 'Tax calculated successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to calculate tax', 500);
         }
-
-        return $this->successResponse([
-            'tax_total' => round($taxTotal, 2),
-            'taxes'     => $taxes,
-        ], 'Tax calculated successfully');
     }
 
     /**
@@ -124,37 +138,21 @@ class TaxController extends Controller
      */
     public function sellerTaxes(Request $request)
     {
-        $seller = Seller::where('user_id', $request->user()->id)->first();
+        try {
+            $seller = Seller::where('user_id', $request->user()->id)->first();
 
-        if (!$seller) {
-            return $this->errorResponse('Seller account not found', 404);
+            if (!$seller) {
+                return $this->error('Seller account not found', 404);
+            }
+
+            $taxes = Tax::where('seller_id', $seller->id)
+                ->latest()
+                ->get();
+
+            return $this->success($taxes, 'Seller taxes fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch seller taxes', 500);
         }
-
-        $taxes = Tax::where('seller_id', $seller->id)
-            ->latest()
-            ->get();
-
-        return $this->successResponse($taxes, 'Seller taxes fetched successfully');
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

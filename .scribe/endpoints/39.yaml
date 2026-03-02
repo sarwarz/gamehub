@@ -1,0 +1,131 @@
+name: Contact
+description: |-
+
+  APIs for the website contact form. Users can submit messages
+  without authentication.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/contact
+    metadata:
+      custom: []
+      groupName: Contact
+      groupDescription: |-
+
+        APIs for the website contact form. Users can submit messages
+        without authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Submit contact message'
+      description: |-
+        Send a message through the website's contact form.
+        Messages are stored and visible to admins for review and reply.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      name:
+        custom: []
+        name: name
+        description: 'Your full name.'
+        required: true
+        example: 'John Doe'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Your email address.'
+        required: true
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'optional Your phone number.'
+        required: false
+        example: '+1234567890'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      subject:
+        custom: []
+        name: subject
+        description: 'Message subject.'
+        required: true
+        example: 'Order inquiry'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: 'Message body (max 5000 characters).'
+        required: true
+        example: 'I have a question about my recent order...'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      captcha_token:
+        custom: []
+        name: captcha_token
+        description: 'optional CAPTCHA token for reCAPTCHA v3 or Cloudflare Turnstile (required when CAPTCHA is enabled).'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      name: 'John Doe'
+      email: john@example.com
+      phone: '+1234567890'
+      subject: 'Order inquiry'
+      message: 'I have a question about my recent order...'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{"status":true,"message":"Your message has been sent successfully. We will get back to you soon.","data":{"id":1,"name":"John Doe","subject":"Order inquiry","status":"new","created_at":"2026-02-28T10:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"The email field is required."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 429
+        content: '{"status":false,"message":"Too many messages. Please try again later."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

@@ -30,26 +30,13 @@ class BlogCategoryController extends Controller
 
                 ->addColumn('actions', function ($cat) {
                     return '
-                        <div class="dropdown">
-                            <button
-                                type="button"
-                                class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
-                                data-bs-toggle="dropdown"
-                                aria-expanded="false">
-                                <i class="ti tabler-dots-vertical"></i>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <a href="'.route('blog-categories.edit', $cat->id).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                <i class="ti tabler-pencil ti-xs"></i>
+                            </a>
+                            <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-id="'.$cat->id.'" title="Delete">
+                                <i class="ti tabler-trash ti-xs"></i>
                             </button>
-
-                            <div class="dropdown-menu">
-                                <a class="dropdown-item" href="'.route('blog-categories.edit', $cat->id).'">
-                                    <i class="ti tabler-edit me-1"></i> Edit
-                                </a>
-
-                                <a class="dropdown-item text-danger delete-btn"
-                                href="javascript:void(0);"
-                                data-id="'.$cat->id.'">
-                                    <i class="ti tabler-trash me-1"></i> Delete
-                                </a>
-                            </div>
                         </div>
                     ';
                 })
@@ -59,7 +46,11 @@ class BlogCategoryController extends Controller
                 ->make(true);
         }
 
-        return view('content.blog-categories.index');
+        $stats = [
+            'total' => \App\Models\BlogCategory::count(),
+        ];
+
+        return view('content.blog-categories.index', compact('stats'));
     }
 
     public function create()
@@ -69,6 +60,7 @@ class BlogCategoryController extends Controller
 
     public function store(Request $request)
     {
+
         $data = $request->validate([
             'name'             => 'required|string|max:255',
             'slug'             => 'nullable|string|max:255|unique:blog_categories,slug',
@@ -95,6 +87,7 @@ class BlogCategoryController extends Controller
 
     public function update(Request $request, BlogCategory $blogCategory)
     {
+
         $data = $request->validate([
             'name'             => 'required|string|max:255',
             'slug'             => 'nullable|string|max:255|unique:blog_categories,slug,' . $blogCategory->id,
@@ -116,6 +109,7 @@ class BlogCategoryController extends Controller
 
     public function destroy(BlogCategory $blogCategory)
     {
+
         try {
             $blogCategory->delete();
 
@@ -136,6 +130,7 @@ class BlogCategoryController extends Controller
 
     public function bulkDelete(Request $request)
     {
+
         BlogCategory::whereIn('id', $request->ids)->delete();
         return response()->json(['message' => 'Deleted']);
     }

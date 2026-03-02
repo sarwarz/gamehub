@@ -1,0 +1,550 @@
+================================================================================
+  GAMEHUB — CHECKOUT INTEGRATION GUIDE FOR NEXT.JS
+================================================================================
+
+  This document explains how to integrate the new payment-first checkout flow
+  from your Next.js frontend. No code is included — only the steps, API
+  contracts, and logic your frontend developer needs.
+
+  Base URL:  YOUR_LARAVEL_URL/api/v1   (e.g. http://127.0.0.1:8000/api/v1)
+
+
+================================================================================
+  TABLE OF CONTENTS
+================================================================================
+
+  1. Flow Overview
+  2. Prerequisites
+  3. Step 1 — Create Checkout Session
+  4. Step 2 — Initiate Payment
+  5. Step 3 — Handle Each Gateway
+       5a. Stripe
+       5b. PayPal
+       5c. Cryptomus
+       5d. Wallet (full balance)
+  6. Step 4 — Poll for Result
+  7. Step 5 — Success Page
+  8. Error Handling
+  9. Idempotency
+  10. Session Expiry
+  11. Suggested Page Structure
+
+
+================================================================================
+  1.  FLOW OVERVIEW
+================================================================================
+
+  Old flow:   Cart → Create Order → Pay → Webhook confirms
+  New flow:   Cart → Create Session → Pay → Webhook creates Order → Poll Result
+
+  The key difference: NO order exists until payment is confirmed. This prevents
+  unpaid orders, stock issues, and coupon abuse.
+
+  Sequence:
+
+    [User clicks Checkout]
+         |
+         v
+    POST /checkout/sessions              →  Returns session_uuid + price breakdown
+         |
+         v
+    [User picks payment method]
+         |
+         v
+    POST /checkout/sessions/{uuid}/pay   →  Returns gateway-specific payment data
+         |
+         v
+    [User completes payment on gateway]
+         |
+         v
+    [Gateway sends webhook to Laravel]   →  Laravel creates the order
+         |
+         v
+    GET /checkout/sessions/{uuid}/result →  Poll until status = "completed"
+         |
+         v
+    [Show success page with order details]
+
+
+================================================================================
+  2.  PREREQUISITES
+================================================================================
+
+  - User must be logged in (Bearer token from POST /auth/login).
+  - Cart items are stored client-side (localStorage / state).
+  - Each cart item must have a "seller_offer_id" (integer) and "quantity" (integer).
+  - You need the user's billing address (name, email, address, city, country).
+  - For Stripe: install @stripe/stripe-js and @stripe/react-stripe-js.
+  - For PayPal and Cryptomus: no extra SDK needed (they use URL redirects).
+
+
+================================================================================
+  3.  STEP 1 — CREATE CHECKOUT SESSION
+================================================================================
+
+  When the user clicks "Proceed to Checkout" (or lands on the checkout page),
+  call this endpoint to validate the cart, calculate taxes/discounts, and
+  create a temporary session that expires in 30 minutes.
+
+  ── Endpoint ──
+
+    POST /api/v1/checkout/sessions
+
+  ── Headers ──
+
+    Authorization:    Bearer {token}
+    Content-Type:     application/json
+    Accept:           application/json
+    X-Idempotency-Key: {optional, see Section 9}
+
+  ── Request Body ──
+
+    {
+      "items": [
+        { "seller_offer_id": 5, "quantity": 1 },
+        { "seller_offer_id": 12, "quantity": 2 }
+      ],
+      "billing": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "+1234567890",        // optional
+        "address": "123 Main St",
+        "city": "New York",
+        "state": "NY",                 // optional
+        "country": "US",
+        "postcode": "10001"            // optional
+      },
+      "currency": "USD",
+      "coupon_code": "SAVE20"          // optional
+    }
+
+  ── Success Response (201) ──
+
+    {
+      "status": true,
+      "message": "Checkout session created.",
+      "data": {
+        "session_uuid": "a1b2c3d4-e5f6-...",
+        "subtotal": 49.98,
+        "tax_amount": 4.50,
+        "discount_amount": 10.00,
+        "total_amount": 44.48,
+        "currency": "USD",
+        "tax_details": [
+          { "name": "State Tax", "rate": 8.875, "type": "percent", "amount": 4.50 }
+        ],
+        "coupon": {
+          "coupon_id": 3,
+          "code": "SAVE20",
+          "type": "percent",
+          "value": 20,
+          "discount": 10.00
+        },
+        "items": [
+          {
+            "seller_offer_id": 5,
+            "seller_id": 2,
+            "product_id": 10,
+            "quantity": 1,
+            "unit_price": 24.99,
+            "line_total": 24.99,
+            "product_title": "GTA V Steam Key"
+          }
+        ],
+        "expires_at": "2026-03-01T14:30:00.000Z"
+      }
+    }
+
+  ── What to do ──
+
+    1. Save the "session_uuid" — you need it for all subsequent calls.
+    2. Display the price breakdown to the user (subtotal, tax, discount, total).
+    3. Show the validated item list from the response (not from localStorage).
+    4. Start a 30-minute countdown timer using "expires_at".
+    5. Let the user pick a payment method (Stripe, PayPal, Cryptomus, Wallet).
+
+  ── Error Response (422) ──
+
+    {
+      "status": false,
+      "message": "Insufficient stock for \"GTA V Steam Key\". Available: 0, Requested: 1"
+    }
+
+    Possible error messages:
+      - "Seller offer #X is not available."
+      - "Insufficient stock for ..."
+      - "Invalid or expired coupon code."
+      - "Coupon usage limit reached."
+      - "Minimum order amount for this coupon is X."
+
+
+================================================================================
+  4.  STEP 2 — INITIATE PAYMENT
+================================================================================
+
+  After the user selects a payment method, call this endpoint. It reserves
+  the product keys, deducts wallet balance (if applicable), and returns
+  the data needed to complete payment on the chosen gateway.
+
+  ── Endpoint ──
+
+    POST /api/v1/checkout/sessions/{session_uuid}/pay
+
+  ── Headers ──
+
+    Authorization:  Bearer {token}
+    Content-Type:   application/json
+    Accept:         application/json
+
+  ── Request Body ──
+
+    {
+      "payment_method": "stripe",       // "stripe" | "paypal" | "cryptomus" | "wallet"
+      "use_wallet": false               // optional, true = use wallet for partial payment
+    }
+
+  ── Success Response (200) — Gateway Payment ──
+
+    {
+      "status": true,
+      "message": "Payment initiated.",
+      "data": {
+        "session_uuid": "a1b2c3d4-e5f6-...",
+        "gateway": "stripe",
+        "payment": {
+          "gateway_reference": "pi_3abc123...",
+          "client_secret": "pi_3abc123..._secret_xyz"    // Stripe only
+          // OR "approval_url": "https://paypal.com/..."  // PayPal only
+          // OR "payment_url": "https://pay.cryptomus..." // Cryptomus only
+        },
+        "wallet_applied": 0.00,
+        "gateway_amount": 44.48
+      }
+    }
+
+  ── Success Response (200) — Full Wallet Payment ──
+
+    When payment_method is "wallet" and user has enough balance, the order
+    is created instantly (no webhook needed):
+
+    {
+      "status": true,
+      "message": "Payment initiated.",
+      "data": {
+        "status": "completed",
+        "session_uuid": "a1b2c3d4-e5f6-...",
+        "order": {
+          "id": 42,
+          "order_number": "000042",
+          "status": "processing",
+          "payment_status": "paid",
+          "subtotal": 49.98,
+          "tax_amount": 4.50,
+          "discount_amount": 10.00,
+          "total_amount": 44.48,
+          "currency": "USD",
+          "paid_at": "2026-03-01T14:05:00.000Z"
+        }
+      }
+    }
+
+    If you see "status": "completed" in the response, skip Step 3 entirely
+    and go directly to the success page.
+
+  ── Error Response (422) ──
+
+    Possible error messages:
+      - "Checkout session has expired. Please start a new checkout."
+      - "This checkout session is no longer available."
+      - "Selected payment method is not available."
+      - "Insufficient wallet balance."
+      - "Partial wallet payment is not enabled."
+      - "Stock no longer available for ..."
+
+
+================================================================================
+  5.  STEP 3 — HANDLE EACH GATEWAY
+================================================================================
+
+  After Step 2, the response contains gateway-specific data. Here is what
+  your frontend does for each gateway:
+
+
+  ── 5a. STRIPE ──
+
+    The response contains "client_secret" in data.payment.
+
+    1. Load Stripe.js using your Stripe publishable key:
+         loadStripe("pk_live_xxx")
+
+    2. Use Stripe Elements to render a payment form (card input).
+
+    3. When user submits, call:
+         stripe.confirmPayment({
+           elements,
+           clientSecret: data.payment.client_secret,
+           confirmParams: {
+             return_url: "https://yoursite.com/checkout/success?session={session_uuid}"
+           }
+         })
+
+    4. Stripe handles 3D Secure / authentication automatically.
+
+    5. On success, Stripe redirects to your return_url.
+
+    6. On the return_url page, read session_uuid from the query string
+       and proceed to Step 4 (Poll for Result).
+
+
+  ── 5b. PAYPAL ──
+
+    The response contains "approval_url" in data.payment.
+
+    1. Redirect the user to the approval_url:
+         window.location.href = data.payment.approval_url
+
+    2. User logs into PayPal and approves the payment.
+
+    3. PayPal redirects back to:
+         https://yoursite.com/checkout/success?session={session_uuid}
+       (This return URL is configured server-side.)
+
+    4. On the success page, read session_uuid from the query string
+       and proceed to Step 4 (Poll for Result).
+
+
+  ── 5c. CRYPTOMUS ──
+
+    The response contains "payment_url" in data.payment.
+
+    1. Redirect the user to the payment_url:
+         window.location.href = data.payment.payment_url
+
+    2. User pays with cryptocurrency on the Cryptomus page.
+
+    3. Cryptomus redirects back to:
+         https://yoursite.com/checkout/success?session={session_uuid}
+
+    4. On the success page, read session_uuid from the query string
+       and proceed to Step 4 (Poll for Result).
+
+
+  ── 5d. WALLET (Full Balance) ──
+
+    If payment_method is "wallet" and the user has enough balance:
+
+    1. The Pay endpoint creates the order instantly.
+    2. The response already contains "status": "completed" and the order data.
+    3. Skip polling — redirect to the success page immediately.
+    4. Clear the cart from localStorage.
+
+
+================================================================================
+  6.  STEP 4 — POLL FOR RESULT
+================================================================================
+
+  After the user returns from the payment gateway (Stripe redirect, PayPal
+  redirect, or Cryptomus redirect), you need to poll the result endpoint
+  until the webhook has been processed and the order has been created.
+
+  ── Endpoint ──
+
+    GET /api/v1/checkout/sessions/{session_uuid}/result
+
+  ── Headers ──
+
+    Authorization:  Bearer {token}
+    Accept:         application/json
+
+  ── Response while still processing ──
+
+    {
+      "status": true,
+      "message": "Success",
+      "data": {
+        "status": "paying",
+        "session_uuid": "a1b2c3d4-e5f6-...",
+        "expires_at": "2026-03-01T14:30:00.000Z"
+      }
+    }
+
+  ── Response when order is ready ──
+
+    {
+      "status": true,
+      "message": "Success",
+      "data": {
+        "status": "completed",
+        "session_uuid": "a1b2c3d4-e5f6-...",
+        "order": {
+          "id": 42,
+          "order_number": "000042",
+          "status": "processing",
+          "payment_status": "paid",
+          "subtotal": 49.98,
+          "tax_amount": 4.50,
+          "discount_amount": 10.00,
+          "total_amount": 44.48,
+          "currency": "USD",
+          "paid_at": "2026-03-01T14:05:00.000Z"
+        }
+      }
+    }
+
+  ── Polling Logic ──
+
+    1. Call the result endpoint.
+    2. If data.status is "completed" → stop polling, show success page.
+    3. If data.status is "expired" → stop polling, show error "Session expired".
+    4. If data.status is "paying" → wait 2 seconds, then poll again.
+    5. Set a maximum of 60 polls (2 minutes). If still "paying" after 2 minutes,
+       show a message: "Payment is being processed. Check your orders page."
+    6. Recommended interval: 2 seconds for the first 10 polls, then 5 seconds.
+
+
+================================================================================
+  7.  STEP 5 — SUCCESS PAGE
+================================================================================
+
+  Once you receive status "completed" with order data:
+
+    1. Clear the cart from localStorage.
+    2. Display the order confirmation:
+         - Order number (order.order_number)
+         - Total paid (order.total_amount + order.currency)
+         - Payment status (order.payment_status)
+         - Paid at (order.paid_at)
+    3. Show a "View Order" button linking to /my-orders/{order.id}
+       or wherever your order detail page lives.
+    4. Show a "View Keys" button if applicable (digital products).
+
+
+================================================================================
+  8.  ERROR HANDLING
+================================================================================
+
+  All error responses follow this shape:
+
+    {
+      "status": false,
+      "message": "Human-readable error message"
+    }
+
+  ── HTTP Status Codes ──
+
+    422  Validation or business logic error (show message to user)
+    404  Session not found (invalid UUID or belongs to another user)
+    500  Server error (show generic "Something went wrong" message)
+
+  ── Common Scenarios ──
+
+    SCENARIO                          WHAT TO DO
+    ─────────────────────────────     ──────────────────────────────────────
+    Session expired (30 min)          Show message, redirect back to cart
+    Out of stock during pay           Show message, redirect back to cart
+    Invalid coupon                    Show message on checkout page
+    Insufficient wallet balance       Show message, let user pick gateway
+    Payment cancelled by user         Let them retry (call /pay again
+                                      with a new session if old one expired)
+    Webhook not yet received          Keep polling (up to 2 min)
+    Network error during polling      Retry with exponential backoff
+
+  ── Important ──
+
+    - NEVER create a new session while an existing one is still "paying".
+      The old session has reserved product keys. It will auto-expire in 30 min.
+    - If the user wants to change their cart, they must wait for the old
+      session to expire (or it will expire automatically).
+
+
+================================================================================
+  9.  IDEMPOTENCY
+================================================================================
+
+  To prevent duplicate sessions if the user double-clicks or the network
+  retries, send an X-Idempotency-Key header when creating a session.
+
+  ── How it works ──
+
+    1. Generate a UUID on the client when the user clicks "Checkout".
+    2. Send it as:  X-Idempotency-Key: {uuid}
+    3. If a session with the same key already exists (and is not expired),
+       the server returns the existing session instead of creating a new one.
+    4. This is optional but strongly recommended.
+
+  ── When to generate a new key ──
+
+    - When the user modifies the cart and re-initiates checkout.
+    - When the previous session has expired.
+    - Do NOT reuse the key across different cart contents.
+
+
+================================================================================
+  10.  SESSION EXPIRY
+================================================================================
+
+  - Sessions expire 30 minutes after creation.
+  - Expired sessions release all reserved product keys.
+  - Expired sessions refund any wallet holds.
+  - The server automatically cleans up expired sessions every 5 minutes.
+
+  ── Frontend Timer ──
+
+    1. Use the "expires_at" from the create-session response.
+    2. Show a countdown timer on the checkout/payment page.
+    3. When the timer reaches 0, show a message:
+       "Your checkout session has expired. Please start a new checkout."
+    4. Redirect back to the cart page.
+
+
+================================================================================
+  11.  SUGGESTED PAGE STRUCTURE
+================================================================================
+
+  PAGE                   ROUTE                       WHAT HAPPENS
+  ─────────────────      ─────────────────────       ───────────────────────────
+  Cart Page              /cart                       User reviews cart items
+                                                     Clicks "Checkout"
+
+  Checkout Page          /checkout                   Collects billing address
+                                                     Shows coupon input
+                                                     Calls POST /checkout/sessions
+                                                     Shows price breakdown
+                                                     Shows payment method options
+                                                     Calls POST /checkout/sessions/{uuid}/pay
+                                                     Handles gateway (Stripe form / redirect)
+
+  Success Page           /checkout/success           Reads "session" from query string
+                                                     Polls GET /checkout/sessions/{uuid}/result
+                                                     Shows spinner while "paying"
+                                                     Shows order confirmation when "completed"
+                                                     Clears cart
+
+  Cancel Page            /checkout/cancel            Shown if user cancels PayPal/Cryptomus
+  (optional)                                         Link back to cart or retry
+
+
+  ── Query String on Success Page ──
+
+    After Stripe redirect:     /checkout/success?session=a1b2c3d4-e5f6-...
+    After PayPal redirect:     /checkout/success?session=a1b2c3d4-e5f6-...
+    After Cryptomus redirect:  /checkout/success?session=a1b2c3d4-e5f6-...
+    After wallet payment:      Navigate programmatically with the session_uuid
+
+
+================================================================================
+  QUICK REFERENCE — ALL ENDPOINTS
+================================================================================
+
+  METHOD   ENDPOINT                                    AUTH     PURPOSE
+  ──────   ──────────────────────────────────────────   ──────   ───────────────
+  POST     /api/v1/checkout/sessions                   Yes      Create session
+  POST     /api/v1/checkout/sessions/{uuid}/pay        Yes      Start payment
+  GET      /api/v1/checkout/sessions/{uuid}/result     Yes      Poll for order
+
+  These are the ONLY 3 endpoints needed for checkout.
+  The old POST /api/v1/orders endpoint has been removed.
+
+================================================================================
+  END OF DOCUMENT
+================================================================================

@@ -2,23 +2,93 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Order;
-use App\Models\Transaction;
-use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
-use App\Models\SellerEarning;
-use App\Models\OrderNote;
-use App\Services\InvoiceService;
-use App\Jobs\AutoDeliverOrderJob;
-use Illuminate\Support\Facades\DB;
+use App\Models\WebhookEvent;
+use App\Jobs\ProcessWebhookJob;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\OrderConfirmedMail;
-use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * @group Payment Webhooks
+ *
+ * Server-to-server webhook endpoints called by payment gateways to confirm
+ * payments. **These are NOT called by the frontend** — they are configured
+ * in your payment gateway dashboard.
+ *
+ * ## How Webhooks Work
+ *
+ * When a customer completes a payment on Stripe, PayPal, or Cryptomus,
+ * the gateway sends a POST request to this endpoint. The system then:
+ *
+ * 1. **Receives** the webhook and returns `200 OK` immediately
+ * 2. **Stores** the event in the `webhook_events` table (with deduplication)
+ * 3. **Dispatches** a background job (`ProcessWebhookJob`) to:
+ *    - Verify the webhook signature (prevents spoofing)
+ *    - Extract the transaction reference (`trx`)
+ *    - Find the matching `CheckoutSession`
+ *    - Create the `Order`, `OrderItems`, `SellerEarnings`, `Transaction`
+ *    - Assign reserved license keys to the order
+ *    - Fire the `OrderPaid` event (triggers invoice, auto-delivery, notifications)
+ *
+ * ## Webhook URLs to Configure
+ *
+ * Set these URLs in each payment gateway's dashboard:
+ *
+ * | Gateway    | Webhook URL                                          |
+ * |------------|------------------------------------------------------|
+ * | Stripe     | `https://your-domain.com/api/v1/webhooks/payment/stripe`    |
+ * | PayPal     | `https://your-domain.com/api/v1/webhooks/payment/paypal`    |
+ * | Cryptomus  | `https://your-domain.com/api/v1/webhooks/payment/cryptomus` |
+ *
+ * ## Stripe Setup
+ *
+ * 1. Go to [Stripe Dashboard → Developers → Webhooks](https://dashboard.stripe.com/webhooks)
+ * 2. Click "Add endpoint" and paste the Stripe webhook URL above
+ * 3. Select event: `payment_intent.succeeded`
+ * 4. Copy the signing secret and add it to your payment method config as `webhook_secret`
+ *
+ * ## PayPal Setup
+ *
+ * 1. Go to [PayPal Developer → Webhooks](https://developer.paypal.com/dashboard/webhooks)
+ * 2. Add the PayPal webhook URL above
+ * 3. Subscribe to: `PAYMENT.CAPTURE.COMPLETED`
+ *
+ * ## Cryptomus Setup
+ *
+ * 1. In Cryptomus merchant settings, set the callback URL to the Cryptomus webhook URL above
+ * 2. The system validates using the merchant UUID and API key from your payment method config
+ *
+ * ## Safety Features
+ *
+ * - **Signature verification**: Each gateway's webhook signature is verified before processing
+ * - **Idempotency**: Duplicate events (same `event_id`) are automatically skipped
+ * - **Async processing**: The endpoint always returns `200 OK` instantly; actual work runs in a background queue job
+ * - **Retry safety**: The job retries up to 3 times with exponential backoff (30s, 120s, 600s)
+ * - **Amount validation**: Paid amount is verified against expected amount (±$0.02 tolerance)
+ * - **Dual routing**: Webhooks automatically route to order fulfillment or wallet deposit confirmation based on the payload metadata
+ *
+ * ## For Frontend Developers
+ *
+ * You do **not** need to call this endpoint. After the user completes payment on the
+ * gateway, redirect them back to your app and poll `GET /checkout/sessions/{uuid}/result`
+ * until `status === "completed"`.
+ */
 class PaymentWebhookController extends Controller
 {
+    /**
+     * Handle payment webhook
+     *
+     * Receives a webhook event from a payment gateway, stores it in the
+     * `webhook_events` table, and dispatches a background job for async
+     * processing. Always returns 200 OK to prevent retry storms.
+     *
+     * @unauthenticated
+     *
+     * @urlParam gateway string required The payment gateway code. Example: stripe
+     *
+     * @response 200 OK
+     */
     public function handle(string $gateway, Request $request)
     {
         $method = PaymentMethod::where('code', $gateway)
@@ -26,192 +96,86 @@ class PaymentWebhookController extends Controller
             ->first();
 
         if (!$method) {
-            return response()->json(['message' => 'Payment method disabled'], 404);
+            return response('OK', 200);
         }
 
         try {
-            // STEP 1: Normalize webhook
-            $payload = $this->normalize($method, $request);
+            $eventId = $this->extractEventId($gateway, $request);
 
-            if (!$payload['success'] || empty($payload['trx'])) {
-                return response()->json(['message' => 'Invalid webhook'], 400);
+            if ($eventId) {
+                $duplicate = WebhookEvent::where('gateway', $gateway)
+                    ->where('event_id', $eventId)
+                    ->whereIn('status', ['processing', 'processed'])
+                    ->exists();
+
+                if ($duplicate) {
+                    Log::info('Duplicate webhook ignored', [
+                        'gateway'  => $gateway,
+                        'event_id' => $eventId,
+                    ]);
+                    return response('OK', 200);
+                }
             }
 
-            $order = null;
-            $transaction = null;
+            $event = WebhookEvent::create([
+                'gateway'    => $gateway,
+                'event_id'   => $eventId,
+                'event_type' => $this->extractEventType($gateway, $request),
+                'payload'    => $request->all(),
+                'headers'    => $this->safeHeaders($request),
+                'status'     => 'received',
+            ]);
 
-            DB::transaction(function () use (
-                $payload,
-                $gateway,
-                &$order,
-                &$transaction
-            ) {
-
-                // STEP 2: Lock transaction
-                $transaction = Transaction::where('trx', $payload['trx'])
-                    ->lockForUpdate()
-                    ->first();
-
-                if (!$transaction) {
-                    throw new \Exception('Transaction not found');
-                }
-
-                // Idempotency
-                if ($transaction->status === 'completed') {
-                    return;
-                }
-
-                // STEP 3: Update transaction
-                $transaction->update([
-                    'status'  => 'completed',
-                    'gateway' => $gateway,
-                    'meta'    => array_merge($transaction->meta ?? [], $payload['raw']),
-                ]);
-
-                // STEP 4: Lock order
-                $order = Order::lockForUpdate()->find($transaction->reference_id);
-
-                if (!$order) {
-                    throw new \Exception('Order not found');
-                }
-
-                // STEP 5: Update order
-                $order->update([
-                    'payment_status' => 'paid',
-                    'status'         => 'processing',
-                    'paid_at'        => now(),
-                ]);
-
-                // STEP 6: Activate seller earnings
-                SellerEarning::where('order_id', $order->id)
-                    ->update(['status' => 'available']);
-
-                // STEP 7: Generate invoice
-                app(InvoiceService::class)->generateFromOrder($order);
-            });
-
-            /**
-             * 🔥 SAFE SECTION (NO ROLLBACK POSSIBLE)
-             * Runs ONLY after successful commit
-             */
-            DB::afterCommit(function () use ($order, $transaction, $gateway) {
-
-                // Payment success
-                $order->notes()->create([
-                    'note' => "Payment completed successfully via {$gateway}. Transaction ID: {$transaction->trx}",
-                    'type' => 'system',
-                    'is_visible_to_customer' => true,
-                ]);
-
-                // Order processing
-                $order->notes()->create([
-                    'note' => 'Order marked as processing after successful payment.',
-                    'type' => 'system',
-                ]);
-
-                // Seller earnings
-                $order->notes()->create([
-                    'note' => 'Seller earnings activated and marked as available.',
-                    'type' => 'system',
-                ]);
-
-                // Invoice
-                $order->notes()->create([
-                    'note' => 'Invoice generated for the order.',
-                    'type' => 'system',
-                    'is_visible_to_customer' => true,
-                ]);
-
-                Mail::to($order->addresses
-                    ->where('type', 'billing')
-                    ->first()?->email
-                )->queue(new OrderConfirmedMail($order));
-
-                // Dispatch delivery AFTER commit
-                dispatch(new AutoDeliverOrderJob($order->id));
-
-                $order->notes()->create([
-                    'note' => 'Auto delivery job dispatched.',
-                    'type' => 'system',
-                ]);
-            });
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment processed successfully',
-            ], Response::HTTP_OK);
+            dispatch(new ProcessWebhookJob($event->id));
 
         } catch (\Throwable $e) {
-
-            Log::error('Payment webhook failed', [
+            Log::error('Webhook storage failed', [
                 'gateway' => $gateway,
                 'error'   => $e->getMessage(),
             ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Webhook error',
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+            report($e);
         }
+
+        return response('OK', 200);
     }
 
-    /**
-     * Normalize & verify webhook payload
-     */
-    protected function normalize(PaymentMethod $method, Request $request): array
+    protected function extractEventId(string $gateway, Request $request): ?string
     {
-        return match ($method->code) {
-            'paypal' => $this->paypal($method, $request),
-            'stripe' => $this->stripe($method, $request),
-            default  => ['success' => false],
+        return match ($gateway) {
+            'stripe'    => $request->input('id'),
+            'paypal'    => $request->input('id'),
+            'cryptomus' => $request->input('uuid'),
+            default     => null,
         };
     }
 
-    protected function paypal(PaymentMethod $method, Request $request): array
+    protected function extractEventType(string $gateway, Request $request): ?string
     {
-        if (app()->environment('local', 'testing')) {
-            return [
-                'success' => $request->input('type') === 'payment_intent.succeeded',
-                'trx'     => data_get($request->input('data'), 'object.metadata.trx'),
-                'raw'     => $request->all(),
-            ];
-        }
-
-        return ['success' => false];
+        return match ($gateway) {
+            'stripe'    => $request->input('type'),
+            'paypal'    => $request->input('event_type'),
+            'cryptomus' => $request->input('status'),
+            default     => null,
+        };
     }
 
-    protected function stripe(PaymentMethod $method, Request $request): array
+    protected function safeHeaders(Request $request): array
     {
-        if (app()->environment('local', 'testing')) {
-            return [
-                'success' => $request->input('type') === 'payment_intent.succeeded',
-                'trx'     => data_get($request->input('data'), 'object.metadata.trx'),
-                'raw'     => $request->all(),
-            ];
-        }
+        $keep = [
+            'stripe-signature',
+            'paypal-auth-algo', 'paypal-cert-url',
+            'paypal-transmission-id', 'paypal-transmission-sig', 'paypal-transmission-time',
+            'content-type',
+        ];
 
-        $secret = $method->config['webhook_secret'] ?? null;
-        if (!$secret) return ['success' => false];
-
-        try {
-            $event = \Stripe\Webhook::constructEvent(
-                $request->getContent(),
-                $request->header('Stripe-Signature'),
-                $secret
-            );
-
-            if ($event->type !== 'payment_intent.succeeded') {
-                return ['success' => false];
+        $headers = [];
+        foreach ($keep as $key) {
+            $value = $request->header($key);
+            if ($value) {
+                $headers[$key] = $value;
             }
-
-            return [
-                'success' => true,
-                'trx'     => $event->data->object->metadata->trx ?? null,
-                'raw'     => (array) $event,
-            ];
-
-        } catch (\Throwable) {
-            return ['success' => false];
         }
+
+        return $headers;
     }
 }

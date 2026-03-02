@@ -1,0 +1,291 @@
+name: Website
+description: |-
+
+  Public website page configuration APIs.
+  Returns fully structured data for rendering the homepage, shop page, and footer.
+  All endpoints are public and do not require authentication.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/website/homepage
+    metadata:
+      custom: []
+      groupName: Website
+      groupDescription: |-
+
+        Public website page configuration APIs.
+        Returns fully structured data for rendering the homepage, shop page, and footer.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get homepage data'
+      description: |-
+        Returns the complete homepage configuration with all section data,
+        ordered according to admin settings. Each section includes its
+        configuration and actual content data (products, categories, etc).
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      sections:
+        custom: []
+        name: sections
+        description: 'Comma-separated list of specific sections to load. If omitted, all enabled sections are returned.'
+        required: false
+        example: 'featured_products,new_arrivals,hot_deals'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      sections: 'featured_products,new_arrivals,hot_deals'
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Homepage data fetched successfully",
+            "data": {
+              "sections_order": ["hero_slider", "category_bar", "featured_products"],
+              "sections": {
+                "hero_slider": {
+                  "enabled": true,
+                  "config": {"autoplay": true, "speed": 5000, "type": "hero"},
+                  "data": {"sliders": []}
+                },
+                "featured_products": {
+                  "enabled": true,
+                  "config": {"title": "Featured Products", "subtitle": "...", "limit": 8},
+                  "data": {"products": []}
+                }
+              }
+            }
+          }
+        headers: []
+        description: success
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/website/homepage/{section}'
+    metadata:
+      custom: []
+      groupName: Website
+      groupDescription: |-
+
+        Public website page configuration APIs.
+        Returns fully structured data for rendering the homepage, shop page, and footer.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get homepage section'
+      description: |-
+        Returns data for a single homepage section by key.
+        Useful for lazy-loading individual sections.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      section:
+        custom: []
+        name: section
+        description: 'The section key.'
+        required: true
+        example: featured_products
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      section: featured_products
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Section fetched successfully",
+            "data": {
+              "enabled": true,
+              "config": {"title": "Featured Products", "limit": 8},
+              "data": {"products": []}
+            }
+          }
+        headers: []
+        description: success
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "status": false,
+            "message": "Section not found."
+          }
+        headers: []
+        description: 'not found'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/website/shop
+    metadata:
+      custom: []
+      groupName: Website
+      groupDescription: |-
+
+        Public website page configuration APIs.
+        Returns fully structured data for rendering the homepage, shop page, and footer.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get shop page configuration'
+      description: |-
+        Returns the shop page layout settings, filter visibility,
+        banner configuration, and SEO metadata.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Shop page configuration fetched successfully",
+            "data": {
+              "layout": {
+                "default_view": "grid",
+                "products_per_page": 12,
+                "default_sort": "featured",
+                "sidebar_position": "left",
+                "columns": 4
+              },
+              "filters": {
+                "price_range": true,
+                "categories": true,
+                "platforms": true
+              },
+              "banner": {
+                "enabled": false,
+                "title": "",
+                "image": "",
+                "url": ""
+              },
+              "seo": {
+                "title": "All Products",
+                "description": "..."
+              }
+            }
+          }
+        headers: []
+        description: success
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/website/footer
+    metadata:
+      custom: []
+      groupName: Website
+      groupDescription: |-
+
+        Public website page configuration APIs.
+        Returns fully structured data for rendering the homepage, shop page, and footer.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get footer configuration'
+      description: |-
+        Returns the complete footer configuration including about section,
+        column layout with links, bottom bar, payment icons, and social links.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Footer configuration fetched successfully",
+            "data": {
+              "about": {
+                "show_logo": true,
+                "description": "Your trusted marketplace...",
+                "show_social": true
+              },
+              "columns": [],
+              "bottom_bar": {
+                "copyright": "© 2026 GameHub. All rights reserved.",
+                "links": []
+              },
+              "payment_icons": {
+                "enabled": true,
+                "methods": ["visa", "mastercard", "paypal"]
+              },
+              "social": {}
+            }
+          }
+        headers: []
+        description: success
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

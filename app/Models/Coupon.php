@@ -10,9 +10,12 @@ class Coupon extends Model
     use HasFactory;
 
     protected $fillable = [
+        'seller_id',
         'code',
+        'description',
         'type',
         'value',
+        'max_discount_amount',
 
         'min_order_amount',
         'max_order_amount',
@@ -24,7 +27,6 @@ class Coupon extends Model
 
         'usage_limit',
         'usage_limit_per_user',
-        'used',
 
         'starts_at',
         'expires_at',
@@ -33,21 +35,25 @@ class Coupon extends Model
     ];
 
     protected $casts = [
-        'include_categories' => 'array',
-        'exclude_categories' => 'array',
-        'include_products'   => 'array',
-        'exclude_products'   => 'array',
-
-        'starts_at' => 'date',
-        'expires_at'=> 'date',
-        'is_active' => 'boolean',
+        'include_categories'   => 'array',
+        'exclude_categories'   => 'array',
+        'include_products'     => 'array',
+        'exclude_products'     => 'array',
+        'max_discount_amount'  => 'decimal:2',
+        'starts_at'            => 'date',
+        'expires_at'           => 'date',
+        'is_active'            => 'boolean',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helper Methods (Optional but Recommended)
-    |--------------------------------------------------------------------------
-    */
+    public function seller()
+    {
+        return $this->belongsTo(Seller::class);
+    }
+
+    public function isGlobal(): bool
+    {
+        return $this->seller_id === null;
+    }
 
     public function isExpired(): bool
     {

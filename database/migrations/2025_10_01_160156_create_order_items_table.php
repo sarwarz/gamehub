@@ -18,8 +18,8 @@ return new class extends Migration
 
             // Price snapshot
             $table->integer('quantity');
-            $table->decimal('unit_price', 12, 2);
-            $table->decimal('subtotal', 12, 2);
+            $table->decimal('unit_price', 14, 2);
+            $table->decimal('subtotal', 14, 2);
 
             // Delivery
             $table->enum('delivery_type', ['auto','manual'])->default('auto');

@@ -24,23 +24,32 @@ class ProductDeveloperController extends Controller
                     .ucfirst($row->status).'</span>'
                 )
                 ->addColumn('actions', function ($row) {
-                    $editUrl   = route('developers.edit', $row->id);
+                    $editUrl = route('developers.edit', $row->id);
                     $deleteUrl = route('developers.destroy', $row->id);
-
                     return '
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger btn-delete" data-url="'.$deleteUrl.'">Delete</button>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <a href="'.$editUrl.'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                <i class="ti tabler-pencil ti-xs"></i>
+                            </a>
+                            <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn"
+                                    data-url="'.$deleteUrl.'" title="Delete">
+                                <i class="ti tabler-trash ti-xs"></i>
+                            </button>
+                        </div>
                     ';
                 })
                 ->rawColumns(['checkbox','status_badge','actions'])
                 ->make(true);
         }
 
-        return view('content.products.developers.index');
+        $stats = ['total' => ProductDeveloper::count()];
+
+        return view('content.products.developers.index', compact('stats'));
     }
 
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'name'   => 'required|string|max:255',
             'slug'   => 'required|string|max:255|unique:product_developers,slug',
@@ -66,6 +75,7 @@ class ProductDeveloperController extends Controller
 
     public function update(Request $request, $id)
     {
+
         $developer = ProductDeveloper::findOrFail($id);
 
         $validated = $request->validate([
@@ -83,6 +93,7 @@ class ProductDeveloperController extends Controller
 
     public function destroy($id)
     {
+
         $developer = ProductDeveloper::findOrFail($id);
         $developer->delete();
 
@@ -91,6 +102,7 @@ class ProductDeveloperController extends Controller
 
     public function bulkDelete(Request $request)
     {
+
         $ids = $request->input('ids');
 
         if (!$ids || !is_array($ids)) {

@@ -34,6 +34,16 @@ class DatabaseSeeder extends Seeder
             PaymentMethodSeeder::class,
             SellerSeeder::class,
             SellerOfferSeeder::class,
+            SettingsSeeder::class,
+            CannedResponseSeeder::class,
+            TicketDepartmentSeeder::class,
+            SupportTicketSeeder::class,
+            CmsPageSettingsSeeder::class,
+            StaticPageSettingsSeeder::class,
+            MegaMenuSeeder::class,
+            AffiliateTierSeeder::class,
+            AffiliateSettingsSeeder::class,
+            //SellerWithdrawSeeder::class,
         ]);
 
     }

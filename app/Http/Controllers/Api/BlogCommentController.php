@@ -29,16 +29,21 @@ class BlogCommentController extends Controller
      */
     public function index(Blog $blog)
     {
-        $comments = BlogComment::with('user')
-            ->where('blog_id', $blog->id)
-            ->where('is_approved', true)
-            ->latest()
-            ->get();
+        try {
+            $comments = BlogComment::with('user')
+                ->where('blog_id', $blog->id)
+                ->where('is_approved', true)
+                ->latest()
+                ->get();
 
-        return $this->successResponse(
-            $comments->map(fn ($comment) => $this->transform($comment)),
-            'Comments fetched successfully'
-        );
+            return $this->success(
+                $comments->map(fn ($comment) => $this->transform($comment)),
+                'Comments fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch comments');
+        }
     }
 
     /**
@@ -64,18 +69,25 @@ class BlogCommentController extends Controller
             'comment' => 'required|string|max:2000',
         ]);
 
-        BlogComment::create([
-            'blog_id'     => $blog->id,
-            'user_id'     => $request->user()->id,
-            'comment'     => $data['comment'],
-            'is_approved' => false,
-        ]);
+        $data['comment'] = strip_tags($data['comment']);
 
-        return $this->successResponse(
-            null,
-            'Comment submitted successfully and awaiting approval',
-            201
-        );
+        try {
+            BlogComment::create([
+                'blog_id'     => $blog->id,
+                'user_id'     => $request->user()->id,
+                'comment'     => $data['comment'],
+                'is_approved' => false,
+            ]);
+
+            return $this->success(
+                null,
+                'Comment submitted successfully and awaiting approval',
+                201
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to submit comment');
+        }
     }
 
     /* --------------------------------
@@ -88,31 +100,10 @@ class BlogCommentController extends Controller
             'id'         => $comment->id,
             'comment'    => $comment->comment,
             'created_at' => $comment->created_at,
-            'user'       => [
+            'user'       => $comment->user ? [
                 'id'   => $comment->user->id,
                 'name' => $comment->user->name,
-            ],
+            ] : null,
         ];
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

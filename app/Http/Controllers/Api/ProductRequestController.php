@@ -16,34 +16,33 @@ use Illuminate\Validation\Rule;
 class ProductRequestController extends Controller
 {
     /**
-     * List product requests
+     * List my product requests
      *
-     * Get a paginated list of product requests.
-     * You can optionally filter by status.
-     *
-     * @queryParam status string Optional. Filter by status (pending, approved, rejected, completed). Example: pending
+     * Paginated list of the authenticated user's product requests. Optional filter by status.
      *
      * @authenticated
      *
-     * @response 200 {
-     *   "status": true,
-     *   "message": "Product requests fetched successfully",
-     *   "data": {
-     *     "current_page": 1,
-     *     "data": []
-     *   }
-     * }
+     * @queryParam status string Filter by status (pending, approved, rejected, completed). Example: pending
+     * @queryParam per_page integer Items per page (default 10). Example: 15
+     *
+     * @response 200 {"status":true,"message":"Product requests fetched successfully","data":{"current_page":1,"data":[]}}
      */
     public function index(Request $request)
     {
-        $requests = ProductRequest::with([
-                'category', 'platform', 'type', 'region', 'language', 'worksOn'
-            ])
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->latest()
-            ->paginate(10);
+        try {
+            $requests = ProductRequest::with([
+                    'category', 'platform', 'type', 'region', 'language', 'worksOn'
+                ])
+                ->where('user_id', $request->user()->id)
+                ->when($request->status, fn ($q) => $q->where('status', $request->status))
+                ->latest()
+                ->paginate(min($request->integer('per_page', 10), 50));
 
-        return $this->successResponse($requests, 'Product requests fetched successfully');
+            return $this->success($requests, 'Product requests fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch product requests');
+        }
     }
 
     /**
@@ -74,6 +73,10 @@ class ProductRequestController extends Controller
      */
     public function store(Request $request)
     {
+        if (!(bool) \App\Models\Setting::get('product', 'allow_product_requests', true)) {
+            return $this->error('Product requests are currently disabled.', 403);
+        }
+
         $data = $request->validate([
             'category_id' => 'required|exists:product_categories,id',
             'platform_id' => 'required|exists:product_platforms,id',
@@ -86,49 +89,53 @@ class ProductRequestController extends Controller
             'source_url'  => 'nullable|url',
         ]);
 
-        $data['user_id'] = $request->user()->id;
-        $data['status']  = 'pending';
+        try {
+            $data['user_id'] = $request->user()->id;
+            $data['status']  = 'pending';
 
-        $requestItem = ProductRequest::create($data);
+            $requestItem = ProductRequest::create($data);
 
-        return $this->successResponse($requestItem, 'Product request submitted successfully', 201);
+            return $this->success($requestItem, 'Product request submitted successfully', 201);
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to submit product request');
+        }
     }
 
     /**
      * Get product request details
      *
-     * Retrieve a single product request by ID.
+     * Retrieve one of your product requests by ID.
      *
      * @authenticated
      *
      * @urlParam id int required Product request ID. Example: 1
      *
-     * @response 200 {
-     *   "status": true,
-     *   "message": "Product request details fetched",
-     *   "data": {
-     *     "id": 1,
-     *     "title": "Windows 11 Pro OEM"
-     *   }
-     * }
+     * @response 200 {"status":true,"message":"Product request details fetched","data":{"id":1,"title":"Windows 11 Pro OEM"}}
+     * @response 404 {"status":false,"message":"Product request not found."}
      */
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $requestItem = ProductRequest::with([
-            'category', 'platform', 'type', 'region', 'language', 'worksOn'
-        ])->find($id);
+        try {
+            $requestItem = ProductRequest::with([
+                'category', 'platform', 'type', 'region', 'language', 'worksOn'
+            ])->where('user_id', $request->user()->id)->find($id);
 
-        if (!$requestItem) {
-            return $this->errorResponse('Product request not found', 404);
+            if (!$requestItem) {
+                return $this->error('Product request not found', 404);
+            }
+
+            return $this->success($requestItem, 'Product request details fetched');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch product request details');
         }
-
-        return $this->successResponse($requestItem, 'Product request details fetched');
     }
 
     /**
      * Update product request
      *
-     * Update product request information or status.
+     * Update one of your product requests. Only pending requests should be editable.
      *
      * @authenticated
      *
@@ -137,78 +144,65 @@ class ProductRequestController extends Controller
      * @bodyParam title string Optional Product title.
      * @bodyParam description string Optional Product description.
      * @bodyParam source_url string Optional Source URL.
-     * @bodyParam status string Optional Status (pending, approved, rejected, completed).
      *
-     * @response 200 {
-     *   "status": true,
-     *   "message": "Product request updated successfully"
-     * }
+     * @response 200 {"status":true,"message":"Product request updated successfully","data":{}}
+     * @response 404 {"status":false,"message":"Product request not found."}
      */
     public function update(Request $request, $id)
     {
-        $requestItem = ProductRequest::find($id);
-
-        if (!$requestItem) {
-            return $this->errorResponse('Product request not found', 404);
-        }
-
         $data = $request->validate([
             'title'       => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
             'source_url'  => 'nullable|url',
-            'status'      => ['sometimes', Rule::in(['pending', 'approved', 'rejected', 'completed'])],
         ]);
 
-        $requestItem->update($data);
+        try {
+            $requestItem = ProductRequest::where('user_id', $request->user()->id)->find($id);
 
-        return $this->successResponse($requestItem, 'Product request updated successfully');
+            if (!$requestItem) {
+                return $this->error('Product request not found', 404);
+            }
+
+            if ($requestItem->status !== 'pending') {
+                return $this->error('Only pending requests can be updated.', 422);
+            }
+
+            $requestItem->update($data);
+
+            return $this->success($requestItem, 'Product request updated successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to update product request');
+        }
     }
 
     /**
      * Delete product request
      *
-     * Remove a product request.
+     * Remove one of your product requests.
      *
      * @authenticated
      *
      * @urlParam id int required Product request ID. Example: 1
      *
-     * @response 200 {
-     *   "status": true,
-     *   "message": "Product request deleted successfully"
-     * }
+     * @response 200 {"status":true,"message":"Product request deleted successfully"}
+     * @response 404 {"status":false,"message":"Product request not found."}
      */
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
-        $requestItem = ProductRequest::find($id);
+        try {
+            $requestItem = ProductRequest::where('user_id', $request->user()->id)->find($id);
 
-        if (!$requestItem) {
-            return $this->errorResponse('Product request not found', 404);
+            if (!$requestItem) {
+                return $this->error('Product request not found', 404);
+            }
+
+            $requestItem->delete();
+
+            return $this->success(null, 'Product request deleted successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to delete product request');
         }
-
-        $requestItem->delete();
-
-        return $this->successResponse(null, 'Product request deleted successfully');
-    }
-
-    /* ------------------------------
-     | API Response Helpers
-     |------------------------------*/
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

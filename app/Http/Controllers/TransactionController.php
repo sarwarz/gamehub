@@ -23,7 +23,15 @@ class TransactionController extends Controller
             );
         }
 
-        return view('content.transactions.index');
+        $stats = [
+            'total'     => Transaction::count(),
+            'completed' => Transaction::where('status', 'completed')->count(),
+            'pending'   => Transaction::where('status', 'pending')->count(),
+            'failed'    => Transaction::where('status', 'failed')->count(),
+            'volume'    => Transaction::where('status', 'completed')->sum('amount'),
+        ];
+
+        return view('content.transactions.index', compact('stats'));
     }
 
     public function pending(Request $request)
@@ -45,7 +53,12 @@ class TransactionController extends Controller
             );
         }
 
-        return view('content.transactions.failed');
+        $stats = [
+            'failed_count' => Transaction::where('status', 'failed')->count(),
+            'failed_amount' => Transaction::where('status', 'failed')->sum('amount'),
+        ];
+
+        return view('content.transactions.failed', compact('stats'));
     }
 
     public function completed(Request $request)
@@ -56,7 +69,12 @@ class TransactionController extends Controller
             );
         }
 
-        return view('content.transactions.completed');
+        $stats = [
+            'completed_count' => Transaction::where('status', 'completed')->count(),
+            'completed_volume' => Transaction::where('status', 'completed')->sum('amount'),
+        ];
+
+        return view('content.transactions.completed', compact('stats'));
     }
 
     /*
@@ -77,86 +95,59 @@ class TransactionController extends Controller
             )
 
             ->addColumn('trx', fn ($row) =>
-                '<code>'.e($row->trx).'</code>'
+                '<code class="small">'.e($row->trx).'</code>'
             )
 
             ->addColumn('owner', function ($row) {
-
                 if ($row->seller) {
-                    return '
-                    <div class="d-flex flex-column">
-                        <div class="fw-semibold">'.$row->seller->store_name.'
-                        </div>
-                        <small class="text-muted">ID: #'.$row->seller->id.'</small>
-                    </div>';
+                    return '<div class="d-flex align-items-center"><div class="avatar avatar-sm me-2 bg-label-info rounded-circle d-flex align-items-center justify-content-center"><i class="ti tabler-building-store ti-xs"></i></div><div class="lh-sm"><span class="fw-semibold d-block">'.e($row->seller->store_name).'</span><small class="text-muted">Seller #'.$row->seller->id.'</small></div></div>';
                 }
-
                 if ($row->user) {
-                    return '
-                    <div class="d-flex flex-column">
-                        <div class="fw-semibold">'.$row->user->name.'
-                        </div>
-                        <small class="text-muted">'.$row->user->email.'</small>
-                    </div>';
+                    $avatar = $row->user->avatar_url ?? asset('assets/img/avatars/1.png');
+                    return '<div class="d-flex align-items-center"><img src="'.$avatar.'" class="rounded-circle me-2" width="32" height="32" style="object-fit:cover"><div class="lh-sm"><span class="fw-semibold d-block">'.e($row->user->name).'</span><small class="text-muted">'.e($row->user->email).'</small></div></div>';
                 }
-
-                return '
-                <div class="d-flex flex-column">
-                    <div class="fw-semibold">System</div>
-                    <small class="text-muted">Auto generated</small>
-                </div>';
+                return '<div class="d-flex align-items-center"><div class="avatar avatar-sm me-2 bg-label-secondary rounded-circle d-flex align-items-center justify-content-center"><i class="ti tabler-robot ti-xs"></i></div><div class="lh-sm"><span class="fw-semibold d-block">System</span><small class="text-muted">Auto generated</small></div></div>';
             })
 
             ->addColumn('type', fn ($row) =>
-                $row->type === 'credit'
-                    ? '<span class="badge bg-success">Credit</span>'
-                    : '<span class="badge bg-danger">Debit</span>'
+                '<span class="badge bg-label-'.($row->type === 'credit' ? 'success' : 'danger').'"><i class="ti tabler-arrow-'.($row->type === 'credit' ? 'down-left' : 'up-right').' ti-xs me-1"></i>'.ucfirst($row->type).'</span>'
             )
 
             ->addColumn('amount', fn ($row) =>
-                format_currency($row->amount)
+                '<span class="fw-semibold">'.format_currency($row->amount).'</span>'
             )
 
             ->addColumn('fee', fn ($row) =>
-                $row->fee > 0
-                    ? format_currency($row->fee)
-                    : '-'
+                $row->fee > 0 ? '<span class="text-danger">'.format_currency($row->fee).'</span>' : '<span class="text-muted">—</span>'
             )
 
             ->addColumn('net_amount', fn ($row) =>
-                '<strong>'.format_currency($row->net_amount).'</strong>'
+                '<span class="fw-bold text-primary">'.format_currency($row->net_amount).'</span>'
             )
 
-            ->addColumn('category', fn ($row) => ucfirst($row->category))
-
-            ->addColumn('payment', fn ($row) =>
-                $row->payment_method ? ucfirst($row->payment_method) : 'Wallet'
+            ->addColumn('category', fn ($row) =>
+                '<span class="badge bg-label-primary" style="font-size:.7rem">'.ucfirst($row->category).'</span>'
             )
+
+            ->addColumn('payment', function ($row) {
+                if (!$row->payment_method) return '<span class="text-muted small">Wallet</span>';
+                $icons = ['stripe' => 'tabler-brand-stripe', 'paypal' => 'tabler-brand-paypal', 'wallet' => 'tabler-wallet'];
+                $icon = $icons[strtolower($row->payment_method)] ?? 'tabler-credit-card';
+                return '<div class="d-flex align-items-center"><i class="ti '.$icon.' ti-xs me-1 text-muted"></i><span class="small">'.ucfirst($row->payment_method).'</span></div>';
+            })
 
             ->addColumn('status', function ($row) {
-                $map = [
-                    'pending'   => 'warning',
-                    'completed' => 'success',
-                    'failed'    => 'danger',
-                    'reversed'  => 'secondary',
-                ];
-
-                return '<span class="badge bg-'.($map[$row->status] ?? 'secondary').'">'
-                    .ucfirst($row->status).
-                '</span>';
+                $map = ['pending' => 'warning', 'completed' => 'success', 'failed' => 'danger', 'reversed' => 'secondary'];
+                return '<span class="badge bg-label-'.($map[$row->status] ?? 'secondary').'">'.ucfirst($row->status).'</span>';
             })
 
             ->addColumn('date', fn ($row) =>
-                $row->created_at->format('d M Y, h:i A')
+                '<span class="small text-muted">'.$row->created_at->format('M d, Y').'</span><div class="text-muted small">'.$row->created_at->format('h:i A').'</div>'
             )
 
             ->rawColumns([
-                'checkbox',
-                'trx',
-                'owner',
-                'type',
-                'net_amount',
-                'status',
+                'checkbox', 'trx', 'owner', 'type', 'amount',
+                'fee', 'net_amount', 'category', 'payment', 'status', 'date',
             ])
             ->make(true);
     }

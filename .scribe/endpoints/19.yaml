@@ -1,78 +1,32 @@
-name: Wallet
+name: Sliders
 description: |-
 
-  APIs for wallet balance and wallet transactions.
+  APIs for homepage sliders, banners, and promotional content.
+  Supports hero sliders, banners, promotional, and product spotlight types.
+  All endpoints are public and do not require authentication.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/wallet
+    uri: api/v1/sliders
     metadata:
       custom: []
-      groupName: Wallet
+      groupName: Sliders
       groupDescription: |-
 
-        APIs for wallet balance and wallet transactions.
+        APIs for homepage sliders, banners, and promotional content.
+        Supports hero sliders, banners, promotional, and product spotlight types.
+        All endpoints are public and do not require authentication.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get wallet details'
-      description: "Retrieve the authenticated user's wallet."
-      authenticated: true
+      title: 'List active sliders'
+      description: |-
+        Retrieve all currently live sliders ordered by position.
+        Only returns sliders that are active and within their scheduled date range.
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Wallet fetched successfully",
-            "data": {
-              "balance": "150.00",
-              "is_active": true
-            }
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
-      - GET
-    uri: api/v1/wallet/transactions
-    metadata:
-      custom: []
-      groupName: Wallet
-      groupDescription: |-
-
-        APIs for wallet balance and wallet transactions.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'List wallet transactions'
-      description: 'Retrieve wallet transaction history.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -81,30 +35,54 @@ endpoints:
       type:
         custom: []
         name: type
-        description: 'Optional. credit or debit.'
+        description: 'Filter by type: hero, banner, promotional, product_spotlight.'
         required: false
-        example: credit
+        example: hero
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      source:
+      position:
         custom: []
-        name: source
-        description: 'Optional. order, refund, withdraw.'
+        name: position
+        description: 'Filter by specific position.'
         required: false
-        example: order
-        type: string
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      limit:
+        custom: []
+        name: limit
+        description: 'Limit results (1-50, default: all).'
+        required: false
+        example: 5
+        type: integer
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      type: credit
-      source: order
-    bodyParameters: []
-    cleanBodyParameters: []
+      type: hero
+      position: 1
+      limit: 5
+    bodyParameters:
+      limit:
+        custom: []
+        name: limit
+        description: 'Must be at least 1. Must not be greater than 50.'
+        required: false
+        example: 21
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      limit: 21
     fileParameters: []
     responses:
       -
@@ -113,19 +91,27 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Wallet transactions fetched successfully",
-            "data": {
-              "current_page": 1,
-              "data": []
-            }
+            "message": "Sliders fetched successfully",
+            "data": [
+              {
+                "id": 1,
+                "type": "hero",
+                "title": "Summer Sale",
+                "subtitle": "Up to 70% off",
+                "image": "https://example.com/uploads/sliders/hero.jpg",
+                "badge": { "text": "SALE", "color": "#ea5455" },
+                "button": { "text": "Shop Now", "url": "https://example.com/products/summer-sale" },
+                "appearance": { "overlay_color": "rgba(0,0,0,0.4)", "text_color": "light", "text_position": "left" },
+                "position": 1,
+                "product": { "id": 5, "title": "Windows 11 Pro", "slug": "windows-11-pro", "price": 29.99 }
+              }
+            ],
+            "meta": { "total": 1 }
           }
         headers: []
         description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
+    auth: []
     controller: null
     method: null
     route: null
@@ -133,25 +119,38 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/wallet/settings
+    uri: 'api/v1/sliders/type/{type}'
     metadata:
       custom: []
-      groupName: Wallet
+      groupName: Sliders
       groupDescription: |-
 
-        APIs for wallet balance and wallet transactions.
+        APIs for homepage sliders, banners, and promotional content.
+        Supports hero sliders, banners, promotional, and product spotlight types.
+        All endpoints are public and do not require authentication.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get wallet settings'
-      description: ''
-      authenticated: true
+      title: 'List sliders by type'
+      description: 'Convenience endpoint to get sliders filtered by type.'
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      type:
+        custom: []
+        name: type
+        description: 'Slider type.'
+        required: true
+        example: hero
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      type: hero
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -164,16 +163,138 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Wallet settings fetched successfully",
-            "data": {}
+            "message": "Sliders fetched",
+            "data": []
           }
         headers: []
         description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/sliders/{id}'
+    metadata:
+      custom: []
+      groupName: Sliders
+      groupDescription: |-
+
+        APIs for homepage sliders, banners, and promotional content.
+        Supports hero sliders, banners, promotional, and product spotlight types.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get slider details'
+      description: 'Retrieve a single active slider by ID with full details.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'Slider ID.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Slider details fetched",
+            "data": {}
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "status": false,
+            "message": "Slider not found"
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/sliders/{id}/click'
+    metadata:
+      custom: []
+      groupName: Sliders
+      groupDescription: |-
+
+        APIs for homepage sliders, banners, and promotional content.
+        Supports hero sliders, banners, promotional, and product spotlight types.
+        All endpoints are public and do not require authentication.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Track slider click'
+      description: 'Record a click event for analytics tracking.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'Slider ID.'
+        required: true
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 3
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Click recorded"
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
     controller: null
     method: null
     route: null

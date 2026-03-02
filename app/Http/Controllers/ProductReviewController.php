@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\ProductReview;
+use App\Models\Seller;
 use Yajra\DataTables\Facades\DataTables;
 
 class ProductReviewController extends Controller
@@ -142,60 +143,28 @@ class ProductReviewController extends Controller
                 })
 
                 ->addColumn('actions', function ($row) {
-
-                    $viewBtn = '
-                        <a class="dropdown-item btn-view"
-                        href="javascript:void(0);"
-                        data-url="'.route('product-reviews.show', $row->id).'">
-                            <i class="ti tabler-eye me-1"></i> View
-                        </a>
-                    ';
-
                     $approveBtn = $row->status !== 'approved'
-                        ? '
-                            <a class="dropdown-item text-success btn-approve"
-                            href="javascript:void(0);"
-                            data-url="'.route('product-reviews.approve', $row->id).'">
-                                <i class="ti tabler-check me-1"></i> Approve
-                            </a>
-                        '
+                        ? '<button type="button" class="btn btn-icon btn-sm btn-label-success btn-approve" data-url="'.route('product-reviews.approve', $row->id).'" title="Approve">
+                            <i class="ti tabler-check ti-xs"></i>
+                        </button>'
                         : '';
 
                     $rejectBtn = $row->status !== 'rejected'
-                        ? '
-                            <a class="dropdown-item text-warning btn-reject"
-                            href="javascript:void(0);"
-                            data-url="'.route('product-reviews.reject', $row->id).'">
-                                <i class="ti tabler-x me-1"></i> Reject
-                            </a>
-                        '
+                        ? '<button type="button" class="btn btn-icon btn-sm btn-label-warning btn-reject" data-url="'.route('product-reviews.reject', $row->id).'" title="Reject">
+                            <i class="ti tabler-x ti-xs"></i>
+                        </button>'
                         : '';
 
-                    $deleteBtn = '
-                        <a class="dropdown-item text-danger btn-delete"
-                        href="javascript:void(0);"
-                        data-url="'.route('product-reviews.destroy', $row->id).'">
-                            <i class="ti tabler-trash me-1"></i> Delete
-                        </a>
-                    ';
-
-                    return '
-                        <div class="dropdown">
-                            <button type="button"
-                                    class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
-                                    data-bs-toggle="dropdown">
-                                <i class="ti tabler-dots-vertical"></i>
-                            </button>
-
-                            <div class="dropdown-menu">
-                                '.$viewBtn.'
-                                '.$approveBtn.'
-                                '.$rejectBtn.'
-                                <div class="dropdown-divider"></div>
-                                '.$deleteBtn.'
-                            </div>
-                        </div>
-                    ';
+                    return '<div class="d-flex align-items-center justify-content-center gap-1">
+                        <button type="button" class="btn btn-icon btn-sm btn-label-info btn-view" data-url="'.route('product-reviews.show', $row->id).'" title="View">
+                            <i class="ti tabler-eye ti-xs"></i>
+                        </button>
+                        '.$approveBtn.'
+                        '.$rejectBtn.'
+                        <button type="button" class="btn btn-icon btn-sm btn-label-danger btn-delete" data-url="'.route('product-reviews.destroy', $row->id).'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
+                        </button>
+                    </div>';
                 })
 
                 ->rawColumns([
@@ -213,10 +182,19 @@ class ProductReviewController extends Controller
         | NORMAL PAGE LOAD
         |--------------------------------------------------------------------------
         */
+        $stats = [
+            'total'    => ProductReview::count(),
+            'approved' => ProductReview::where('status', 'approved')->count(),
+            'pending'  => ProductReview::where('status', 'pending')->count(),
+            'rejected' => ProductReview::where('status', 'rejected')->count(),
+            'avg'      => round(ProductReview::where('status', 'approved')->avg('rating') ?? 0, 1),
+        ];
+
         return view('content.product_reviews.index', [
-        'products' =>  Product::select('id', 'title')->orderBy('title')->get(),
-        'users'    =>  User::select('id', 'name')->orderBy('name')->get(),
-    ]);
+            'products' => Product::select('id', 'title')->orderBy('title')->get(),
+            'users'    => User::select('id', 'name')->orderBy('name')->get(),
+            'stats'    => $stats,
+        ]);
 
 
     }
@@ -269,6 +247,7 @@ class ProductReviewController extends Controller
      */
     public function destroy($id)
     {
+
         ProductReview::findOrFail($id)->delete();
 
         return response()->json(['message' => 'Review deleted successfully']);
@@ -276,15 +255,27 @@ class ProductReviewController extends Controller
 
     public function bulkStatus(Request $request)
     {
+        $productIds = ProductReview::whereIn('id', $request->ids)->pluck('product_id')->unique();
+
         ProductReview::whereIn('id', $request->ids)
             ->update(['status' => $request->status]);
+
+        foreach ($productIds as $pid) {
+            Seller::recalculateRatingsForProduct($pid);
+        }
 
         return response()->json(['success' => true]);
     }
 
     public function bulkDelete(Request $request)
     {
+        $productIds = ProductReview::whereIn('id', $request->ids)->pluck('product_id')->unique();
+
         ProductReview::whereIn('id', $request->ids)->delete();
+
+        foreach ($productIds as $pid) {
+            Seller::recalculateRatingsForProduct($pid);
+        }
 
         return response()->json(['success' => true]);
     }

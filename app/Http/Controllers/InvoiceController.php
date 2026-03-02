@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Invoice;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\InvoiceService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
 
 class InvoiceController extends Controller
@@ -25,31 +27,37 @@ class InvoiceController extends Controller
                 'order:id,order_number'
             ])->select('invoices.*');
 
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
             return DataTables::of($query)
                 ->addIndexColumn()
 
+                ->addColumn('checkbox', fn ($row) =>
+                    '<input type="checkbox" class="form-check-input bulk-checkbox" value="'.$row->id.'">'
+                )
+
                 ->editColumn('invoice_number', fn ($row) =>
-                    '<code>' . e($row->invoice_number) . '</code>'
+                    '<a href="'.route('invoices.show', $row->id).'" class="fw-semibold text-body"><code>'.e($row->invoice_number).'</code></a>'
                 )
 
                 ->addColumn('customer', function ($row) {
-                    return '<div>
-                        <strong>' . e($row->user->name ?? '-') . '</strong><br>
-                        <small class="text-muted">' . e($row->user->email ?? '') . '</small>
-                    </div>';
+                    $avatar = $row->user->avatar_url ?? asset('assets/img/avatars/1.png');
+                    return '<div class="d-flex align-items-center"><img src="'.$avatar.'" class="rounded-circle me-2" width="32" height="32" style="object-fit:cover"><div class="lh-sm"><span class="fw-semibold d-block">'.e($row->user->name ?? '-').'</span><small class="text-muted">'.e($row->user->email ?? '').'</small></div></div>';
                 })
 
                 ->addColumn('order', fn ($row) =>
-                    e($row->order->order_number ?? '-')
+                    $row->order ? '<a href="'.route('orders.edit', $row->order->id).'" class="fw-semibold text-body">#'.e($row->order->order_number).'</a>' : '<span class="text-muted">—</span>'
                 )
 
                 ->editColumn('issued_at', fn ($row) =>
-                    optional($row->issued_at)->format('d M Y') ?? '-'
+                    '<span class="small">'.optional($row->issued_at)->format('M d, Y').'</span>' ?? '-'
                 )
 
                 ->editColumn('paid_at', fn ($row) =>
                     $row->paid_at
-                        ? $row->paid_at->format('d M Y')
+                        ? '<span class="small text-success">'.($row->paid_at->format('M d, Y')).'</span>'
                         : '<span class="text-muted">—</span>'
                 )
 
@@ -58,40 +66,44 @@ class InvoiceController extends Controller
                 )
 
                 ->editColumn('grand_total', fn ($row) =>
-                    '<strong>' . format_currency($row->grand_total) . '</strong>'
+                    '<span class="fw-bold text-primary">'.format_currency($row->grand_total).'</span>'
                 )
 
                 ->editColumn('status', function ($row) {
-                    $map = [
-                        'draft'     => 'secondary',
-                        'issued'    => 'info',
-                        'paid'      => 'success',
-                        'cancelled' => 'danger',
-                    ];
-
-                    return '<span class="badge bg-' . ($map[$row->status] ?? 'secondary') . '">' .
-                        strtoupper($row->status) .
-                        '</span>';
+                    $map = ['draft' => 'secondary', 'issued' => 'info', 'paid' => 'success', 'cancelled' => 'danger'];
+                    return '<span class="badge bg-label-'.($map[$row->status] ?? 'secondary').'">'.ucfirst($row->status).'</span>';
                 })
 
                 ->addColumn('action', fn ($row) =>
-                    view('content.invoices.partials.actions', [
-                        'invoice' => $row
-                    ])->render()
+                    '<div class="d-flex align-items-center justify-content-center gap-1">
+                        <a href="'.route('invoices.show', $row->id).'" class="btn btn-icon btn-sm btn-label-info" title="View">
+                            <i class="ti tabler-eye ti-xs"></i>
+                        </a>
+                        <a href="'.route('invoices.download', $row->id).'" class="btn btn-icon btn-sm btn-label-primary" title="Download PDF">
+                            <i class="ti tabler-download ti-xs"></i>
+                        </a>
+                        <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-url="'.route('invoices.destroy', $row->id).'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
+                        </button>
+                    </div>'
                 )
 
                 ->rawColumns([
-                    'invoice_number',
-                    'customer',
-                    'paid_at',
-                    'grand_total',
-                    'status',
-                    'action'
+                    'checkbox', 'invoice_number', 'customer', 'order',
+                    'issued_at', 'paid_at', 'grand_total', 'status', 'action'
                 ])
                 ->make(true);
         }
 
-        return view('content.invoices.index');
+        $stats = [
+            'total'    => Invoice::count(),
+            'paid'     => Invoice::where('status', 'paid')->count(),
+            'unpaid'   => Invoice::where('status', 'unpaid')->count(),
+            'overdue'  => Invoice::where('status', 'overdue')->count(),
+            'revenue'  => Invoice::where('status', 'paid')->sum('grand_total'),
+        ];
+
+        return view('content.invoices.index', compact('stats'));
     }
 
     /**
@@ -102,10 +114,13 @@ class InvoiceController extends Controller
         $invoice->load([
             'items.orderItem.product:id,title',
             'user:id,name,email',
-            'order:id,order_number'
+            'order:id,order_number,payment_method,currency,status',
+            'order.billingAddress',
         ]);
 
-        return view('content.invoices.show', compact('invoice'));
+        $billing = $invoice->order?->billingAddress;
+
+        return view('content.invoices.show', compact('invoice', 'billing'));
     }
 
     /**
@@ -125,7 +140,7 @@ class InvoiceController extends Controller
      */
     public function print(Invoice $invoice)
     {
-        return $this->renderInvoiceHtml($invoice);
+        return response(InvoiceService::renderHtml($invoice));
     }
 
     /**
@@ -133,89 +148,9 @@ class InvoiceController extends Controller
      */
     public function download(Invoice $invoice)
     {
-        $html = $this->renderInvoiceHtml($invoice, true);
-
+        $html = InvoiceService::renderHtml($invoice);
         $pdf = Pdf::loadHTML($html)->setPaper('a4');
-
         return $pdf->download('Invoice-' . $invoice->invoice_number . '.pdf');
-    }
-
-    /**
-     * Shared HTML renderer (PRINT + PDF)
-     */
-    private function renderInvoiceHtml(Invoice $invoice, bool $returnHtmlOnly = false)
-    {
-        $invoice->load([
-            'items.orderItem.product',
-            'user',
-            'order.billingAddress'
-        ]);
-
-        $billing = $invoice->order->billingAddress;
-
-        $html = File::get(
-            resource_path('views/content/invoices/print.html')
-        );
-
-        // Build items rows
-        $itemsHtml = '';
-        foreach ($invoice->items as $item) {
-            $itemsHtml .= '
-            <tr>
-                <td>' . e($item->item_name) . '</td>
-                <td>' . e($item->orderItem->product->title ?? '-') . '</td>
-                <td>' . format_currency($item->unit_price) . '</td>
-                <td>' . $item->quantity . '</td>
-                <td>' . format_currency($item->subtotal) . '</td>
-            </tr>';
-        }
-
-        // Replace placeholders
-        $html = str_replace([
-            '{{invoice_number}}',
-            '{{issued_date}}',
-            '{{due_date}}',
-
-            '{{customer_name}}',
-            '{{customer_company}}',
-            '{{customer_address}}',
-            '{{customer_phone}}',
-            '{{customer_email}}',
-
-            '{{subtotal}}',
-            '{{discount}}',
-            '{{tax}}',
-            '{{grand_total}}',
-
-            '{{items}}',
-
-            '{{salesperson}}',
-            '{{footer_message}}',
-            '{{note}}',
-        ], [
-            $invoice->invoice_number,
-            $invoice->issued_at->format('d M Y'),
-            optional($invoice->due_at)->format('d M Y') ?? '-',
-
-            $billing?->name ?? $invoice->user->name,
-            $billing?->company ?? '-',
-            $billing?->address ?? '-',
-            $billing?->phone ?? '-',
-            $billing?->email ?? $invoice->user->email,
-
-            format_currency($invoice->subtotal),
-            format_currency($invoice->discount_total),
-            format_currency($invoice->tax_total),
-            format_currency($invoice->grand_total),
-
-            $itemsHtml,
-
-            auth()->user()->name ?? '-',
-            'Thanks for your business',
-            $invoice->meta['note'] ?? '-',
-        ], $html);
-
-        return $returnHtmlOnly ? $html : response($html);
     }
 
     /**
@@ -231,10 +166,10 @@ class InvoiceController extends Controller
             $invoice = Invoice::create([
                 'order_id'       => $order->id,
                 'user_id'        => $order->user_id,
-                'invoice_number' => 'INV-' . now()->format('Ymd') . '-' . $order->id,
+                'invoice_number' => Setting::get('invoice', 'prefix', 'INV') . '-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6)),
                 'subtotal'       => $order->subtotal,
-                'tax_total'      => $order->tax_total ?? 0,
-                'discount_total' => $order->discount_total ?? 0,
+                'tax_total'      => $order->tax_amount ?? 0,
+                'discount_total' => $order->discount_amount ?? 0,
                 'grand_total'    => $order->total_amount,
                 'currency'       => $order->currency,
                 'status'         => 'paid',
@@ -269,11 +204,28 @@ class InvoiceController extends Controller
     }
 
     /**
+     * Bulk delete invoices
+     */
+    public function bulkDelete(Request $request)
+    {
+
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'exists:invoices,id']);
+        Invoice::whereIn('id', $request->ids)->delete();
+
+        return response()->json(['message' => 'Invoices deleted successfully.']);
+    }
+
+    /**
      * Delete invoice
      */
     public function destroy(Invoice $invoice)
     {
+
         $invoice->delete();
+
+        if (request()->ajax()) {
+            return response()->json(['message' => 'Invoice deleted successfully.']);
+        }
 
         return back()->with('success', 'Invoice deleted successfully.');
     }

@@ -9,10 +9,14 @@ class UserProfile extends Model
     protected $fillable = [
         'user_id', 'first_name', 'last_name', 'avatar', 'dob', 'gender',
         'phone', 'alternate_phone',
-        'address_line1', 'address_line2', 'city', 'state', 'postal_code', 'country',
-        'company', 'tax_id', 'newsletter_subscribed', 'is_verified',
+        'company', 'tax_id', 'newsletter_subscribed',
         'preferred_currency', 'preferred_language',
-        'last_login_at', 'last_login_ip'
+    ];
+
+    protected $casts = [
+        'dob'                   => 'date',
+        'newsletter_subscribed' => 'boolean',
+        'last_login_at'         => 'datetime',
     ];
 
     public function user()

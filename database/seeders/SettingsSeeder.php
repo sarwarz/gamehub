@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Setting;
 
@@ -10,13 +9,249 @@ class SettingsSeeder extends Seeder
 {
     public function run()
     {
-        Setting::set('general', 'site_name', 'My E-Commerce');
-        Setting::set('general', 'currency', 'USD');
+        $defaults = [
+            'general' => [
+                'site_name'     => 'GameHub',
+                'tagline'       => 'Your Digital Marketplace',
+                'contact_email' => 'support@gamehub.com',
+                'contact_phone' => '',
+                'currency'      => 'USD',
+                'timezone'      => 'UTC',
+                'date_format'   => 'M d, Y',
+                'per_page'      => 12,
+            ],
+            'branding' => [
+                'logo'            => '/assets/img/branding/logo.png',
+                'logo_dark'       => '',
+                'favicon'         => '/assets/img/favicon/favicon.ico',
+                'primary_color'   => '#7367f0',
+                'secondary_color' => '#a8aaae',
+                'footer_text'     => '',
+            ],
+            'store' => [
+                'order_prefix'        => 'ORD-',
+                'min_order_amount'    => 0,
+                'auto_cancel_hours'   => 24,
+                'guest_checkout'      => '0',
+                'tax_enabled'         => '1',
+                'tax_display'         => 'exclusive',
+                'low_stock_threshold' => 5,
+                'show_out_of_stock'   => '1',
+            ],
+            'vendor' => [
+                'registration_enabled'   => '1',
+                'auto_approve'           => '0',
+                'require_documents'      => '0',
+                'commission_rate'        => 10,
+                'commission_type'        => 'percentage',
+                'min_withdrawal'         => 50,
+                'payout_schedule'        => 'manual',
+                'hold_period_days'       => 7,
+                'payout_methods'         => ['bank', 'paypal'],
+                'max_products'           => 0,
+                'max_pending_withdrawals'=> 1,
+            ],
+            'invoice' => [
+                'prefix'          => 'INV-',
+                'auto_generate'   => '1',
+                'company_name'    => '',
+                'tax_number'      => '',
+                'company_address' => '',
+                'footer_note'     => 'Thank you for your purchase!',
+            ],
+            'seo' => [
+                'meta_title'       => 'GameHub - Best Digital Marketplace',
+                'meta_description' => 'Buy digital products, game keys, and software licenses online',
+                'meta_keywords'    => '',
+                'og_image'         => '',
+                'google_analytics' => '',
+                'head_scripts'     => '',
+            ],
+            'notifications' => [
+                'admin_email'          => '',
+                'order_placed'         => '1',
+                'order_paid'           => '1',
+                'order_completed'      => '1',
+                'order_cancelled'      => '1',
+                'seller_registered'    => '1',
+                'seller_approved'      => '1',
+                'withdrawal_requested' => '1',
+                'withdrawal_approved'  => '1',
+                'low_stock_alert'      => '1',
+                'new_contact_message'  => '1',
+                'new_product_review'   => '0',
+            ],
+            'social' => [
+                'facebook'  => '',
+                'twitter'   => '',
+                'instagram' => '',
+                'youtube'   => '',
+                'tiktok'    => '',
+                'linkedin'  => '',
+                'discord'   => '',
+                'telegram'  => '',
+            ],
+            'legal' => [
+                'terms_of_service' => '',
+                'privacy_policy'   => '',
+                'refund_policy'    => '',
+                'cookie_policy'    => '',
+                'seller_agreement' => '',
+            ],
+            'maintenance' => [
+                'enabled'       => '0',
+                'message'       => 'We are currently undergoing maintenance. Please check back soon.',
+                'allowed_ips'   => '',
+                'expected_back' => '',
+            ],
+            'notifications' => [
+                'admin_email'           => '',
+                'seller_approved'       => true,
+                'seller_rejected'       => true,
+                'seller_suspended'      => true,
+                'seller_reactivated'    => true,
+                'withdrawal_requested'  => true,
+                'withdrawal_approved'   => true,
+                'withdrawal_rejected'   => true,
+                'new_contact_message'   => true,
+                'new_product_review'    => true,
+                'product_request_status'=> true,
+                'subscriber_welcome'    => true,
+            ],
+            'order_notifications' => [
+                'customer_on_placed'        => true,
+                'seller_on_placed'          => true,
+                'admin_on_placed'           => true,
+                'customer_on_paid'          => true,
+                'admin_on_paid'             => false,
+                'customer_on_status_change' => true,
+                'customer_on_completed'     => true,
+                'seller_on_completed'       => true,
+                'customer_on_cancelled'     => true,
+                'seller_on_cancelled'       => true,
+                'admin_on_cancelled'        => false,
+                'customer_on_refunded'      => true,
+                'seller_on_refunded'        => true,
+                'customer_on_delivery'      => true,
+                'admin_on_delivery_failed'  => true,
+            ],
+            'ticket_notifications' => [
+                'on_ticket_created'  => true,
+                'admin_on_new_ticket'=> true,
+                'on_staff_reply'     => true,
+                'on_customer_reply'  => true,
+                'on_status_change'   => true,
+                'on_ticket_closed'   => true,
+                'on_assigned'        => true,
+                'on_escalated'       => true,
+            ],
+            'refund_notifications' => [
+                'customer_on_requested' => true,
+                'admin_on_requested'    => true,
+                'customer_on_approved'  => true,
+                'customer_on_rejected'  => true,
+                'customer_on_completed' => true,
+            ],
+            'wallet_notifications' => [
+                'on_deposit_confirmed' => true,
+                'on_transfer_received' => true,
+                'on_seller_transfer'   => true,
+            ],
+            'security' => [
+                'two_factor_enabled'        => false,
+                'session_timeout_minutes'   => 120,
+                'password_min_length'       => 8,
+                'password_require_uppercase'=> true,
+                'password_require_number'   => true,
+                'password_require_symbol'   => false,
+                'max_login_attempts'        => 5,
+                'lockout_duration_minutes'  => 15,
+                'ip_whitelist_enabled'      => false,
+                'ip_whitelist'              => [],
+            ],
+            'checkout' => [
+                'session_timeout_minutes'   => 30,
+                'key_reservation_minutes'   => 35,
+                'max_items_per_order'       => 20,
+                'payment_retry_limit'       => 3,
+                'require_billing_address'   => true,
+                'guest_checkout_enabled'    => false,
+                'abandoned_cleanup_minutes' => 5,
+            ],
+            'refund_escrow' => [
+                'refund_enabled'            => true,
+                'auto_refund_window_hours'  => 48,
+                'escrow_period_days'        => 14,
+                'partial_refund_enabled'    => true,
+                'refund_to_wallet_enabled'  => true,
+                'refund_to_original_enabled'=> true,
+                'max_refund_percentage'     => 100,
+            ],
+            'review' => [
+                'reviews_enabled'           => true,
+                'auto_approve_reviews'      => false,
+                'require_purchase_for_review'=> true,
+                'min_review_length'         => 10,
+                'max_review_length'         => 2000,
+                'allow_review_images'       => false,
+                'review_moderation_enabled' => true,
+                'seller_can_reply'          => true,
+            ],
+            'registration' => [
+                'require_email_verification'=> true,
+                'allow_social_login'        => false,
+                'social_providers'          => [],
+                'require_phone_number'      => false,
+                'min_age_required'          => 0,
+                'auto_assign_role'          => 'user',
+                'registration_enabled'      => true,
+                'welcome_email_enabled'     => true,
+            ],
+            'product' => [
+                'max_images_per_product'    => 10,
+                'allowed_image_types'       => ['jpg', 'jpeg', 'png', 'webp'],
+                'max_image_size_mb'         => 5,
+                'auto_approve_products'     => false,
+                'max_offers_per_product'    => 50,
+                'require_product_description'=> true,
+                'min_description_length'    => 50,
+                'allow_product_requests'    => true,
+            ],
+            'currency_locale' => [
+                'number_format'       => 'en-US',
+                'decimal_separator'   => '.',
+                'thousands_separator' => ',',
+                'decimal_places'      => 2,
+                'currency_position'   => 'before',
+                'rtl_enabled'         => false,
+                'multi_language_enabled' => false,
+                'default_language'    => 'en',
+            ],
+            'api_integration' => [
+                'api_rate_limit_per_minute'       => 60,
+                'webhook_retry_count'             => 3,
+                'webhook_retry_delay_seconds'     => 60,
+                'captcha_provider'                => 'none',
+                'google_recaptcha_enabled'        => false,
+                'google_recaptcha_site_key'       => '',
+                'google_recaptcha_secret_key'     => '',
+                'turnstile_enabled'               => false,
+                'turnstile_site_key'              => '',
+                'turnstile_secret_key'            => '',
+                'google_analytics_id'             => '',
+                'facebook_pixel_id'               => '',
+                'custom_head_scripts'             => '',
+                'custom_body_scripts'             => '',
+            ],
+        ];
 
-        Setting::set('ui', 'logo', '/logo.png');
-        Setting::set('ui', 'primary_color', '#0d6efd');
-
-        Setting::set('seo', 'meta_title', 'Best Online Shop');
-        Setting::set('seo', 'meta_description', 'Buy digital products online');
+        foreach ($defaults as $group => $keys) {
+            foreach ($keys as $key => $value) {
+                Setting::firstOrCreate(
+                    ['group' => $group, 'key' => $key],
+                    ['value' => $value]
+                );
+            }
+        }
     }
 }

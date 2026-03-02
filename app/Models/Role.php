@@ -3,10 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Role extends Model
 {
-    protected $fillable = ['name', 'label'];
+    protected $fillable = ['name', 'label', 'type', 'is_system'];
+
+    protected function casts(): array
+    {
+        return [
+            'is_system' => 'boolean',
+        ];
+    }
 
     public function users()
     {
@@ -28,4 +36,23 @@ class Role extends Model
         return $this->permissions()->where('name', $permission)->exists();
     }
 
+    public function scopeInternal(Builder $query): Builder
+    {
+        return $query->where('type', 'internal');
+    }
+
+    public function scopeExternal(Builder $query): Builder
+    {
+        return $query->where('type', 'external');
+    }
+
+    public function isInternal(): bool
+    {
+        return $this->type === 'internal';
+    }
+
+    public function isExternal(): bool
+    {
+        return $this->type === 'external';
+    }
 }

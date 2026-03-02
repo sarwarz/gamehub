@@ -31,16 +31,21 @@ class PageController extends Controller
      */
     public function index(Request $request)
     {
-        $pages = Page::where('is_active', true)
-            ->when($request->header, fn ($q) => $q->where('show_in_header', true))
-            ->when($request->footer, fn ($q) => $q->where('show_in_footer', true))
-            ->orderBy('position')
-            ->get();
+        try {
+            $pages = Page::where('is_active', true)
+                ->when($request->header, fn ($q) => $q->where('show_in_header', true))
+                ->when($request->footer, fn ($q) => $q->where('show_in_footer', true))
+                ->orderBy('position')
+                ->get();
 
-        return $this->successResponse(
-            $pages->map(fn ($page) => $this->transform($page)),
-            'Pages fetched successfully'
-        );
+            return $this->success(
+                $pages->map(fn ($page) => $this->transform($page)),
+                'Pages fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch pages');
+        }
     }
 
     /**
@@ -60,14 +65,19 @@ class PageController extends Controller
      */
     public function show(Page $page)
     {
-        if (!$page->is_active) {
-            return $this->errorResponse('Page not found', 404);
-        }
+        try {
+            if (!$page->is_active) {
+                return $this->error('Page not found', 404);
+            }
 
-        return $this->successResponse(
-            $this->transform($page, true),
-            'Page fetched successfully'
-        );
+            return $this->success(
+                $this->transform($page, true),
+                'Page fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch page');
+        }
     }
 
     /* --------------------------------
@@ -91,26 +101,5 @@ class PageController extends Controller
             'footer'   => $page->show_in_footer,
             'position' => $page->position,
         ];
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

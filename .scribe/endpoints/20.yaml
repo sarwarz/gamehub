@@ -1,72 +1,61 @@
-name: 'Payment Methods'
+name: Pages
 description: |-
 
-  APIs for retrieving available payment methods
-  during checkout and payment selection.
+  CMS APIs for static pages such as About Us,
+  Privacy Policy, Terms & Conditions, etc.
 endpoints:
   -
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/payment-methods
+    uri: api/v1/pages
     metadata:
       custom: []
-      groupName: 'Payment Methods'
+      groupName: Pages
       groupDescription: |-
 
-        APIs for retrieving available payment methods
-        during checkout and payment selection.
+        CMS APIs for static pages such as About Us,
+        Privacy Policy, Terms & Conditions, etc.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List payment methods'
+      title: 'List pages'
       description: |-
-        Retrieve enabled payment methods.
-        Supports filtering by country, currency, and type.
-      authenticated: false
+        Retrieve active CMS pages.
+        Supports header/footer filtering.
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
     cleanUrlParameters: []
     queryParameters:
-      country:
+      header:
         custom: []
-        name: country
-        description: 'Optional. Country code.'
+        name: header
+        description: 'Optional. Pages shown in header.'
         required: false
-        example: US
-        type: string
+        example: true
+        type: boolean
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      currency:
+      footer:
         custom: []
-        name: currency
-        description: 'Optional. Currency code.'
+        name: footer
+        description: 'Optional. Pages shown in footer.'
         required: false
-        example: USD
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      type:
-        custom: []
-        name: type
-        description: 'Optional. online, offline, wallet.'
-        required: false
-        example: online
-        type: string
+        example: true
+        type: boolean
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanQueryParameters:
-      country: US
-      currency: USD
-      type: online
+      header: true
+      footer: true
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -77,13 +66,16 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Payment methods fetched successfully",
+            "message": "Pages fetched successfully",
             "data": []
           }
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -91,37 +83,50 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: 'api/v1/payment-methods/{code}'
+    uri: 'api/v1/pages/{page_slug}'
     metadata:
       custom: []
-      groupName: 'Payment Methods'
+      groupName: Pages
       groupDescription: |-
 
-        APIs for retrieving available payment methods
-        during checkout and payment selection.
+        CMS APIs for static pages such as About Us,
+        Privacy Policy, Terms & Conditions, etc.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get payment method'
-      description: 'Retrieve payment method details by code.'
-      authenticated: false
+      title: 'Get page by slug'
+      description: 'Retrieve a CMS page using slug.'
+      authenticated: true
       deprecated: false
     headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      code:
+      page_slug:
         custom: []
-        name: code
-        description: 'Payment method code.'
+        name: page_slug
+        description: 'The slug of the page.'
         required: true
-        example: stripe
+        example: about-us
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      page:
+        custom: []
+        name: page
+        description: 'Page slug.'
+        required: true
+        example: privacy-policy
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
     cleanUrlParameters:
-      code: stripe
+      page_slug: about-us
+      page: privacy-policy
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -134,15 +139,18 @@ endpoints:
         content: |-
           {
             "status": true,
-            "message": "Payment method fetched successfully",
+            "message": "Page fetched successfully",
             "data": {
-              "name": "Stripe"
+              "title": "Privacy Policy"
             }
           }
         headers: []
         description: ''
     responseFields: []
-    auth: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

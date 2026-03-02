@@ -12,31 +12,22 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
-        DB::table('roles')->insert([
-            [
-                'name'       => 'superadmin',
-                'label'      => 'Super Administrator',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name'       => 'admin',
-                'label'      => 'Administrator',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name'       => 'seller',
-                'label'      => 'Seller',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name'       => 'customer',
-                'label'      => 'Customer',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-        ]);
+        $roles = [
+            ['name' => 'superadmin',    'label' => 'Super Administrator', 'type' => 'internal', 'is_system' => true],
+            ['name' => 'admin',         'label' => 'Administrator',       'type' => 'internal', 'is_system' => true],
+            ['name' => 'support_agent', 'label' => 'Support Agent',       'type' => 'internal', 'is_system' => false],
+            ['name' => 'seller',        'label' => 'Seller',              'type' => 'external', 'is_system' => true],
+            ['name' => 'customer',      'label' => 'Customer',            'type' => 'external', 'is_system' => true],
+        ];
+
+        foreach ($roles as $role) {
+            DB::table('roles')->updateOrInsert(
+                ['name' => $role['name']],
+                array_merge($role, [
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+            );
+        }
     }
 }

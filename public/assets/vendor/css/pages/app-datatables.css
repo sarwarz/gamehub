@@ -1,0 +1,130 @@
+/**
+ * Shared DataTable styles — consistent design across all admin table pages
+ */
+
+/* ── Stat card avatars (icon centering for bg-label avatars) ── */
+.avatar[class*="bg-label-"] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+.avatar[class*="bg-label-"] > i,
+.avatar[class*="bg-label-"] > .ti {
+    line-height: 1;
+}
+.dt-stats .card {
+    transition: transform .15s, box-shadow .15s;
+}
+.dt-stats .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+
+/* ── Collapsible filter panel ────────────────────────── */
+.dt-filter-panel .input-group-text {
+    background: transparent;
+    border-right: none;
+}
+.dt-filter-panel .form-select,
+.dt-filter-panel .form-control {
+    border-left: none;
+}
+.dt-filter-panel .input-group:focus-within .input-group-text {
+    border-color: #7367f0;
+}
+.dt-filter-panel .input-group:focus-within .form-select,
+.dt-filter-panel .input-group:focus-within .form-control {
+    border-color: #7367f0;
+}
+
+/* ── Animated bulk action bar ────────────────────────── */
+.bulk-bar {
+    background: linear-gradient(135deg, #f0f2ff 0%, #e8eaff 100%);
+    border-radius: 8px;
+    border: 1px solid rgba(115, 103, 240, .12);
+    animation: bulkSlide .3s ease;
+}
+@keyframes bulkSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.bulk-bar .badge {
+    font-size: .72rem;
+    padding: .35em .65em;
+}
+.bulk-bar .btn-group .dropdown-menu {
+    min-width: 11rem;
+}
+
+/* ── Table enhancements ──────────────────────────────── */
+.table > thead.table-light > tr > th {
+    font-size: .8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #566a7f;
+    white-space: nowrap;
+}
+.table-hover > tbody > tr {
+    transition: background-color .15s ease;
+}
+
+/* ── Action dropdown buttons ─────────────────────────── */
+.dt-action-dropdown .dropdown-toggle::after {
+    display: none;
+}
+.dt-action-dropdown .dropdown-menu {
+    min-width: 10rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    border: 1px solid rgba(0,0,0,.06);
+}
+.dt-action-dropdown .dropdown-item {
+    font-size: .825rem;
+    padding: .45rem .85rem;
+}
+.dt-action-dropdown .dropdown-item i {
+    width: 1.25rem;
+    text-align: center;
+}
+
+/* ── Empty state ─────────────────────────────────────── */
+.dataTables_empty {
+    padding: 2rem 0 !important;
+}
+
+/* ── Processing indicator ────────────────────────────── */
+.dataTables_processing {
+    background: rgba(255,255,255,.9) !important;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+/* ── DataTable info & pagination ─────────────────────── */
+.dataTables_info {
+    font-size: .8rem;
+    color: #a1acb8;
+}
+.dataTables_paginate .page-link {
+    font-size: .8rem;
+}
+
+/* ── Card header with filter toggle ──────────────────── */
+.dt-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
+/* ── Responsive tweaks ───────────────────────────────── */
+@media (max-width: 575.98px) {
+    .dt-stats .col-sm-6 {
+        margin-bottom: .5rem;
+    }
+    .bulk-bar {
+        flex-direction: column;
+        gap: .5rem;
+    }
+}

@@ -63,12 +63,12 @@ class StatsWidgetService
                 ->sum('net_amount');
 
             return [
-                'sales'     => $sales,
+                'sales'     => format_currency($sales),
                 'customers' => OrderItem::where('seller_id', $sellerId)
                     ->distinct('order_id')
                     ->count('order_id'),
                 'products'  => $user->seller->offers()->count(),
-                'revenue'   => $earnings,
+                'revenue'   => format_currency($earnings),
             ];
         }
 
@@ -81,14 +81,16 @@ class StatsWidgetService
                 ->whereBetween('created_at', [$start, $end])
                 ->sum('total_amount');
 
-            $sellerEarnings = SellerEarning::where('status', 'available')
+            $sellerEarnings = (float) SellerEarning::whereBetween('created_at', [$start, $end])
                 ->sum('net_amount');
 
+            $commission = max($sales - $sellerEarnings, 0);
+
             return [
-                'sales'     => $sales,
+                'sales'     => format_currency($sales),
                 'customers' => User::customers()->count(),
                 'products'  => Product::active()->count(),
-                'revenue'   => max($sales - $sellerEarnings, 0),
+                'revenue'   => format_currency($commission),
             ];
         }
 
@@ -96,10 +98,10 @@ class StatsWidgetService
            NORMAL USER
         ==========================*/
         return [
-            'sales' => 0,
+            'sales'     => format_currency(0),
             'customers' => 0,
-            'products' => 0,
-            'revenue' => 0,
+            'products'  => 0,
+            'revenue'   => format_currency(0),
         ];
     }
 }

@@ -121,7 +121,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product platforms'
-      description: ''
+      description: 'List all platforms (e.g. Windows, Steam) for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -138,13 +138,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":2,"name":"Epic Games","slug":"epic-games"},{"id":5,"name":"GOG","slug":"gog"},{"id":10,"name":"Mac OS","slug":"mac-os"},{"id":8,"name":"Nintendo Switch","slug":"nintendo-switch"},{"id":3,"name":"Origin","slug":"origin"},{"id":7,"name":"PlayStation","slug":"playstation"},{"id":1,"name":"Steam","slug":"steam"},{"id":4,"name":"Uplay","slug":"uplay"},{"id":9,"name":"Windows","slug":"windows"},{"id":6,"name":"Xbox","slug":"xbox"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Windows","slug":"windows"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -165,7 +161,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product types'
-      description: ''
+      description: 'List all product types (e.g. Retail, OEM) with commission. For filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -182,13 +178,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"DLC","slug":"dlc","commission":"8.00"},{"id":1,"name":"Game","slug":"game","commission":"10.00"},{"id":3,"name":"Gift Card","slug":"gift-card","commission":"5.00"},{"id":2,"name":"Software","slug":"software","commission":"12.50"},{"id":5,"name":"Subscription","slug":"subscription","commission":"15.00"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Retail","slug":"retail","commission":10}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -209,7 +201,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product regions'
-      description: ''
+      description: 'List all regions (e.g. Global, EU) for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -226,13 +218,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":7,"name":"Africa","slug":"africa"},{"id":5,"name":"Asia","slug":"asia"},{"id":2,"name":"Europe (EU)","slug":"europe-eu"},{"id":1,"name":"Global","slug":"global"},{"id":6,"name":"Middle East","slug":"middle-east"},{"id":3,"name":"North America (NA)","slug":"north-america-na"},{"id":8,"name":"Oceania","slug":"oceania"},{"id":4,"name":"South America (SA)","slug":"south-america-sa"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Global","slug":"global"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -253,7 +241,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product languages'
-      description: ''
+      description: 'List all languages for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -270,13 +258,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":12,"name":"Arabic","slug":"arabic"},{"id":8,"name":"Chinese (Simplified)","slug":"chinese-simplified"},{"id":9,"name":"Chinese (Traditional)","slug":"chinese-traditional"},{"id":1,"name":"English","slug":"english"},{"id":2,"name":"French","slug":"french"},{"id":3,"name":"German","slug":"german"},{"id":14,"name":"Hindi","slug":"hindi"},{"id":5,"name":"Italian","slug":"italian"},{"id":10,"name":"Japanese","slug":"japanese"},{"id":11,"name":"Korean","slug":"korean"},{"id":6,"name":"Portuguese","slug":"portuguese"},{"id":7,"name":"Russian","slug":"russian"},{"id":4,"name":"Spanish","slug":"spanish"},{"id":13,"name":"Turkish","slug":"turkish"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"English","slug":"en"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -297,7 +281,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get supported operating systems'
-      description: ''
+      description: 'List "works on" options (e.g. Windows 10, Windows 11) for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -314,13 +298,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"Android","slug":"android"},{"id":5,"name":"iOS","slug":"ios"},{"id":3,"name":"Linux","slug":"linux"},{"id":2,"name":"Mac OS","slug":"mac-os"},{"id":1,"name":"Windows","slug":"windows"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Windows 10","slug":"windows-10"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -341,7 +321,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product developers'
-      description: ''
+      description: 'List all developers for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -358,13 +338,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":4,"name":"CD Projekt Red","slug":"cd-projekt-red"},{"id":3,"name":"Mojang Studios","slug":"mojang-studios"},{"id":2,"name":"Rockstar Games","slug":"rockstar-games"},{"id":1,"name":"Ubisoft","slug":"ubisoft"},{"id":5,"name":"Valve Corporation","slug":"valve-corporation"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Microsoft","slug":"microsoft"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null
@@ -385,7 +361,7 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product publishers'
-      description: ''
+      description: 'List all publishers for filters and product creation.'
       authenticated: false
       deprecated: false
     headers:
@@ -402,13 +378,9 @@ endpoints:
       -
         custom: []
         status: 200
-        content: '{"status":true,"message":"Success","data":[{"id":3,"name":"Activision","slug":"activision"},{"id":5,"name":"Bethesda Softworks","slug":"bethesda-softworks"},{"id":2,"name":"Electronic Arts (EA)","slug":"electronic-arts-ea"},{"id":4,"name":"Square Enix","slug":"square-enix"},{"id":1,"name":"Ubisoft","slug":"ubisoft"}]}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        content: '{"status":true,"message":"Success","data":[{"id":1,"name":"Microsoft","slug":"microsoft"}]}'
+        headers: []
+        description: ''
     responseFields: []
     auth: []
     controller: null

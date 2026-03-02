@@ -17,6 +17,10 @@ class BlogController extends Controller
         if ($request->ajax()) {
             $blogs = Blog::with('category');
 
+            if ($request->filled('status')) {
+                $blogs->where('is_published', $request->status === 'published');
+            }
+
             return DataTables::of($blogs)
                 ->addColumn('checkbox', fn ($blog) =>
                     '<input type="checkbox" class="row-checkbox" value="'.$blog->id.'">')
@@ -39,26 +43,13 @@ class BlogController extends Controller
                 )
 
                 ->addColumn('actions', fn ($blog) => '
-                    <div class="dropdown">
-                        <button
-                            type="button"
-                            class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                            <i class="ti tabler-dots-vertical"></i>
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <a href="'.route('blogs.edit', $blog).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                            <i class="ti tabler-pencil ti-xs"></i>
+                        </a>
+                        <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-id="'.$blog->id.'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
                         </button>
-
-                        <div class="dropdown-menu">
-                            <a class="dropdown-item" href="'.route('blogs.edit', $blog).'">
-                                <i class="ti tabler-edit me-1"></i> Edit
-                            </a>
-
-                            <a class="dropdown-item text-danger delete-btn"
-                            href="javascript:void(0);"
-                            data-id="'.$blog->id.'">
-                                <i class="ti tabler-trash me-1"></i> Delete
-                            </a>
-                        </div>
                     </div>
                 ')
 
@@ -67,7 +58,13 @@ class BlogController extends Controller
                 ->make(true);
         }
 
-        return view('content.blogs.index');
+        $stats = [
+            'total'     => Blog::count(),
+            'published' => Blog::where('is_published', true)->count(),
+            'draft'     => Blog::where('is_published', false)->count(),
+        ];
+
+        return view('content.blogs.index', compact('stats'));
     }
 
     public function create()
@@ -81,6 +78,7 @@ class BlogController extends Controller
 
     public function store(Request $request)
     {
+
         $data = $request->validate([
             'blog_category_id' => 'required|exists:blog_categories,id',
             'title'            => 'required|string|max:255',
@@ -128,6 +126,7 @@ class BlogController extends Controller
 
     public function update(Request $request, Blog $blog)
     {
+
         $data = $request->validate([
             'blog_category_id' => 'required|exists:blog_categories,id',
             'title'            => 'required|string|max:255',
@@ -170,6 +169,7 @@ class BlogController extends Controller
 
     public function destroy(Blog $blog)
     {
+
         if ($blog->featured_image) {
             Storage::disk('public')->delete($blog->featured_image);
         }
@@ -177,6 +177,14 @@ class BlogController extends Controller
         $blog->delete();
 
         return response()->json(['message' => 'Deleted']);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+
+        Blog::whereIn('id', $request->ids)->delete();
+
+        return response()->json(['message' => 'Blog posts deleted']);
     }
 
     public function popular(Request $request)
@@ -212,26 +220,13 @@ class BlogController extends Controller
 
                 ->addColumn('actions', function ($blog) {
                         return '
-                            <div class="dropdown">
-                                <button
-                                    type="button"
-                                    class="btn btn-icon btn-text-secondary rounded-pill dropdown-toggle hide-arrow"
-                                    data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    <i class="ti tabler-dots-vertical"></i>
+                            <div class="d-flex align-items-center justify-content-center gap-1">
+                                <a href="'.route('blogs.edit', $blog->id).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                    <i class="ti tabler-pencil ti-xs"></i>
+                                </a>
+                                <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-id="'.$blog->id.'" title="Delete">
+                                    <i class="ti tabler-trash ti-xs"></i>
                                 </button>
-
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="'.route('blogs.edit', $blog->id).'">
-                                        <i class="ti tabler-edit me-1"></i> Edit
-                                    </a>
-
-                                    <a class="dropdown-item text-danger delete-btn"
-                                    href="javascript:void(0);"
-                                    data-id="'.$blog->id.'">
-                                        <i class="ti tabler-trash me-1"></i> Delete
-                                    </a>
-                                </div>
                             </div>
                         ';
                     })

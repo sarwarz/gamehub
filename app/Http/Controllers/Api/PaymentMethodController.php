@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\PaymentMethod;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @group Payment Methods
@@ -32,29 +33,34 @@ class PaymentMethodController extends Controller
      *   "data": []
      * }
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $methods = PaymentMethod::where('is_enabled', true)
-            ->when($request->country, fn ($q) =>
-                $q->where(function ($q) use ($request) {
-                    $q->whereNull('country')
-                      ->orWhere('country', $request->country);
-                })
-            )
-            ->when($request->currency, fn ($q) =>
-                $q->where(function ($q) use ($request) {
-                    $q->whereNull('currency')
-                      ->orWhere('currency', $request->currency);
-                })
-            )
-            ->when($request->type, fn ($q) => $q->where('type', $request->type))
-            ->orderBy('sort_order')
-            ->get();
+        try {
+            $methods = PaymentMethod::where('is_enabled', true)
+                ->when($request->country, fn ($q) =>
+                    $q->where(function ($q) use ($request) {
+                        $q->whereNull('country')
+                          ->orWhere('country', $request->country);
+                    })
+                )
+                ->when($request->currency, fn ($q) =>
+                    $q->where(function ($q) use ($request) {
+                        $q->whereNull('currency')
+                          ->orWhere('currency', $request->currency);
+                    })
+                )
+                ->when($request->type, fn ($q) => $q->where('type', $request->type))
+                ->orderBy('sort_order')
+                ->get();
 
-        return $this->successResponse(
-            $methods->map(fn ($method) => $this->transform($method)),
-            'Payment methods fetched successfully'
-        );
+            return $this->success(
+                $methods->map(fn ($method) => $this->transform($method)),
+                'Payment methods fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch payment methods.', 500);
+        }
     }
 
     /**
@@ -72,59 +78,40 @@ class PaymentMethodController extends Controller
      *   }
      * }
      */
-    public function show(string $code)
+    public function show(string $code): JsonResponse
     {
-        $method = PaymentMethod::where('code', $code)
-            ->where('is_enabled', true)
-            ->first();
+        try {
+            $method = PaymentMethod::where('code', $code)
+                ->where('is_enabled', true)
+                ->first();
 
-        if (!$method) {
-            return $this->errorResponse('Payment method not found', 404);
+            if (!$method) {
+                return $this->error('Payment method not found', 404);
+            }
+
+            return $this->success(
+                $this->transform($method),
+                'Payment method fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch payment method.', 500);
         }
-
-        return $this->successResponse(
-            $this->transform($method, true),
-            'Payment method fetched successfully'
-        );
     }
 
     /* --------------------------------
      | Data Transformer
      |-------------------------------- */
 
-    protected function transform(PaymentMethod $method, bool $full = false): array
+    protected function transform(PaymentMethod $method): array
     {
         return [
-            'id'        => $method->id,
             'name'      => $method->name,
             'code'      => $method->code,
             'type'      => $method->type,
             'rate'      => $method->rate,
             'country'   => $method->country,
             'currency'  => $method->currency,
-            'mode'      => $method->mode, // live / sandbox
-            'config'    => $full ? $method->config : null, // hide secrets on list
         ];
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

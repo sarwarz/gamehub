@@ -1,0 +1,598 @@
+name: 'Support Tickets'
+description: |-
+
+  Manage support tickets as an authenticated customer.
+  Customers can create tickets, view their ticket history,
+  reply to conversations, escalate seller tickets to admin, and close tickets.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/tickets
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List my tickets'
+      description: "Returns a paginated list of the authenticated user's support tickets."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status.'
+        required: false
+        example: open
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      department:
+        custom: []
+        name: department
+        description: 'Filter by department.'
+        required: false
+        example: order
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page (default 15).'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: open
+      department: order
+      per_page: 15
+    bodyParameters:
+      status:
+        custom: []
+        name: status
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      department:
+        custom: []
+        name: department
+        description: ''
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Must be at least 1. Must not be greater than 100.'
+        required: false
+        example: 21
+        type: integer
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      per_page: 21
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Tickets fetched successfully",
+            "data": {
+              "current_page": 1,
+              "data": [
+                {
+                  "id": 1,
+                  "ticket_number": "TKT-000001",
+                  "subject": "Missing game key",
+                  "department": "order",
+                  "priority": "high",
+                  "status": "awaiting_seller",
+                  "is_escalated": false,
+                  "created_at": "2026-02-28T12:00:00.000000Z",
+                  "last_reply_at": "2026-02-28T14:30:00.000000Z",
+                  "seller": {
+                    "id": 1,
+                    "store_name": "GameKeys Pro"
+                  },
+                  "messages_count": 3
+                }
+              ],
+              "total": 5
+            }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/tickets
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Create a ticket'
+      description: |-
+        Opens a new support ticket. If an `order_id` is provided with department `order`,
+        the ticket is automatically assigned to the seller associated with that order.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      department:
+        custom: []
+        name: department
+        description: 'Department slug from active departments.'
+        required: true
+        example: order
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      subject:
+        custom: []
+        name: subject
+        description: 'Ticket subject (max 255 chars).'
+        required: true
+        example: 'Missing game key after purchase'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      message:
+        custom: []
+        name: message
+        description: 'Initial message body (max 5000 chars).'
+        required: true
+        example: 'I purchased Order #000012 but never received my activation key. Please help.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      priority:
+        custom: []
+        name: priority
+        description: 'Priority level: low, medium, high, urgent. Defaults to medium.'
+        required: false
+        example: high
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      order_id:
+        custom: []
+        name: order_id
+        description: 'Order ID to link (must belong to authenticated user).'
+        required: false
+        example: 12
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      department: order
+      subject: 'Missing game key after purchase'
+      message: 'I purchased Order #000012 but never received my activation key. Please help.'
+      priority: high
+      order_id: 12
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: |-
+          {
+            "status": true,
+            "message": "Ticket created successfully.",
+            "data": {
+              "id": 1,
+              "ticket_number": "TKT-000001",
+              "subject": "Missing game key after purchase",
+              "department": "order",
+              "priority": "high",
+              "status": "awaiting_seller",
+              "seller_id": 3,
+              "order_id": 12,
+              "created_at": "2026-02-28T12:00:00.000000Z"
+            }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: |-
+          {
+            "message": "The department field is required.",
+            "errors": { "department": ["The department field is required."] }
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/tickets/{id}'
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'View a ticket'
+      description: |-
+        Returns ticket details with the full conversation thread.
+        Internal notes are not visible to customers.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ticket ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Ticket fetched successfully",
+            "data": {
+              "id": 1,
+              "ticket_number": "TKT-000001",
+              "subject": "Missing game key",
+              "department": "order",
+              "priority": "high",
+              "status": "awaiting_seller",
+              "is_escalated": false,
+              "created_at": "2026-02-28T12:00:00.000000Z",
+              "seller": { "id": 1, "store_name": "GameKeys Pro" },
+              "order": { "id": 12, "order_number": "000012" },
+              "messages": [
+                {
+                  "id": 1,
+                  "sender_role": "customer",
+                  "message": "I never received my key.",
+                  "attachments": null,
+                  "created_at": "2026-02-28T12:00:00.000000Z",
+                  "user": { "id": 5, "name": "John Doe" }
+                }
+              ]
+            }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "status": false,
+            "message": "Ticket not found."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/tickets/{id}/reply'
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reply to a ticket'
+      description: 'Adds a new message to an existing ticket. Only allowed if the ticket is not closed.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ticket ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      message:
+        custom: []
+        name: message
+        description: 'Reply message (max 5000 chars).'
+        required: true
+        example: 'Could you please check the order again?'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      message: 'Could you please check the order again?'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Reply sent.",
+            "data": {
+              "id": 4,
+              "sender_role": "customer",
+              "message": "Could you please check the order again?",
+              "created_at": "2026-02-28T15:00:00.000000Z"
+            }
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: |-
+          {
+            "status": false,
+            "message": "This ticket is closed."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/tickets/{id}/escalate'
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Escalate to admin'
+      description: |-
+        Escalates a seller-assigned ticket to the platform admin.
+        Only possible when the ticket is currently assigned to a seller and not already escalated.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ticket ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Ticket escalated to admin."
+          }
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: |-
+          {
+            "status": false,
+            "message": "This ticket cannot be escalated."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: 'api/v1/tickets/{id}/close'
+    metadata:
+      custom: []
+      groupName: 'Support Tickets'
+      groupDescription: |-
+
+        Manage support tickets as an authenticated customer.
+        Customers can create tickets, view their ticket history,
+        reply to conversations, escalate seller tickets to admin, and close tickets.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Close a ticket'
+      description: 'Customer can close their own ticket at any time (except already closed tickets).'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The ticket ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Ticket closed."
+          }
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null

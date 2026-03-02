@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /*
     |--------------------------------------------------------------------------
@@ -20,7 +21,15 @@ class Order extends Model
         'user_id',
         'order_number',
         'currency',
+        'base_currency',
+        'base_subtotal',
+        'base_tax_amount',
+        'base_discount_amount',
+        'base_total_amount',
+        'exchange_rate',
         'subtotal',
+        'tax_amount',
+        'discount_amount',
         'total_amount',
 
         // Payment
@@ -48,13 +57,20 @@ class Order extends Model
     |--------------------------------------------------------------------------
     */
     protected $casts = [
-        'subtotal'     => 'decimal:2',
-        'total_amount' => 'decimal:2',
-        'meta'         => 'array',
-        'paid_at'      => 'datetime',
-        'completed_at' => 'datetime',
-        'cancelled_at' => 'datetime',
-        'refunded_at'  => 'datetime',
+        'subtotal'             => 'decimal:2',
+        'tax_amount'           => 'decimal:2',
+        'discount_amount'      => 'decimal:2',
+        'total_amount'         => 'decimal:2',
+        'base_subtotal'        => 'decimal:2',
+        'base_tax_amount'      => 'decimal:2',
+        'base_discount_amount' => 'decimal:2',
+        'base_total_amount'    => 'decimal:2',
+        'exchange_rate'        => 'decimal:8',
+        'meta'                 => 'array',
+        'paid_at'              => 'datetime',
+        'completed_at'         => 'datetime',
+        'cancelled_at'         => 'datetime',
+        'refunded_at'          => 'datetime',
     ];
 
     /*
@@ -66,16 +82,32 @@ class Order extends Model
     {
         static::creating(function ($order) {
             if (! $order->order_number) {
+                $maxRetries = 5;
 
-                // Lock table to avoid duplicates
-                $lastNumber = DB::table('orders')
-                    ->lockForUpdate()
-                    ->max('order_number');
+                for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+                    $lastNumber = DB::table('orders')
+                        ->lockForUpdate()
+                        ->max(DB::raw('CAST(order_number AS UNSIGNED)'));
 
-                $nextNumber = $lastNumber ? ((int) $lastNumber + 1) : 1;
+                    $nextNumber = $lastNumber ? ((int) $lastNumber + 1) : 1;
+                    $padded     = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-                // Store as string with padding
-                $order->order_number = str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+                    $prefix = Setting::get('store', 'order_prefix', '');
+                    $candidate = $prefix ? $prefix . $padded : $padded;
+                    $exists = DB::table('orders')->where('order_number', $candidate)->exists();
+
+                    if (!$exists) {
+                        $order->order_number = $candidate;
+                        return;
+                    }
+                }
+
+                $prefix = Setting::get('store', 'order_prefix', '');
+                $fallback = str_pad(
+                    (int) DB::table('orders')->max(DB::raw('CAST(REPLACE(order_number, \'' . addslashes($prefix) . '\', \'\') AS UNSIGNED)')) + 1 + random_int(1, 100),
+                    6, '0', STR_PAD_LEFT
+                );
+                $order->order_number = $prefix ? $prefix . $fallback : $fallback;
             }
         });
     }
@@ -136,6 +168,21 @@ class Order extends Model
     public function transactions()
     {
         return $this->morphMany(Transaction::class, 'reference');
+    }
+
+    public function refundRequests()
+    {
+        return $this->hasMany(RefundRequest::class);
+    }
+
+    public function sellerEarnings()
+    {
+        return $this->hasMany(SellerEarning::class);
+    }
+
+    public function deliveries()
+    {
+        return $this->hasManyThrough(OrderDelivery::class, OrderItem::class);
     }
 
     /*

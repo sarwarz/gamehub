@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
 
             /* Dashboard */
             'dashboard',
+            'reports',
 
             /* Product Attributes */
             'categories',
@@ -71,6 +72,9 @@ class PermissionSeeder extends Seeder
             'users',
             'roles',
             'permissions',
+
+            /* Settings */
+            'settings',
         ];
 
         foreach ($permissions as $permission) {

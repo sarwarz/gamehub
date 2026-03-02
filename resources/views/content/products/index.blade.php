@@ -3,558 +3,396 @@
 
 @push('page-css')
 <link rel="stylesheet" href="{{ asset('assets/vendor/css/pages/app-ecommerce.css') }}">
+<style>
+    .bulk-bar { background:#f0f2ff; border-radius:8px; animation:bulkSlide .3s ease; }
+    @keyframes bulkSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+</style>
 @endpush
 
 @section('content')
-<div class="app-ecommerce-products">
 
     @include('partials.alerts')
 
-    {{-- ================= FILTER PANEL ================= --}}
-    <div class="card mb-3 p-4 collapse" id="filter-collapse">
-        {{-- Close (X) Button --}}
-        <button type="button"
-                id="closeFilters"
-                class="btn btn-sm btn-icon position-absolute top-0 end-0 m-2"
-                aria-label="Close filters">
-            <i class="ti tabler-x"></i>
-        </button>
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h4 class="mb-1"><i class="ti tabler-package me-2"></i>Products</h4>
+            <p class="text-muted mb-0">Manage your product catalog</p>
+        </div>
+        <a href="{{ route('products.create') }}" class="btn btn-primary">
+            <i class="ti tabler-plus me-1"></i> Add Product
+        </a>
+    </div>
 
-        <div class="card-bodys">
-            <p>Filters</p>
-
-            <form id="filterForm">
-                <div id="filterRows">
-
-                    {{-- Filter Row --}}
-                    <div class="row g-2 align-items-center filter-row mb-2">
-
-                        <div class="col-md-6">
-                            <select name="field[]" class="form-select">
-                                <option value="">Select field</option>
-
-                                {{-- Product --}}
-                                <option value="title">Product Title</option>
-                                <option value="sku">SKU</option>
-                                <option value="status">Status</option>
-                                <option value="is_featured">Featured</option>
-                                <option value="created_at">Created At</option>
-
-                                {{-- Relations --}}
-                                <option value="category_id">Category</option>
-                                <option value="type_id">Type</option>
-                                <option value="region_id">Region</option>
-                                <option value="developer_id">Developer</option>
-                                <option value="publisher_id">Publisher</option>
-                            </select>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-primary">
+                            <i class="ti tabler-package fs-4"></i>
                         </div>
-
-                        <div class="col-md-6">
-                            <select class="form-select" name="operator[]">
-                                <option value="=">Is equal to</option>
-                                <option value="!=">Is not equal to</option>
-                                <option value="like">Contains</option>
-                            </select>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['total']) }}</h5>
+                            <small class="text-muted">Total Products</small>
                         </div>
-
-                        <div class="col-md-12 value-wrapper">
-                            <input type="text"
-                                class="form-control"
-                                name="value[]"
-                                placeholder="Value">
-                        </div>
-
-                        <div class="col-md-1 text-start">
-                            <button type="button"
-                                    class="btn btn-outline-danger remove-row d-none">
-                                <i class="menu-icon icon-base ti tabler-trash"></i>
-                            </button>
-                        </div>
-
                     </div>
                 </div>
-
-                <div class="d-flex gap-2 mt-3">
-                    <button type="button"
-                            class="btn btn-outline-secondary"
-                            id="addFilter">
-                        Add additional filter
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-primary">
-                        Apply
-                    </button>
-
-                    <button type="button"
-                            class="btn btn-outline-danger d-none"
-                            id="clearFilters">
-                        Clear Filters
-                    </button>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-success">
+                            <i class="ti tabler-circle-check fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['active']) }}</h5>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
                 </div>
-            </form>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-warning">
+                            <i class="ti tabler-circle-off fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['inactive']) }}</h5>
+                            <small class="text-muted">Inactive</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-info">
+                            <i class="ti tabler-star fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['featured']) }}</h5>
+                            <small class="text-muted">Featured</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-
-    {{-- ================= TABLE ================= --}}
-    <div class="card p-2">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-                <div class="btn-group">
-                    <button type="button"
-                            class="btn btn-outline-secondary dropdown-toggle waves-effect"
-                            data-bs-toggle="dropdown"
-                            aria-expanded="false">
-                        Bulk Actions
+    <!-- DataTable Card -->
+    <div class="card">
+        <!-- Card Header -->
+        <div class="card-header pb-0">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <h5 class="mb-0"><i class="ti tabler-list-details me-2"></i>All Products</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-label-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filter-collapse">
+                        <i class="ti tabler-filter me-1"></i> Filters
                     </button>
-
-                    <ul class="dropdown-menu">
-
-                        {{-- STATUS --}}
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="status"
-                            data-status="active">
-                                Mark as Active
-                            </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="status"
-                            data-status="inactive">
-                                Mark as Inactive
-                            </a>
-                        </li>
-
-                        <li><hr class="dropdown-divider"></li>
-
-                        {{-- FEATURED --}}
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="featured"
-                            data-value="1">
-                                Mark as Featured
-                            </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="featured"
-                            data-value="0">
-                                Remove Featured
-                            </a>
-                        </li>
-
-                        <li><hr class="dropdown-divider"></li>
-
-                        {{-- DELETE --}}
-                        <li>
-                            <a class="dropdown-item bulk-action text-danger"
-                            href="#"
-                            data-action="delete"
-                            data-url="{{ route('products.bulk-delete') }}">
-                                Delete Products
-                            </a>
-                        </li>
-                    </ul>
                 </div>
-
-
-                <button class="btn btn-outline-secondary" data-bs-toggle="collapse"
-                        data-bs-target="#filter-collapse">
-                    Filters
-                </button>
             </div>
 
-            <a href="{{ route('products.create') }}" class="btn btn-primary">
-                <i class="ti tabler-plus"></i> Add Product
-            </a>
+            <!-- Collapsible Filter Row -->
+            <div class="collapse mt-3" id="filter-collapse">
+                <div class="row g-3 pb-3 border-bottom">
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Status</label>
+                        <select id="filter-status" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">Featured</label>
+                        <select id="filter-featured" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            <option value="yes">Yes</option>
+                            <option value="no">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-muted">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="apply-filters">
+                                <i class="ti tabler-check me-1"></i> Apply
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="clear-filters">
+                                <i class="ti tabler-x me-1"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
+        <!-- Bulk Actions Bar -->
+        <div class="card-body py-0">
+            <div class="bulk-bar d-none py-2 px-3 mt-3" id="bulk-bar">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-pill fs-6" id="bulk-count">0</span>
+                        <span class="fw-medium" style="font-size:.85rem">products selected</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-label-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="ti tabler-refresh me-1"></i> Change Status
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="status" data-status="active"><i class="ti tabler-circle-check ti-xs me-2 text-success"></i> Active</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="status" data-status="inactive"><i class="ti tabler-circle-off ti-xs me-2 text-warning"></i> Inactive</a></li>
+                            </ul>
+                        </div>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-label-info dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="ti tabler-star me-1"></i> Toggle Featured
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="featured" data-value="1"><i class="ti tabler-star-filled ti-xs me-2 text-warning"></i> Mark Featured</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="featured" data-value="0"><i class="ti tabler-star-off ti-xs me-2 text-muted"></i> Remove Featured</a></li>
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-label-danger bulk-action" data-action="delete" data-url="{{ route('products.bulk-delete') }}">
+                            <i class="ti tabler-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle" id="products-table">
-                <thead>
-                <tr>
-                    <th width="30">
-                        <input type="checkbox" id="select-all" class="form-check-input">
-                    </th>
-                    <th>Product</th>
-                    <th>Categories</th>
-                    <th>Types</th>
-                    <th>Regions</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
+            <table class="table table-hover" id="products-table">
+                <thead class="table-light">
+                    <tr>
+                        <th width="40"><input type="checkbox" class="form-check-input" id="select-all"></th>
+                        <th>Product</th>
+                        <th>Categories</th>
+                        <th>Types</th>
+                        <th>Regions</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" width="120">Actions</th>
+                    </tr>
                 </thead>
             </table>
         </div>
     </div>
-
-</div>
 @endsection
+
 @push('page-js')
 <script>
 (function ($) {
     'use strict';
 
     const ProductsPage = {
-
         table: null,
 
         init() {
             this.cacheDom();
             this.initDataTable();
             this.bindEvents();
-            this.initSelect2(); 
         },
 
         cacheDom() {
-            this.$table        = $('#products-table');
-            this.$filterForm   = $('#filterForm');
-            this.$filterRows   = $('#filterRows');
-            this.$clearBtn     = $('#clearFilters');
-            this.$addFilterBtn = $('#addFilter');
-            this.$selectAll    = $('#select-all');
+            this.$table     = $('#products-table');
+            this.$selectAll = $('#select-all');
+            this.$bulkBar   = $('#bulk-bar');
+            this.$bulkCount = $('#bulk-count');
         },
 
-        /* ===============================
-         * DataTable
-         =============================== */
         initDataTable() {
             this.table = this.$table.DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route('products.index') }}',
-                    data: d => {
-                        const raw = this.$filterForm.serializeArray();
-                        const filters = [];
-
-                        for (let i = 0; i < raw.length; i += 3) {
-                            filters.push({
-                                field: raw[i]?.value ?? null,
-                                operator: raw[i + 1]?.value ?? null,
-                                value: raw[i + 2]?.value ?? null,
-                            });
-                        }
-
-                        d.filters = filters;
+                    url: '{{ route("products.index") }}',
+                    data: function (d) {
+                        d.status   = $('#filter-status').val();
+                        d.featured = $('#filter-featured').val();
                     }
-
                 },
                 order: [[1, 'asc']],
+                lengthMenu: [10, 25, 50, 100],
+                pageLength: 25,
                 columns: [
-                    { data: 'checkbox', orderable: false, searchable: false },
+                    { data: 'checkbox', orderable: false, searchable: false, className: 'pe-0' },
                     { data: 'product_column', name: 'title' },
                     { data: 'categories', orderable: false, searchable: false },
                     { data: 'types', orderable: false, searchable: false },
                     { data: 'regions', orderable: false, searchable: false },
-                    { data: 'status_badge', orderable: false, searchable: false },
-                    { data: 'actions', orderable: false, searchable: false }
-                ]
+                    { data: 'status_badge', orderable: false, searchable: false, className: 'text-center' },
+                    { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                language: {
+                    emptyTable: '<div class="py-4 text-center"><i class="ti tabler-package-off ti-xl text-muted mb-2 d-block"></i><span class="text-muted">No products found</span></div>',
+                    zeroRecords: '<div class="py-3 text-center text-muted">No matching products</div>'
+                }
             });
         },
 
-        /* ===============================
-         * Events
-         =============================== */
         bindEvents() {
+            const self = this;
 
-            // Apply filters
-            this.$filterForm.on('submit', e => {
-                e.preventDefault();
-                this.table.ajax.reload();
-                this.$clearBtn.removeClass('d-none');
+            $('#apply-filters').on('click', () => self.table.ajax.reload());
+
+            $('#clear-filters').on('click', () => {
+                $('#filter-status, #filter-featured').val('');
+                self.table.ajax.reload();
             });
 
-            // Clear filters
-            this.$clearBtn.on('click', () => this.clearFilters());
-
-            // Add filter row
-            this.$addFilterBtn.on('click', () => this.addFilterRow());
-
-            // Remove filter row
-            $(document).on('click', '.remove-row', e =>
-                $(e.currentTarget).closest('.filter-row').remove()
-            );
-
-            // Dynamic field input
-            $(document).on('change', 'select[name="field[]"]', e =>
-                this.handleFieldChange($(e.currentTarget))
-            );
-
-            // Select all
-            this.$selectAll.on('change', e =>
-                $('.bulk-checkbox').prop('checked', e.target.checked)
-            );
-
-            // close filter card
-            $('#closeFilters').on('click', () => {
-                this.clearFilters();
-                $('#filter-collapse').collapse('hide');
+            this.$selectAll.on('change', function () {
+                $('.bulk-checkbox').prop('checked', this.checked);
+                self.syncBulkBar();
             });
 
-            // Bulk action click
-            $(document).on('click', '.bulk-action', e => {
+            $(document).on('change', '.bulk-checkbox', () => self.syncBulkBar());
+
+            $(document).on('click', '.bulk-action', function (e) {
                 e.preventDefault();
-
-                const $btn   = $(e.currentTarget);
-                const action = $btn.data('action');
-
-                this.handleBulkAction(
-                    action,
+                const $btn = $(this);
+                self.handleBulkAction(
+                    $btn.data('action'),
                     $btn.data('status') ?? $btn.data('value') ?? null,
                     $btn.data('url') ?? null
                 );
             });
 
-
-
+            $(document).on('click', '.btn-delete', function (e) {
+                e.preventDefault();
+                const url = $(this).data('url');
+                Swal.fire({
+                    title: 'Delete this product?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                    buttonsStyling: false
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+                    $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: { _token: '{{ csrf_token() }}' },
+                        success: () => {
+                            self.table.ajax.reload(null, false);
+                            Swal.fire({ icon: 'success', title: 'Product deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                        },
+                        error: () => Swal.fire({ icon: 'error', title: 'Failed to delete product', showConfirmButton: false, timer: 1500 })
+                    });
+                });
+            });
         },
 
-        /* ===============================
-         * Filters
-         =============================== */
-        clearFilters() {
-            this.$filterForm[0].reset();
-            this.$filterRows.find('.filter-row:not(:first)').remove();
-            this.$filterRows.find('.value-wrapper').html(this.defaultInput());
-            this.table.ajax.reload();
-            this.$clearBtn.addClass('d-none');
-        },
+        syncBulkBar() {
+            const count = $('.bulk-checkbox:checked').length;
+            this.$bulkCount.text(count);
 
-        addFilterRow() {
-            const $row = this.$filterRows.find('.filter-row:first').clone();
-            $row.find('select, input').val('');
-            $row.find('.remove-row').removeClass('d-none');
-            this.$filterRows.append($row);
-            this.initSelect2($row);
-        },
-
-        handleFieldChange($select) {
-            const field = $select.val();
-            const $row  = $select.closest('.filter-row');
-
-            $row.find('.value-wrapper').html(this.getFieldInput(field));
-            this.initSelect2($row);
-
-            if (['created_at'].includes(field)) {
-                $row.find('select[name="operator[]"]').val('=');
+            if (count > 0) {
+                this.$bulkBar.removeClass('d-none');
+            } else {
+                this.$bulkBar.addClass('d-none');
             }
+
+            const total = $('.bulk-checkbox').length;
+            this.$selectAll.prop('checked', count > 0 && count === total);
         },
 
-        getFieldInput(field) {
-
-            const inputs = {
-
-                status: `
-                    <select name="value[]" class="form-select">
-                        <option value="">Select Status</option>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>`,
-
-                is_featured: `
-                    <select name="value[]" class="form-select">
-                        <option value="">Featured?</option>
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-                    </select>`,
-
-                category_id: `
-                    <select name="value[]" class="form-select select2">
-                        <option value="">Select Category</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>`,
-
-                type_id: `
-                    <select name="value[]" class="form-select select2">
-                        <option value="">Select Type</option>
-                        @foreach($types as $type)
-                            <option value="{{ $type->id }}">{{ $type->name }}</option>
-                        @endforeach
-                    </select>`,
-
-                region_id: `
-                    <select name="value[]" class="form-select select2">
-                        <option value="">Select Region</option>
-                        @foreach($regions as $region)
-                            <option value="{{ $region->id }}">{{ $region->name }}</option>
-                        @endforeach
-                    </select>`,
-
-                developer_id: `
-                    <select name="value[]" class="form-select select2">
-                        <option value="">Select Developer</option>
-                        @foreach($developers as $dev)
-                            <option value="{{ $dev->id }}">{{ $dev->name }}</option>
-                        @endforeach
-                    </select>`,
-
-                publisher_id: `
-                    <select name="value[]" class="form-select select2">
-                        <option value="">Select Publisher</option>
-                        @foreach($publishers as $pub)
-                            <option value="{{ $pub->id }}">{{ $pub->name }}</option>
-                        @endforeach
-                    </select>`,
-
-                created_at: `
-                    <input type="date"
-                            id="flatpickr-date"
-                            placeholder="YYYY-MM-DD"
-                           class="form-control"
-                           name="value[]">`
-            };
-
-            return inputs[field] || this.defaultInput();
-        },
-
-        defaultInput() {
-            return `<input type="text"
-                           class="form-control"
-                           name="value[]"
-                           placeholder="Value">`;
-        },
-
-
-        /* ===============================
-        * Bulk Actions
-        =============================== */
-        handleBulkAction(action, value = null, url = null) {
-
+        handleBulkAction(action, value, url) {
             const ids = this.getSelectedIds();
-
             if (!ids.length) {
-                Swal.fire('Info', 'Please select at least one product', 'info');
+                Swal.fire({ icon: 'info', title: 'No Selection', text: 'Please select at least one product.', timer: 2000, showConfirmButton: false });
                 return;
             }
-
-            if (action === 'delete') {
-                this.confirmBulkDelete(ids, url);
-                return;
-            }
-
-            if (action === 'status') {
-                this.confirmBulkStatus(ids, value);
-                return;
-            }
-
-            if (action === 'featured') {
-                this.confirmBulkFeatured(ids, value);
-                return;
-            }
+            if (action === 'delete')   { this.confirmBulkDelete(ids, url); return; }
+            if (action === 'status')   { this.confirmBulkStatus(ids, value); return; }
+            if (action === 'featured') { this.confirmBulkFeatured(ids, value); return; }
         },
 
         getSelectedIds() {
-            return $('.bulk-checkbox:checked')
-                .map((_, el) => el.value)
-                .get();
+            return $('.bulk-checkbox:checked').map((_, el) => el.value).get();
         },
 
         confirmBulkStatus(ids, status) {
             Swal.fire({
-                title: 'Change product status?',
-                text: `Selected products will be marked as "${status}".`,
-                icon: 'warning',
+                title: 'Change Product Status?',
+                html: `<span class="text-muted">Selected products will be marked as <strong>${status}</strong>.</span>`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, update',
-                reverseButtons: true
-            }).then(result => {
-
-                if (!result.isConfirmed) return;
-
-                Swal.showLoading();
-
-                $.post('{{ route('products.bulk-status') }}', {
-                    ids,
-                    status,
-                    _token: '{{ csrf_token() }}'
-                })
-                .done(() => this.afterBulkAction('Status updated'))
-                .fail(() => Swal.fire('Error', 'Failed to update status', 'error'));
+                confirmButtonText: 'Yes, change',
+                cancelButtonText: 'Cancel',
+                customClass: { confirmButton: 'btn btn-primary me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post('{{ route("products.bulk-status") }}', { ids, status, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.afterBulkAction();
+                        Swal.fire({ icon: 'success', title: 'Status updated', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not update status.', timer: 2000, showConfirmButton: false }));
             });
         },
 
         confirmBulkFeatured(ids, value) {
+            const label = value == 1 ? 'featured' : 'unfeatured';
             Swal.fire({
-                title: 'Update featured products?',
-                text: value == 1
-                    ? 'Products will be marked as featured.'
-                    : 'Products will be removed from featured.',
-                icon: 'warning',
+                title: 'Update Featured?',
+                html: `<span class="text-muted">Selected products will be marked as <strong>${label}</strong>.</span>`,
+                icon: 'question',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, update',
-                reverseButtons: true
-            }).then(result => {
-
-                if (!result.isConfirmed) return;
-
-                Swal.showLoading();
-
-                $.post('{{ route('products.bulk-featured') }}', {
-                    ids,
-                    value,
-                    _token: '{{ csrf_token() }}'
-                })
-                .done(() => this.afterBulkAction('Featured updated'))
-                .fail(() => Swal.fire('Error', 'Failed to update featured', 'error'));
+                cancelButtonText: 'Cancel',
+                customClass: { confirmButton: 'btn btn-primary me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post('{{ route("products.bulk-featured") }}', { ids, value, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.afterBulkAction();
+                        Swal.fire({ icon: 'success', title: 'Featured updated', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not update featured.', timer: 2000, showConfirmButton: false }));
             });
         },
 
         confirmBulkDelete(ids, url) {
             Swal.fire({
-                title: 'Delete products?',
+                title: 'Delete Products?',
                 text: 'This action cannot be undone.',
-                icon: 'error',
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, delete',
-                reverseButtons: true
-            }).then(result => {
-
-                if (!result.isConfirmed) return;
-
-                Swal.showLoading();
-
-                $.post(url, {
-                    ids,
-                    _token: '{{ csrf_token() }}'
-                })
-                .done(() => this.afterBulkAction('Products deleted'))
-                .fail(() => Swal.fire('Error', 'Delete failed', 'error'));
+                cancelButtonText: 'Cancel',
+                customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post(url, { ids, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.afterBulkAction();
+                        Swal.fire({ icon: 'success', title: 'Products deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not delete products.', timer: 2000, showConfirmButton: false }));
             });
         },
 
-        afterBulkAction(message) {
-            Swal.close();
+        afterBulkAction() {
             this.table.ajax.reload(null, false);
             this.$selectAll.prop('checked', false);
-
-            Swal.fire({
-                icon: 'success',
-                title: message,
-                showConfirmButton: false,
-                timer: 1500
-            });
-        },
-
-        initSelect2(context = document) {
-            $(context).find('.select2').select2({
-                width: '100%',
-                dropdownParent: $('#filter-collapse')
-            });
-        },
-
-
-
+            this.$bulkBar.addClass('d-none');
+        }
     };
 
     $(document).ready(() => ProductsPage.init());

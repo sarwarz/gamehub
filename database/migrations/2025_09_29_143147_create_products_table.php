@@ -12,50 +12,46 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
 
-            // Core info
             $table->string('title');
             $table->string('slug')->unique();
             $table->string('sku')->nullable()->unique();
             $table->longText('description')->nullable();
+            $table->string('short_description', 500)->nullable();
 
-            // Media
             $table->string('image')->nullable();
             $table->json('gallery')->nullable();
 
-            // Relations
             $table->foreignId('developer_id')->nullable()
                 ->constrained('product_developers')->nullOnDelete();
 
             $table->foreignId('publisher_id')->nullable()
                 ->constrained('product_publishers')->nullOnDelete();
 
-            // Metadata
+            $table->foreignId('label_id')->nullable()
+                ->constrained('product_labels')->nullOnDelete();
+
             $table->json('attributes')->nullable();
             $table->json('system_requirements')->nullable();
             $table->string('delivery_type')
                 ->default('instant')
                 ->comment('instant / manual / email / link');
 
-            // Visibility
             $table->enum('status', ['active','inactive'])
                 ->default('active');
 
             $table->boolean('is_featured')->default(false);
             $table->integer('sort_order')->default(0);
 
-            // SEO
             $table->string('meta_title')->nullable();
             $table->text('meta_description')->nullable();
             $table->text('meta_keywords')->nullable();
 
             $table->timestamps();
 
-            // ⚡ Speed indexes
             $table->index('status');
             $table->index(['status', 'is_featured']);
         });
 
-        // 🚀 FULLTEXT index for live search
         DB::statement("
             ALTER TABLE products
             ADD FULLTEXT INDEX ft_products_search (title, sku)

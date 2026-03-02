@@ -40,12 +40,8 @@ class Seller extends Model
         'address',
         'postal_code',
 
-        // Stats & status
-        'rating',
-        'total_sales',
-        'total_products',
+        // Status (admin-managed)
         'status',
-        'is_verified',
     ];
 
     /**
@@ -89,8 +85,91 @@ class Seller extends Model
         return $this->hasMany(SellerWithdraw::class);
     }
 
+    public function offers()
+    {
+        return $this->hasMany(SellerOffer::class);
+    }
 
+    /**
+     * Sync the seller + customer roles on the linked user based on seller status.
+     */
+    public function syncUserRoles(): void
+    {
+        $user = $this->user;
+        if (!$user) return;
 
+        $sellerRole   = \App\Models\Role::where('name', 'seller')->first();
+        $customerRole = \App\Models\Role::where('name', 'customer')->first();
+
+        if (!$sellerRole) return;
+
+        if ($this->status === 'active') {
+            $roleIds = [$sellerRole->id];
+            if ($customerRole) $roleIds[] = $customerRole->id;
+            $user->roles()->syncWithoutDetaching($roleIds);
+        } else {
+            $user->roles()->detach($sellerRole->id);
+        }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rating & Stats
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Recalculate rating from approved reviews on products this seller has offers on.
+     */
+    public function recalculateRating(): void
+    {
+        $productIds = $this->offers()->pluck('product_id')->unique();
+
+        if ($productIds->isEmpty()) {
+            $this->update(['rating' => 0]);
+            return;
+        }
+
+        $avg = ProductReview::whereIn('product_id', $productIds)
+            ->where('status', 'approved')
+            ->avg('rating');
+
+        $this->update(['rating' => round($avg ?? 0, 2)]);
+    }
+
+    /**
+     * Recalculate total_sales from completed order items.
+     */
+    public function recalculateSales(): void
+    {
+        $this->update([
+            'total_sales'    => OrderItem::where('seller_id', $this->id)
+                                    ->whereHas('order', fn ($q) => $q->where('status', 'completed'))
+                                    ->sum('quantity'),
+            'total_products' => $this->offers()->where('status', 'active')->distinct('product_id')->count('product_id'),
+        ]);
+    }
+
+    /**
+     * Recalculate all stats at once.
+     */
+    public function recalculateStats(): void
+    {
+        $this->recalculateRating();
+        $this->recalculateSales();
+    }
+
+    /**
+     * Recalculate ratings for all sellers linked to a given product.
+     */
+    public static function recalculateRatingsForProduct(int $productId): void
+    {
+        $sellerIds = SellerOffer::where('product_id', $productId)->pluck('seller_id')->unique();
+
+        foreach (static::whereIn('id', $sellerIds)->get() as $seller) {
+            $seller->recalculateRating();
+        }
+    }
 
     /*
     |--------------------------------------------------------------------------

@@ -10,26 +10,35 @@ return new class extends Migration {
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
 
-            // Optional manual content
+            $table->enum('type', ['hero', 'banner', 'promotional', 'product_spotlight'])
+                  ->default('hero');
+
             $table->string('title')->nullable();
             $table->string('subtitle')->nullable();
+            $table->string('badge_text', 50)->nullable();
+            $table->string('badge_color', 20)->nullable();
 
-            // Slider image
             $table->string('image');
+            $table->string('overlay_color', 50)->nullable();
+            $table->enum('text_color', ['light', 'dark'])->default('light');
+            $table->enum('text_position', ['left', 'center', 'right'])->default('left');
 
-            // Dynamic product relation
             $table->foreignId('product_id')
                   ->nullable()
                   ->constrained('products')
                   ->nullOnDelete();
 
-            // CTA
             $table->string('button_text')->nullable();
             $table->string('button_url')->nullable();
 
-            // Control
             $table->unsignedInteger('position')->default(0);
             $table->boolean('is_active')->default(true);
+
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
+
+            $table->unsignedBigInteger('clicks')->default(0);
+            $table->unsignedBigInteger('views')->default(0);
 
             $table->timestamps();
         });

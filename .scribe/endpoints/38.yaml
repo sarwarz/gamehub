@@ -1,0 +1,219 @@
+name: Newsletter
+description: |-
+
+  APIs for newsletter subscription management.
+  Subscribe and unsubscribe endpoints are public (no auth required).
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/subscribe
+    metadata:
+      custom: []
+      groupName: Newsletter
+      groupDescription: |-
+
+        APIs for newsletter subscription management.
+        Subscribe and unsubscribe endpoints are public (no auth required).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Subscribe to newsletter'
+      description: |-
+        Add an email address to the newsletter mailing list.
+        If the email was previously unsubscribed, it will be reactivated.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Email address to subscribe.'
+        required: true
+        example: user@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      name:
+        custom: []
+        name: name
+        description: 'optional Subscriber name.'
+        required: false
+        example: 'John Doe'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      captcha_token:
+        custom: []
+        name: captcha_token
+        description: 'optional CAPTCHA token for reCAPTCHA v3 or Cloudflare Turnstile (required when CAPTCHA is enabled).'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: user@example.com
+      name: 'John Doe'
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"You are already subscribed."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Welcome back! Your subscription has been reactivated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 201
+        content: '{"status":true,"message":"Subscribed successfully.","data":{"id":1,"email":"user@example.com","status":"active"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/unsubscribe
+    metadata:
+      custom: []
+      groupName: Newsletter
+      groupDescription: |-
+
+        APIs for newsletter subscription management.
+        Subscribe and unsubscribe endpoints are public (no auth required).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Unsubscribe from newsletter'
+      description: |-
+        Remove an email address from the newsletter mailing list.
+        The record is kept but marked as unsubscribed.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Email address to unsubscribe.'
+        required: true
+        example: user@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: user@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"You have been unsubscribed successfully."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"Email not found in our subscriber list."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/subscribe/check
+    metadata:
+      custom: []
+      groupName: Newsletter
+      groupDescription: |-
+
+        APIs for newsletter subscription management.
+        Subscribe and unsubscribe endpoints are public (no auth required).
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Check subscription status'
+      description: 'Check if an email address is subscribed to the newsletter.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Email to check.'
+        required: true
+        example: user@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      email: user@example.com
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Must be a valid email address.'
+        required: true
+        example: qkunze@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: qkunze@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Checked","data":{"subscribed":true,"email":"user@example.com"}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

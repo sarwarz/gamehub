@@ -3,7 +3,167 @@
 name: Authentication
 description: |-
 
-  APIs for user authentication using Laravel Sanctum.
+  Complete authentication system using **Laravel Sanctum** Bearer tokens.
+  Covers registration, email verification, login, password management,
+  and account deletion.
+
+  ## Complete Auth Flow
+
+  ```
+  ┌──────────────────────────────────────────────────────────────────┐
+  │                    REGISTRATION & VERIFICATION                   │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  1. POST /auth/register                                          │
+  │     body: { name, email, password, password_confirmation }        │
+  │     ← { token, user: { email_verified: false } }                │
+  │                                                                  │
+  │  2. User receives verification email with a signed link           │
+  │     (if require_email_verification is enabled in admin settings)  │
+  │                                                                  │
+  │  3. GET /auth/verify-email/{id}/{hash}                           │
+  │     ← { message: "Email verified successfully." }                │
+  │                                                                  │
+  │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+  │     ← Resends the verification email if not yet verified         │
+  │                                                                  │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                          LOGIN                                   │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  5. POST /auth/login                                             │
+  │     body: { email, password }                                     │
+  │     ← { token, user: { id, name, email, email_verified } }      │
+  │                                                                  │
+  │  6. Store the token → use in Authorization header for all         │
+  │     authenticated requests                                       │
+  │                                                                  │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                    PASSWORD RECOVERY                              │
+  ├──────────────────────────────────────────────────────────────────┤
+  │                                                                  │
+  │  7. POST /auth/forgot-password                                   │
+  │     body: { email }                                               │
+  │     ← Sends password reset email with token                      │
+  │                                                                  │
+  │  8. POST /auth/reset-password                                    │
+  │     body: { email, token, password, password_confirmation }       │
+  │     ← Password updated, all tokens revoked                      │
+  │                                                                  │
+  └──────────────────────────────────────────────────────────────────┘
+  ```
+
+  ## Next.js Integration Example
+
+  ```javascript
+  // ─── Registration ───
+  const { token, user } = await api.post('/auth/register', {
+    name: 'John Doe',
+    email: 'john@example.com',
+    password: 'SecurePass123!',
+    password_confirmation: 'SecurePass123!',
+    captcha_token: captchaToken,  // if CAPTCHA enabled
+  });
+  api.setToken(token);
+  // → Show "Check your email for verification link"
+
+  // ─── Login ───
+  const { token, user } = await api.post('/auth/login', {
+    email: 'john@example.com',
+    password: 'SecurePass123!',
+    captcha_token: captchaToken,
+  });
+  api.setToken(token);
+  if (!user.email_verified) {
+    // → Redirect to "verify your email" page
+  }
+
+  // ─── Resend Verification ───
+  await api.post('/auth/send-verification');
+
+  // ─── Forgot Password ───
+  await api.post('/auth/forgot-password', {
+    email: 'john@example.com',
+    captcha_token: captchaToken,
+  });
+
+  // ─── Reset Password (from email link) ───
+  await api.post('/auth/reset-password', {
+    email: 'john@example.com',
+    token: tokenFromEmailLink,
+    password: 'NewSecure456!',
+    password_confirmation: 'NewSecure456!',
+  });
+  ```
+
+  ## CAPTCHA Protection
+
+  When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+  these endpoints require a `captcha_token` field:
+  - `POST /auth/register`
+  - `POST /auth/login`
+  - `POST /auth/forgot-password`
+
+  Check `captcha.provider` to determine which widget to render:
+  - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+  - `"turnstile"` → Cloudflare Turnstile widget
+  - `"none"` → Don't send `captcha_token`
+
+  ## Login Throttling
+
+  Login attempts are rate-limited per email+IP combination.
+  Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+  When locked out, the response is `429` with a `Retry-After` header.
+
+  ## Password Requirements
+
+  Password rules are configurable by admin via Settings → Security:
+  - Minimum length (default: 8)
+  - Require uppercase letter (optional)
+  - Require number (optional)
+  - Require special character (optional)
+
+  When validation fails, the error response includes specific messages
+  explaining which rules were not met.
+
+  ## Token Management
+
+  | Action | What happens to tokens |
+  |--------|----------------------|
+  | Register | New token created |
+  | Login | New token created (old tokens remain valid) |
+  | Logout | Current token revoked |
+  | Change password | All tokens revoked except current |
+  | Reset password | All tokens revoked |
+  | Delete account | All tokens revoked, account deleted |
+
+  ## Email Verification Deep Link
+
+  The verification email contains a link like:
+  ```
+  https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+  ```
+
+  **For SPA/Next.js apps**: Configure your backend to redirect the verification
+  URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+  The API endpoint verifies the hash and marks the email as verified.
+
+  ## Admin-Controlled Settings
+
+  These auth behaviors are configurable via the admin panel:
+
+  | Setting | Effect |
+  |---------|--------|
+  | `registration_enabled` | `false` → register returns `403` |
+  | `require_email_verification` | `false` → no verification email sent |
+  | `welcome_email_enabled` | `true` → sends welcome email on register |
+  | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+  | `max_login_attempts` | Attempts before lockout (default: 5) |
+  | `lockout_duration_minutes` | Lockout duration (default: 15) |
+  | `password_min_length` | Minimum password length (default: 8) |
+  | `password_require_uppercase` | Require uppercase letter |
+  | `password_require_number` | Require digit |
+  | `password_require_symbol` | Require special character |
 endpoints:
   -
     custom: []
@@ -15,15 +175,176 @@ endpoints:
       groupName: Authentication
       groupDescription: |-
 
-        APIs for user authentication using Laravel Sanctum.
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
       subgroup: ''
       subgroupDescription: ''
-      title: 'Register user'
-      description: 'Create a new user account.'
-      authenticated: true
+      title: Register
+      description: |-
+        Create a new user account and receive an API token.
+        A verification email will be sent to confirm the email address.
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -45,7 +366,7 @@ endpoints:
       email:
         custom: []
         name: email
-        description: 'Email address.'
+        description: 'Email address (must be unique).'
         required: true
         example: john@example.com
         type: string
@@ -56,9 +377,31 @@ endpoints:
       password:
         custom: []
         name: password
-        description: 'Password (min 8 chars).'
+        description: 'Password (min 8 characters).'
         required: true
-        example: 'O[2UZ5ij-e/dl4m{o,'
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match password.'
+        required: true
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      captcha_token:
+        custom: []
+        name: captcha_token
+        description: 'optional CAPTCHA token for reCAPTCHA v3 or Cloudflare Turnstile (required when CAPTCHA is enabled).'
+        required: false
+        example: null
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -67,24 +410,24 @@ endpoints:
     cleanBodyParameters:
       name: 'John Doe'
       email: john@example.com
-      password: 'O[2UZ5ij-e/dl4m{o,'
+      password: password123
+      password_confirmation: password123
     fileParameters: []
     responses:
       -
         custom: []
         status: 201
-        content: |-
-          {
-           "status": true,
-           "message": "Registration successful"
-          }
+        content: '{"status":true,"message":"Registration successful. Please verify your email.","data":{"token":"1|abc123...","user":{"id":1,"name":"John Doe","email":"john@example.com","email_verified":false}}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"The email has already been taken."}'
         headers: []
         description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
+    auth: []
     controller: null
     method: null
     route: null
@@ -98,15 +441,176 @@ endpoints:
       groupName: Authentication
       groupDescription: |-
 
-        APIs for user authentication using Laravel Sanctum.
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
       subgroup: ''
       subgroupDescription: ''
-      title: 'Login user'
-      description: 'Authenticate user and return API token.'
-      authenticated: true
+      title: Login
+      description: |-
+        Authenticate with email and password to receive an API token.
+        Disabled accounts will receive a 403 error.
+      authenticated: false
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -117,7 +621,7 @@ endpoints:
       email:
         custom: []
         name: email
-        description: Email.
+        description: 'Email address.'
         required: true
         example: john@example.com
         type: string
@@ -130,7 +634,18 @@ endpoints:
         name: password
         description: Password.
         required: true
-        example: 'O[2UZ5ij-e/dl4m{o,'
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      captcha_token:
+        custom: []
+        name: captcha_token
+        description: 'optional CAPTCHA token for reCAPTCHA v3 or Cloudflare Turnstile (required when CAPTCHA is enabled).'
+        required: false
+        example: null
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -138,24 +653,751 @@ endpoints:
         deprecated: false
     cleanBodyParameters:
       email: john@example.com
-      password: 'O[2UZ5ij-e/dl4m{o,'
+      password: password123
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: |-
-          {
-           "status": true,
-           "token": "..."
-          }
+        content: '{"status":true,"message":"Login successful","data":{"token":"1|abc123...","user":{"id":1,"name":"John Doe","email":"john@example.com","email_verified":true}}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Invalid credentials"}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"status":false,"message":"Account is disabled"}'
         headers: []
         description: ''
     responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/forgot-password
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Forgot password'
+      description: |-
+        Send a password reset link to the given email address.
+        The link will expire after 60 minutes.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      email:
+        custom: []
+        name: email
+        description: 'Email address.'
+        required: true
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      captcha_token:
+        custom: []
+        name: captcha_token
+        description: 'optional CAPTCHA token for reCAPTCHA v3 or Cloudflare Turnstile (required when CAPTCHA is enabled).'
+        required: false
+        example: null
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      email: john@example.com
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Password reset link sent to your email.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"We can''t find a user with that email address."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/reset-password
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Reset password'
+      description: |-
+        Reset the user's password using the token from the email link.
+        All existing API tokens will be revoked after reset.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      token:
+        custom: []
+        name: token
+        description: 'Reset token from the email.'
+        required: true
+        example: abc123def456...
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'Email address.'
+        required: true
+        example: john@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'New password (min 8 characters).'
+        required: true
+        example: newpassword123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match password.'
+        required: true
+        example: newpassword123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      token: abc123def456...
+      email: john@example.com
+      password: newpassword123
+      password_confirmation: newpassword123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Password has been reset successfully.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"This password reset token is invalid."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/auth/verify-email/{id}/{hash}'
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Verify email'
+      description: |-
+        Verify the user's email address using the signed URL from the
+        verification email. The `id` and `hash` are extracted from the link.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      id:
+        custom: []
+        name: id
+        description: 'The user ID.'
+        required: true
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      hash:
+        custom: []
+        name: hash
+        description: 'SHA1 hash of the email.'
+        required: true
+        example: abc123def456
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      id: 1
+      hash: abc123def456
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Email verified successfully.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Email already verified.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 400
+        content: '{"status":false,"message":"Invalid or expired verification link."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
     controller: null
     method: null
     route: null
@@ -169,15 +1411,177 @@ endpoints:
       groupName: Authentication
       groupDescription: |-
 
-        APIs for user authentication using Laravel Sanctum.
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
       subgroup: ''
       subgroupDescription: ''
-      title: 'Logout user'
-      description: 'Revoke current access token.'
+      title: Logout
+      description: |-
+        Revoke the current API token. The token used in the request
+        will no longer be valid for authentication.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -187,12 +1591,705 @@ endpoints:
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
-    responses: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Logged out successfully","data":null}'
+        headers: []
+        description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/change-password
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Change password'
+      description: |-
+        Update the authenticated user's password. Requires the current
+        password for verification. All other tokens are revoked after change.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      current_password:
+        custom: []
+        name: current_password
+        description: 'Current password.'
+        required: true
+        example: oldpassword123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password:
+        custom: []
+        name: password
+        description: 'New password (min 8 characters).'
+        required: true
+        example: newpassword456
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      password_confirmation:
+        custom: []
+        name: password_confirmation
+        description: 'Must match new password.'
+        required: true
+        example: newpassword456
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      current_password: oldpassword123
+      password: newpassword456
+      password_confirmation: newpassword456
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Password changed successfully.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"Current password is incorrect."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/delete-account
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Delete account'
+      description: |-
+        Permanently delete the authenticated user's account and all associated data.
+        Requires password confirmation. This action cannot be undone.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      password:
+        custom: []
+        name: password
+        description: 'Password for confirmation.'
+        required: true
+        example: password123
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      password: password123
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Account deleted successfully.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"Password is incorrect."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"Cannot delete account with active seller store. Please close your store first."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/auth/send-verification
+    metadata:
+      custom: []
+      groupName: Authentication
+      groupDescription: |-
+
+        Complete authentication system using **Laravel Sanctum** Bearer tokens.
+        Covers registration, email verification, login, password management,
+        and account deletion.
+
+        ## Complete Auth Flow
+
+        ```
+        ┌──────────────────────────────────────────────────────────────────┐
+        │                    REGISTRATION & VERIFICATION                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  1. POST /auth/register                                          │
+        │     body: { name, email, password, password_confirmation }        │
+        │     ← { token, user: { email_verified: false } }                │
+        │                                                                  │
+        │  2. User receives verification email with a signed link           │
+        │     (if require_email_verification is enabled in admin settings)  │
+        │                                                                  │
+        │  3. GET /auth/verify-email/{id}/{hash}                           │
+        │     ← { message: "Email verified successfully." }                │
+        │                                                                  │
+        │  4. (Optional) POST /auth/send-verification  [authenticated]     │
+        │     ← Resends the verification email if not yet verified         │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                          LOGIN                                   │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  5. POST /auth/login                                             │
+        │     body: { email, password }                                     │
+        │     ← { token, user: { id, name, email, email_verified } }      │
+        │                                                                  │
+        │  6. Store the token → use in Authorization header for all         │
+        │     authenticated requests                                       │
+        │                                                                  │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                    PASSWORD RECOVERY                              │
+        ├──────────────────────────────────────────────────────────────────┤
+        │                                                                  │
+        │  7. POST /auth/forgot-password                                   │
+        │     body: { email }                                               │
+        │     ← Sends password reset email with token                      │
+        │                                                                  │
+        │  8. POST /auth/reset-password                                    │
+        │     body: { email, token, password, password_confirmation }       │
+        │     ← Password updated, all tokens revoked                      │
+        │                                                                  │
+        └──────────────────────────────────────────────────────────────────┘
+        ```
+
+        ## Next.js Integration Example
+
+        ```javascript
+        // ─── Registration ───
+        const { token, user } = await api.post('/auth/register', {
+          name: 'John Doe',
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          password_confirmation: 'SecurePass123!',
+          captcha_token: captchaToken,  // if CAPTCHA enabled
+        });
+        api.setToken(token);
+        // → Show "Check your email for verification link"
+
+        // ─── Login ───
+        const { token, user } = await api.post('/auth/login', {
+          email: 'john@example.com',
+          password: 'SecurePass123!',
+          captcha_token: captchaToken,
+        });
+        api.setToken(token);
+        if (!user.email_verified) {
+          // → Redirect to "verify your email" page
+        }
+
+        // ─── Resend Verification ───
+        await api.post('/auth/send-verification');
+
+        // ─── Forgot Password ───
+        await api.post('/auth/forgot-password', {
+          email: 'john@example.com',
+          captcha_token: captchaToken,
+        });
+
+        // ─── Reset Password (from email link) ───
+        await api.post('/auth/reset-password', {
+          email: 'john@example.com',
+          token: tokenFromEmailLink,
+          password: 'NewSecure456!',
+          password_confirmation: 'NewSecure456!',
+        });
+        ```
+
+        ## CAPTCHA Protection
+
+        When CAPTCHA is enabled (check `GET /settings/bootstrap` → `captcha`),
+        these endpoints require a `captcha_token` field:
+        - `POST /auth/register`
+        - `POST /auth/login`
+        - `POST /auth/forgot-password`
+
+        Check `captcha.provider` to determine which widget to render:
+        - `"recaptcha"` → Google reCAPTCHA v3 (use `grecaptcha.execute()`)
+        - `"turnstile"` → Cloudflare Turnstile widget
+        - `"none"` → Don't send `captcha_token`
+
+        ## Login Throttling
+
+        Login attempts are rate-limited per email+IP combination.
+        Default: **5 attempts** then locked for **15 minutes** (configurable by admin).
+        When locked out, the response is `429` with a `Retry-After` header.
+
+        ## Password Requirements
+
+        Password rules are configurable by admin via Settings → Security:
+        - Minimum length (default: 8)
+        - Require uppercase letter (optional)
+        - Require number (optional)
+        - Require special character (optional)
+
+        When validation fails, the error response includes specific messages
+        explaining which rules were not met.
+
+        ## Token Management
+
+        | Action | What happens to tokens |
+        |--------|----------------------|
+        | Register | New token created |
+        | Login | New token created (old tokens remain valid) |
+        | Logout | Current token revoked |
+        | Change password | All tokens revoked except current |
+        | Reset password | All tokens revoked |
+        | Delete account | All tokens revoked, account deleted |
+
+        ## Email Verification Deep Link
+
+        The verification email contains a link like:
+        ```
+        https://your-domain.com/api/v1/auth/verify-email/{id}/{hash}?signature=...
+        ```
+
+        **For SPA/Next.js apps**: Configure your backend to redirect the verification
+        URL to your frontend (e.g., `https://app.example.com/verify?status=success`).
+        The API endpoint verifies the hash and marks the email as verified.
+
+        ## Admin-Controlled Settings
+
+        These auth behaviors are configurable via the admin panel:
+
+        | Setting | Effect |
+        |---------|--------|
+        | `registration_enabled` | `false` → register returns `403` |
+        | `require_email_verification` | `false` → no verification email sent |
+        | `welcome_email_enabled` | `true` → sends welcome email on register |
+        | `auto_assign_role` | Role assigned on registration (default: `customer`) |
+        | `max_login_attempts` | Attempts before lockout (default: 5) |
+        | `lockout_duration_minutes` | Lockout duration (default: 15) |
+        | `password_min_length` | Minimum password length (default: 8) |
+        | `password_require_uppercase` | Require uppercase letter |
+        | `password_require_number` | Require digit |
+        | `password_require_symbol` | Require special character |
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Send verification email'
+      description: |-
+        Resend the email verification link. If the user's email is already
+        verified, a message will indicate so.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Verification link sent to your email.","data":null}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Email already verified.","data":null}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

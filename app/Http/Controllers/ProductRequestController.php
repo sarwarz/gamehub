@@ -159,15 +159,14 @@ class ProductRequestController extends Controller
                 })
 
                 ->addColumn('actions', function ($row) {
-                    return '
-                        <a href="'.route('product-requests.edit', $row->id).'"
-                        class="btn btn-sm btn-warning">Edit</a>
-
-                        <button class="btn btn-sm btn-danger btn-delete"
-                                data-url="'.route('product-requests.destroy', $row->id).'">
-                            Delete
+                    return '<div class="d-flex align-items-center justify-content-center gap-1">
+                        <a href="'.route('product-requests.edit', $row->id).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                            <i class="ti tabler-pencil ti-xs"></i>
+                        </a>
+                        <button type="button" class="btn btn-icon btn-sm btn-label-danger btn-delete" data-url="'.route('product-requests.destroy', $row->id).'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
                         </button>
-                    ';
+                    </div>';
                 })
 
                 ->rawColumns([
@@ -186,7 +185,16 @@ class ProductRequestController extends Controller
         | Normal Page Load
         |--------------------------------------------------------------------------
         */
+        $stats = [
+            'total'     => ProductRequest::count(),
+            'pending'   => ProductRequest::where('status', 'pending')->count(),
+            'approved'  => ProductRequest::where('status', 'approved')->count(),
+            'rejected'  => ProductRequest::where('status', 'rejected')->count(),
+            'completed' => ProductRequest::where('status', 'completed')->count(),
+        ];
+
         return view('content.product_requests.index', [
+            'stats'      => $stats,
             'categories' => ProductCategory::all(),
             'platforms'  => ProductPlatform::all(),
             'types'      => ProductType::all(),
@@ -217,6 +225,7 @@ class ProductRequestController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'title'        => 'required|string|max:255',
             'description'  => 'nullable|string',
@@ -263,6 +272,7 @@ class ProductRequestController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $productRequest = ProductRequest::findOrFail($id);
 
         $validated = $request->validate([
@@ -272,7 +282,22 @@ class ProductRequestController extends Controller
             'status'       => 'required|in:pending,approved,rejected,completed',
         ]);
 
+        $oldStatus = $productRequest->status;
+
         $productRequest->update($validated);
+
+        if ($oldStatus !== $productRequest->status && in_array($productRequest->status, ['approved', 'rejected', 'completed'])) {
+            try {
+                if (\App\Models\Setting::get('notifications', 'product_request_status', true)) {
+                    $productRequest->load('user');
+                    if ($productRequest->user) {
+                        $productRequest->user->notify(new \App\Notifications\ProductRequestStatusNotification($productRequest, $productRequest->status));
+                    }
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Product request notification failed: ' . $e->getMessage());
+            }
+        }
 
         return redirect()
             ->route('product-requests.index')
@@ -284,6 +309,7 @@ class ProductRequestController extends Controller
      */
     public function destroy($id)
     {
+
         ProductRequest::findOrFail($id)->delete();
 
         return response()->json([
@@ -294,8 +320,25 @@ class ProductRequestController extends Controller
     // BULK STATUS
     public function bulkStatus(Request $request)
     {
-        ProductRequest::whereIn('id', $request->ids)
+        $requests = \App\Models\ProductRequest::with('user')
+            ->whereIn('id', $request->ids)
+            ->where('status', '!=', $request->status)
+            ->get();
+
+        \App\Models\ProductRequest::whereIn('id', $request->ids)
             ->update(['status' => $request->status]);
+
+        if (in_array($request->status, ['approved', 'rejected', 'completed']) && \App\Models\Setting::get('notifications', 'product_request_status', true)) {
+            foreach ($requests as $req) {
+                try {
+                    if ($req->user) {
+                        $req->user->notify(new \App\Notifications\ProductRequestStatusNotification($req, $request->status));
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Product request bulk notification failed: ' . $e->getMessage());
+                }
+            }
+        }
 
         return response()->json(['success' => true]);
     }
@@ -303,6 +346,7 @@ class ProductRequestController extends Controller
     // BULK DELETE
     public function bulkDelete(Request $request)
     {
+
         ProductRequest::whereIn('id', $request->ids)->delete();
         return response()->json(['success' => true]);
     }

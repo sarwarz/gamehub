@@ -6,7 +6,6 @@ use App\Http\Controllers\BlogController;
 use App\Http\Controllers\PageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\MediaController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\CouponController;
 use App\Http\Controllers\SellerController;
@@ -17,8 +16,11 @@ use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\AiContentController;
 use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardWidgetController;
+use App\Http\Controllers\HeaderNotificationController;
 use App\Http\Controllers\OrderNoteController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\BlogCommentController;
@@ -39,6 +41,25 @@ use App\Http\Controllers\ProductLanguageController;
 use App\Http\Controllers\ProductPlatformController;
 use App\Http\Controllers\ProductDeveloperController;
 use App\Http\Controllers\ProductPublisherController;
+use App\Http\Controllers\SubscriberController;
+use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\CannedResponseController;
+use App\Http\Controllers\TicketDepartmentController;
+use App\Http\Controllers\TicketNotificationSettingsController;
+use App\Http\Controllers\OrderNotificationSettingsController;
+use App\Http\Controllers\WebsiteController;
+use App\Http\Controllers\MenuController;
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\StaticPageController;
+use App\Http\Controllers\RefundController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\AffiliateController;
+use App\Http\Controllers\AffiliateCommissionController;
+use App\Http\Controllers\AffiliateWithdrawalController;
+use App\Http\Controllers\AffiliateTierController;
 
 
 
@@ -58,9 +79,10 @@ Route::get('/', function () {
 
 Route::get('/system/optimize', [SystemController::class, 'optimize']);
 
-// Super Admin login page (separate from standard user login)
-Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])
-    ->name('superadmin.login');
+if (app()->isLocal()) {
+    Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])
+        ->name('superadmin.login');
+}
 
 
 
@@ -76,10 +98,30 @@ Route::get('/superadmin-login', [ProfileController::class, 'superAdminLogin'])
 |--------------------------------------------------------------------------
 */
 
-Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'verified', 'role:internal', 'restrict.delete'])->group(function () {
 
     Route::get('/dashboard', [DashboardController::class, 'index'])
             ->name('dashboard');
+
+    Route::prefix('dashboard/widgets')->name('dashboard.widgets.')->group(function () {
+        Route::get('/statistics', [DashboardWidgetController::class, 'statistics'])->name('statistics');
+        Route::get('/view-sales', [DashboardWidgetController::class, 'viewSales'])->name('view-sales');
+        Route::get('/profit', [DashboardWidgetController::class, 'profit'])->name('profit');
+        Route::get('/expenses', [DashboardWidgetController::class, 'expenses'])->name('expenses');
+        Route::get('/revenue-report', [DashboardWidgetController::class, 'revenueReport'])->name('revenue-report');
+        Route::get('/earning-report', [DashboardWidgetController::class, 'earningReport'])->name('earning-report');
+        Route::get('/popular-products', [DashboardWidgetController::class, 'popularProducts'])->name('popular-products');
+        Route::get('/recent-orders', [DashboardWidgetController::class, 'recentOrders'])->name('recent-orders');
+        Route::get('/recent-transactions', [DashboardWidgetController::class, 'recentTransactions'])->name('recent-transactions');
+        Route::get('/generated-leads', [DashboardWidgetController::class, 'generatedLeads'])->name('generated-leads');
+        Route::get('/invoices', [DashboardWidgetController::class, 'invoices'])->name('invoices');
+    });
+
+    Route::prefix('header/notifications')->name('header.notifications')->group(function () {
+        Route::get('/', [HeaderNotificationController::class, 'index']);
+        Route::post('/{id}/read', [HeaderNotificationController::class, 'markAsRead'])->name('.read');
+        Route::post('/read-all', [HeaderNotificationController::class, 'markAllAsRead'])->name('.read-all');
+    });
 
 });
 
@@ -91,7 +133,7 @@ Route::middleware(['auth', 'verified', 'role:admin'])->group(function () {
 | All routes inside this group:
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function () {
+Route::middleware(['auth','role:internal','restrict.delete'])->prefix('dashboard')->group(function () {
 
 
     /*
@@ -105,21 +147,26 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
     |--------------------------------------------------------------------------
     */
 
-    Route::middleware('permission:users')->group(function () {
+    Route::get('profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
 
-        // Show profile edit form
-        Route::get('profile', [ProfileController::class, 'edit'])
-            ->name('profile.edit');
+    Route::patch('profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
 
-        // Update profile information
-        Route::patch('profile', [ProfileController::class, 'update'])
-            ->name('profile.update');
+    Route::put('profile/password', [ProfileController::class, 'updatePassword'])
+        ->name('profile.password');
 
-        // Delete user profile/account
-        Route::delete('profile', [ProfileController::class, 'destroy'])
-            ->name('profile.destroy');
+    Route::delete('profile', [ProfileController::class, 'destroy'])
+        ->name('profile.destroy');
 
-    });
+    Route::post('profile/address', [ProfileController::class, 'storeAddress'])
+        ->name('profile.address.store');
+    Route::put('profile/address/{address}', [ProfileController::class, 'updateAddress'])
+        ->name('profile.address.update');
+    Route::delete('profile/address/{address}', [ProfileController::class, 'destroyAddress'])
+        ->name('profile.address.destroy');
+    Route::patch('profile/address/{address}/default', [ProfileController::class, 'setDefaultAddress'])
+        ->name('profile.address.default');
 
 
     /*
@@ -411,21 +458,12 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             // Reject a product review
             Route::post('{review}/reject', 'reject')->name('reject');
 
-            // Delete a product review
             Route::delete('{review}', 'destroy')->name('destroy');
 
+            Route::post('bulk-status', 'bulkStatus')->name('bulk-status');
+            Route::post('bulk-delete', 'bulkDelete')->name('bulk-delete');
+
         });
-
-        // ======================
-        // BULK ACTIONS
-        // ======================
-        Route::post('product-reviews/bulk-status', 
-            [ProductReviewController::class, 'bulkStatus']
-        )->name('product-reviews.bulk-status');
-
-        Route::post('product-reviews/bulk-delete', 
-            [ProductReviewController::class, 'bulkDelete']
-        )->name('product-reviews.bulk-delete');
     
 
 
@@ -509,21 +547,19 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
     Route::middleware('permission:sellers')->group(function () {
 
-        // Seller CRUD (except show)
-        Route::resource('sellers', SellerController::class)
-            ->except(['show']);
-
-        // View pending sellers
         Route::get('sellers/pending', [SellerController::class, 'pending'])
             ->name('sellers.pending');
 
-        // View suspended sellers
         Route::get('sellers/suspended', [SellerController::class, 'suspended'])
             ->name('sellers.suspended');
 
-        // Bulk delete multiple sellers
-        Route::delete('sellers/bulk-delete', [SellerController::class, 'bulkDelete'])
+        Route::post('sellers/bulk-delete', [SellerController::class, 'bulkDelete'])
             ->name('sellers.bulk-delete');
+
+        Route::post('sellers/bulk-status', [SellerController::class, 'bulkStatus'])
+            ->name('sellers.bulk-status');
+
+        Route::resource('sellers', SellerController::class);
 
     });
 
@@ -538,7 +574,8 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
     */
 
     Route::post('seller-offers/{offer}/toggle-status', [SellerOfferController::class, 'toggleStatus'])
-        ->name('seller-offers.toggle-status');
+        ->name('seller-offers.toggle-status')
+        ->middleware('permission:seller-offers');
 
 
 
@@ -557,13 +594,20 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         ->middleware('permission:sellers')
         ->group(function () {
 
-            // View all seller withdraw requests
             Route::get('/', [SellerWithdrawController::class, 'index'])
                 ->name('index');
 
-            // View pending seller withdraw requests
             Route::get('pending', [SellerWithdrawController::class, 'pending'])
                 ->name('pending');
+
+            Route::get('{withdraw}', [SellerWithdrawController::class, 'show'])
+                ->name('show');
+
+            Route::post('{withdraw}/approve', [SellerWithdrawController::class, 'approve'])
+                ->name('approve');
+
+            Route::post('{withdraw}/reject', [SellerWithdrawController::class, 'reject'])
+                ->name('reject');
 
         });
 
@@ -619,48 +663,18 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             Route::put('{offer}', [SellerOfferController::class, 'update'])
                 ->name('update');
 
-            // Delete a seller offer
             Route::delete('{offer}', [SellerOfferController::class, 'destroy'])
                 ->name('destroy');
 
+            Route::post('/bulk-status', [SellerOfferController::class, 'bulkStatus'])
+                ->name('bulk-status');
+
+            Route::post('/bulk-delete', [SellerOfferController::class, 'bulkDelete'])
+                ->name('bulk-delete');
 
         });
 
-        /* ===============================
-         | BULK ACTIONS
-         =============================== */
-        Route::post('seller-offers/bulk-status',
-            [SellerOfferController::class, 'bulkStatus']
-        )->name('seller-offers.bulk-status');
 
-        Route::post('seller-offers/bulk-delete',
-            [SellerOfferController::class, 'bulkDelete']
-        )->name('seller-offers.bulk-delete');
-
-
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Manage Media
-    |--------------------------------------------------------------------------
-    | These routes manage discount coupons including
-    | creation, editing, updating, and deletion.
-    | Access is restricted by the `coupons` permission.
-    |--------------------------------------------------------------------------
-    */
-    Route::prefix('media')->name('media.')->group(function () {
-
-        Route::get('/', [MediaController::class, 'index'])->name('index');
-        Route::get('/create', [MediaController::class, 'create'])->name('create');
-        Route::post('/', [MediaController::class, 'store'])->name('store');
-
-        Route::get('/{media}', [MediaController::class, 'show'])->name('show');
-        Route::delete('/{media}', [MediaController::class, 'destroy'])->name('destroy');
-        
-
-    });
-    
 
 
     /*
@@ -678,6 +692,9 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Coupon CRUD (except show)
         Route::resource('coupons', CouponController::class)
             ->except(['show']);
+
+        Route::post('coupons/bulk-delete', [CouponController::class, 'bulkDelete'])
+            ->name('coupons.bulk-delete');
 
     });
 
@@ -697,6 +714,10 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Tax CRUD (except show)
         Route::resource('taxes', TaxController::class)
             ->except(['show']);
+
+        // Bulk delete taxes
+        Route::post('taxes/bulk-delete', [TaxController::class, 'bulkDelete'])
+            ->name('taxes.bulk-delete');
 
     });
 
@@ -748,8 +769,7 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Currency CRUD
         Route::resource('currencies', CurrencyController::class);
 
-        // Bulk delete currencies
-        Route::delete('currencies/bulk-delete', [CurrencyController::class, 'bulkDelete'])
+        Route::post('currencies/bulk-delete', [CurrencyController::class, 'bulkDelete'])
             ->name('currencies.bulk-delete');
 
         // Update currency exchange rates
@@ -840,16 +860,26 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         ->name('orders.bulk-status');
 
         // Bulk delete orders
-        Route::delete('orders/bulk-delete', [OrderController::class, 'bulkDelete'])
+        Route::post('orders/bulk-delete', [OrderController::class, 'bulkDelete'])
             ->name('orders.bulk-delete');
 
         Route::put('/orders/{order}/billing', [OrderController::class, 'updateBilling'])
         ->name('orders.billing.update');
 
         Route::post('/orders/{order}/notes', [OrderNoteController::class, 'store'])
-        ->name('orders.notes.store');
+            ->name('orders.notes.store');
 
+        Route::delete('/orders/notes/{note}', [OrderNoteController::class, 'destroy'])
+            ->name('orders.notes.destroy');
 
+        Route::post('/orders/deliveries/{delivery}/retry', [OrderController::class, 'retryDelivery'])
+            ->name('admin.deliveries.retry');
+
+        Route::post('/orders/{order}/resend-notification', [OrderController::class, 'resendNotification'])
+            ->name('orders.resend-notification');
+
+        Route::get('/order-notification-settings', fn() => redirect()->route('settings.notifications'))
+            ->name('order-notification-settings.index');
 
     });
 
@@ -865,15 +895,22 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
     */
 
     Route::middleware('permission:sliders')->group(function () {
+        Route::resource('sliders', SliderController::class)->except(['show']);
+        Route::post('sliders/{slider}/toggle', [SliderController::class, 'toggleStatus'])->name('sliders.toggle');
+        Route::post('sliders/reorder', [SliderController::class, 'reorder'])->name('sliders.reorder');
+        Route::post('sliders/{slider}/duplicate', [SliderController::class, 'duplicate'])->name('sliders.duplicate');
+        Route::delete('sliders/bulk-delete', [SliderController::class, 'bulkDelete'])->name('sliders.bulk-delete');
+    });
 
-        // Slider CRUD (except show)
-        Route::resource('sliders', SliderController::class)
-            ->except(['show']);
-
-        // Bulk delete sliders
-        Route::delete('sliders/bulk-delete', [SliderController::class, 'bulkDelete'])
-            ->name('sliders.bulk-delete');
-
+    /*
+    |--------------------------------------------------------------------------
+    | Website Management Routes (Home Page, Shop Page, Footer)
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('website')->name('website.')->group(function () {
+        Route::get('/homepage', fn() => redirect()->route('settings.website'))->name('homepage');
+        Route::get('/shoppage', fn() => redirect()->route('settings.website'))->name('shoppage');
+        Route::get('/footer', fn() => redirect()->route('settings.website'))->name('footer');
     });
 
 
@@ -896,6 +933,22 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         // Bulk delete pages
         Route::delete('pages/bulk-delete', [PageController::class, 'bulkDelete'])
             ->name('pages.bulk-delete');
+
+        // Menus
+        Route::get('menus', [MenuController::class, 'index'])->name('menus.index');
+        Route::post('menus', [MenuController::class, 'store'])->name('menus.store');
+        Route::get('menus/linkable-items', [MenuController::class, 'linkableItems'])->name('menus.linkable-items');
+        Route::get('menus/{menu}/edit', [MenuController::class, 'edit'])->name('menus.edit');
+        Route::put('menus/{menu}', [MenuController::class, 'update'])->name('menus.update');
+        Route::delete('menus/{menu}', [MenuController::class, 'destroy'])->name('menus.destroy');
+
+        // FAQs
+        Route::get('faqs', [FaqController::class, 'index'])->name('faqs.index');
+        Route::put('faqs', [FaqController::class, 'update'])->name('faqs.update');
+
+        // Static Pages (About, Contact, Privacy, Terms)
+        Route::get('static-pages/{page}', [StaticPageController::class, 'edit'])->name('static-pages.edit');
+        Route::put('static-pages/{page}', [StaticPageController::class, 'update'])->name('static-pages.update');
 
     });
 
@@ -947,6 +1000,10 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
                 ->except(['show'])
                 ->parameters(['' => 'blog']);
 
+            // Bulk delete blogs
+            Route::delete('bulk-delete', [BlogController::class, 'bulkDelete'])
+                ->name('bulk-delete');
+
         });
 
 
@@ -974,6 +1031,14 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
             // Delete a blog comment
             Route::delete('{blogComment}', [BlogCommentController::class, 'destroy'])
                 ->name('destroy');
+
+            // Bulk approve blog comments
+            Route::post('bulk-approve', [BlogCommentController::class, 'bulkApprove'])
+                ->name('bulk-approve');
+
+            // Bulk delete blog comments
+            Route::post('bulk-delete', [BlogCommentController::class, 'bulkDelete'])
+                ->name('bulk-delete');
 
         });
 
@@ -1015,11 +1080,8 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
         Route::post('wallet/{user}/debit', [WalletController::class, 'debit'])
             ->name('wallet.debit');
 
-         Route::get('wallet-settings', [WalletSettingController::class, 'edit'])
-        ->name('wallet-settings.edit');
-
-        Route::put('wallet-settings', [WalletSettingController::class, 'update'])
-            ->name('wallet-settings.update');
+         Route::get('wallet-settings', fn() => redirect()->route('settings.wallet'))
+            ->name('wallet-settings.edit');
 
     });
 
@@ -1104,19 +1166,229 @@ Route::middleware(['auth','role:admin'])->prefix('dashboard')->group(function ()
 
 
 
-     Route::middleware('permission:settings')->group(function () {
+     Route::middleware('permission:settings')->prefix('settings')->name('settings.')->group(function () {
 
-        // Global Settings
-        Route::get('/settings', [SettingController::class, 'edit'])
-            ->name('settings.edit');
+        Route::get('/', fn() => redirect()->route('settings.general'));
 
-        Route::put('/settings', [SettingController::class, 'update'])
-            ->name('settings.update');
+        // Platform
+        Route::get('/general', [SettingController::class, 'general'])->name('general');
+        Route::put('/general', [SettingController::class, 'updateGeneral'])->name('general.update');
+        Route::get('/branding', [SettingController::class, 'branding'])->name('branding');
+        Route::put('/branding', [SettingController::class, 'updateBranding'])->name('branding.update');
+        Route::get('/security', [SettingController::class, 'security'])->name('security');
+        Route::put('/security', [SettingController::class, 'updateSecurity'])->name('security.update');
+        Route::get('/registration', [SettingController::class, 'registration'])->name('registration');
+        Route::put('/registration', [SettingController::class, 'updateRegistration'])->name('registration.update');
 
+        // Affiliate
+        Route::get('/affiliate', [SettingController::class, 'affiliate'])->name('affiliate');
+        Route::put('/affiliate', [SettingController::class, 'updateAffiliate'])->name('affiliate.update');
+
+        // Commerce
+        Route::get('/store', [SettingController::class, 'store'])->name('store');
+        Route::put('/store', [SettingController::class, 'updateStore'])->name('store.update');
+        Route::get('/checkout', [SettingController::class, 'checkout'])->name('checkout');
+        Route::put('/checkout', [SettingController::class, 'updateCheckout'])->name('checkout.update');
+        Route::get('/products', [SettingController::class, 'products'])->name('products');
+        Route::put('/products', [SettingController::class, 'updateProducts'])->name('products.update');
+        Route::get('/vendor', [SettingController::class, 'vendor'])->name('vendor');
+        Route::put('/vendor', [SettingController::class, 'updateVendor'])->name('vendor.update');
+        Route::get('/refund-escrow', [SettingController::class, 'refundEscrow'])->name('refund-escrow');
+        Route::put('/refund-escrow', [SettingController::class, 'updateRefundEscrow'])->name('refund-escrow.update');
+        Route::get('/reviews', [SettingController::class, 'reviews'])->name('reviews');
+        Route::put('/reviews', [SettingController::class, 'updateReviews'])->name('reviews.update');
+
+        // Financial
+        Route::get('/wallet', [SettingController::class, 'wallet'])->name('wallet');
+        Route::put('/wallet', [SettingController::class, 'updateWallet'])->name('wallet.update');
+        Route::get('/invoice', [SettingController::class, 'invoice'])->name('invoice');
+        Route::put('/invoice', [SettingController::class, 'updateInvoice'])->name('invoice.update');
+        Route::get('/currency', [SettingController::class, 'currency'])->name('currency');
+        Route::put('/currency', [SettingController::class, 'updateCurrency'])->name('currency.update');
+
+        // Communication
+        Route::get('/email', [SettingController::class, 'email'])->name('email');
+        Route::put('/email', [SettingController::class, 'updateEmail'])->name('email.update');
+        Route::get('/notifications', [SettingController::class, 'notifications'])->name('notifications');
+        Route::put('/notifications/{type}', [SettingController::class, 'updateNotifications'])->name('notifications.update');
+
+        // Content & Marketing
+        Route::get('/seo', [SettingController::class, 'seo'])->name('seo');
+        Route::put('/seo', [SettingController::class, 'updateSeo'])->name('seo.update');
+        Route::get('/social', [SettingController::class, 'social'])->name('social');
+        Route::put('/social', [SettingController::class, 'updateSocial'])->name('social.update');
+        Route::get('/legal', [SettingController::class, 'legal'])->name('legal');
+        Route::put('/legal', [SettingController::class, 'updateLegal'])->name('legal.update');
+        Route::get('/website', [SettingController::class, 'website'])->name('website');
+        Route::put('/website/{section}', [SettingController::class, 'updateWebsite'])->name('website.update');
+
+        // System
+        Route::get('/api-integrations', [SettingController::class, 'apiIntegrations'])->name('api-integrations');
+        Route::put('/api-integrations', [SettingController::class, 'updateApiIntegrations'])->name('api-integrations.update');
+        Route::get('/maintenance', [SettingController::class, 'maintenance'])->name('maintenance');
+        Route::put('/maintenance', [SettingController::class, 'updateMaintenance'])->name('maintenance.update');
+        Route::get('/ai', [SettingController::class, 'ai'])->name('ai');
+        Route::put('/ai', [SettingController::class, 'updateAi'])->name('ai.update');
+
+        Route::post('/ai/generate', [AiContentController::class, 'generate'])->name('ai.generate');
+
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Subscribers
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/subscribers', [SubscriberController::class, 'index'])->name('subscribers.index');
+    Route::post('/subscribers', [SubscriberController::class, 'store'])->name('subscribers.store');
+    Route::put('/subscribers/{subscriber}', [SubscriberController::class, 'update'])->name('subscribers.update');
+    Route::delete('/subscribers/{subscriber}', [SubscriberController::class, 'destroy'])->name('subscribers.destroy');
+    Route::post('/subscribers/bulk-delete', [SubscriberController::class, 'bulkDelete'])->name('subscribers.bulk-delete');
+    Route::get('/subscribers/export', [SubscriberController::class, 'export'])->name('subscribers.export');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contact Messages
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/contact-messages', [ContactMessageController::class, 'index'])->name('contact-messages.index');
+    Route::get('/contact-messages/{contactMessage}', [ContactMessageController::class, 'show'])->name('contact-messages.show');
+    Route::put('/contact-messages/{contactMessage}', [ContactMessageController::class, 'update'])->name('contact-messages.update');
+    Route::delete('/contact-messages/{contactMessage}', [ContactMessageController::class, 'destroy'])->name('contact-messages.destroy');
+    Route::post('/contact-messages/bulk-delete', [ContactMessageController::class, 'bulkDelete'])->name('contact-messages.bulk-delete');
+    Route::post('/contact-messages/bulk-status', [ContactMessageController::class, 'bulkStatus'])->name('contact-messages.bulk-status');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reports & Analytics
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('permission:reports')->prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [ReportsController::class, 'index'])->name('index');
+        Route::get('/sales', [ReportsController::class, 'salesData'])->name('sales');
+        Route::get('/revenue', [ReportsController::class, 'revenueData'])->name('revenue');
+        Route::get('/products', [ReportsController::class, 'productData'])->name('products');
+        Route::get('/customers', [ReportsController::class, 'customerData'])->name('customers');
+        Route::get('/sellers', [ReportsController::class, 'sellerData'])->name('sellers');
+        Route::get('/payments', [ReportsController::class, 'paymentData'])->name('payments');
+        Route::get('/refunds', [ReportsController::class, 'refundData'])->name('refunds');
+        Route::get('/support', [ReportsController::class, 'supportData'])->name('support');
+
+        Route::prefix('export')->name('export.')->group(function () {
+            Route::get('/sales', [ReportExportController::class, 'sales'])->name('sales');
+            Route::get('/revenue', [ReportExportController::class, 'revenue'])->name('revenue');
+            Route::get('/products', [ReportExportController::class, 'products'])->name('products');
+            Route::get('/customers', [ReportExportController::class, 'customers'])->name('customers');
+            Route::get('/sellers', [ReportExportController::class, 'sellers'])->name('sellers');
+            Route::get('/payments', [ReportExportController::class, 'payments'])->name('payments');
+            Route::get('/refunds', [ReportExportController::class, 'refunds'])->name('refunds');
+            Route::get('/support', [ReportExportController::class, 'support'])->name('support');
+            Route::get('/full', [ReportExportController::class, 'full'])->name('full');
+            Route::post('/async/{type}', [ReportExportController::class, 'queueExport'])->name('async');
+            Route::get('/download/{filename}', [ReportExportController::class, 'downloadExport'])->name('download');
+        });
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Refund Management
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('permission:orders')->prefix('refunds')->name('refunds.')->group(function () {
+        Route::get('/', [RefundController::class, 'index'])->name('index');
+        Route::get('/{id}', [RefundController::class, 'show'])->name('show');
+        Route::post('/{id}/approve', [RefundController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [RefundController::class, 'reject'])->name('reject');
+        Route::post('/{id}/process', [RefundController::class, 'process'])->name('process');
+        Route::post('/bulk-action', [RefundController::class, 'bulkAction'])->name('bulk-action');
     });
 
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Notification Management
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::get('/search-users', [NotificationController::class, 'searchUsers'])->name('search-users');
+        Route::post('/send', [NotificationController::class, 'send'])->name('send');
+        Route::post('/send-all', [NotificationController::class, 'sendToAll'])->name('send-all');
+        Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-delete', [NotificationController::class, 'bulkDelete'])->name('bulk-delete');
+    });
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Support Tickets
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('permission:support-tickets')->group(function () {
+        Route::get('/support-tickets', [SupportTicketController::class, 'index'])->name('support-tickets.index');
+        Route::get('/support-tickets/create', [SupportTicketController::class, 'create'])->name('support-tickets.create');
+        Route::post('/support-tickets', [SupportTicketController::class, 'store'])->name('support-tickets.store');
+        Route::get('/support-tickets/{supportTicket}', [SupportTicketController::class, 'show'])->name('support-tickets.show');
+        Route::post('/support-tickets/{supportTicket}/reply', [SupportTicketController::class, 'reply'])->name('support-tickets.reply');
+        Route::put('/support-tickets/{supportTicket}/status', [SupportTicketController::class, 'updateStatus'])->name('support-tickets.update-status');
+        Route::put('/support-tickets/{supportTicket}/assign', [SupportTicketController::class, 'assign'])->name('support-tickets.assign');
+        Route::put('/support-tickets/{supportTicket}/priority', [SupportTicketController::class, 'updatePriority'])->name('support-tickets.update-priority');
+        Route::post('/support-tickets/{supportTicket}/escalate', [SupportTicketController::class, 'escalate'])->name('support-tickets.escalate');
+        Route::delete('/support-tickets/{supportTicket}', [SupportTicketController::class, 'destroy'])->name('support-tickets.destroy');
+        Route::post('/support-tickets/bulk-delete', [SupportTicketController::class, 'bulkDelete'])->name('support-tickets.bulk-delete');
+        Route::post('/support-tickets/bulk-action', [SupportTicketController::class, 'bulkAction'])->name('support-tickets.bulk-action');
+
+        // Canned Responses
+        Route::resource('canned-responses', CannedResponseController::class)->except(['create', 'edit']);
+
+        // Ticket Departments
+        Route::resource('ticket-departments', TicketDepartmentController::class)->except(['create', 'edit']);
+
+        // Ticket Notification Settings
+        Route::get('/ticket-notification-settings', fn() => redirect()->route('settings.notifications'))
+            ->name('ticket-notification-settings.index');
+        Route::put('/ticket-notification-settings', [\App\Http\Controllers\SettingController::class, 'updateNotifications'])
+            ->defaults('type', 'ticket')
+            ->name('ticket-notification-settings.update');
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Affiliate Management
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('permission:affiliates')->group(function () {
+
+        Route::get('affiliates', [AffiliateController::class, 'index'])->name('affiliates.index');
+        Route::get('affiliates/pending', [AffiliateController::class, 'pending'])->name('affiliates.pending');
+        Route::get('affiliates/{affiliate}', [AffiliateController::class, 'show'])->name('affiliates.show');
+        Route::post('affiliates/{affiliate}/approve', [AffiliateController::class, 'approve'])->name('affiliates.approve');
+        Route::post('affiliates/{affiliate}/reject', [AffiliateController::class, 'reject'])->name('affiliates.reject');
+        Route::post('affiliates/{affiliate}/suspend', [AffiliateController::class, 'suspend'])->name('affiliates.suspend');
+        Route::post('affiliates/{affiliate}/reactivate', [AffiliateController::class, 'reactivate'])->name('affiliates.reactivate');
+        Route::put('affiliates/{affiliate}/tier', [AffiliateController::class, 'updateTier'])->name('affiliates.update-tier');
+        Route::delete('affiliates/{affiliate}', [AffiliateController::class, 'destroy'])->name('affiliates.destroy');
+        Route::post('affiliates/bulk-status', [AffiliateController::class, 'bulkStatus'])->name('affiliates.bulk-status');
+        Route::post('affiliates/bulk-delete', [AffiliateController::class, 'bulkDelete'])->name('affiliates.bulk-delete');
+
+        Route::get('affiliate-commissions', [AffiliateCommissionController::class, 'index'])->name('affiliate-commissions.index');
+        Route::post('affiliate-commissions/{commission}/release', [AffiliateCommissionController::class, 'release'])->name('affiliate-commissions.release');
+        Route::post('affiliate-commissions/{commission}/reverse', [AffiliateCommissionController::class, 'reverse'])->name('affiliate-commissions.reverse');
+
+        Route::get('affiliate-withdrawals', [AffiliateWithdrawalController::class, 'index'])->name('affiliate-withdrawals.index');
+        Route::get('affiliate-withdrawals/pending', [AffiliateWithdrawalController::class, 'pending'])->name('affiliate-withdrawals.pending');
+        Route::post('affiliate-withdrawals/{withdrawal}/approve', [AffiliateWithdrawalController::class, 'approve'])->name('affiliate-withdrawals.approve');
+        Route::post('affiliate-withdrawals/{withdrawal}/reject', [AffiliateWithdrawalController::class, 'reject'])->name('affiliate-withdrawals.reject');
+
+        Route::get('affiliate-tiers', [AffiliateTierController::class, 'index'])->name('affiliate-tiers.index');
+        Route::post('affiliate-tiers', [AffiliateTierController::class, 'store'])->name('affiliate-tiers.store');
+        Route::put('affiliate-tiers/{affiliateTier}', [AffiliateTierController::class, 'update'])->name('affiliate-tiers.update');
+        Route::delete('affiliate-tiers/{affiliateTier}', [AffiliateTierController::class, 'destroy'])->name('affiliate-tiers.destroy');
+    });
 
 });
 

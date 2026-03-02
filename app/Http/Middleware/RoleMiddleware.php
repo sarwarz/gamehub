@@ -18,12 +18,22 @@ class RoleMiddleware
     {
         $user = Auth::user();
 
-        if ($user->roles()->where('name', 'superadmin')->exists()) {
+        if (!$user) {
+            abort(403, 'Unauthorized - You do not have the required role.');
+        }
+
+        if ($user->isSuperAdmin()) {
             return $next($request);
         }
 
-        if (!$user || !$user->roles()->where('name', $role)->exists()) {
-            abort(403, 'Unauthorized - You do not have the required role.');
+        if (in_array($role, ['internal', 'external'])) {
+            if (!$user->roles()->where('type', $role)->exists()) {
+                abort(403, 'Unauthorized - You do not have the required role.');
+            }
+        } else {
+            if (!$user->roles()->where('name', $role)->exists()) {
+                abort(403, 'Unauthorized - You do not have the required role.');
+            }
         }
 
         return $next($request);

@@ -5,35 +5,28 @@ use App\Services\CurrencyService;
 if (! function_exists('format_currency')) {
 
     /**
-     * Format amount using default currency symbol
-     *
-     * @param float|int $amount
-     * @param int $decimals
-     * @return string
+     * Format amount with currency symbol.
+     * Pass $currencyCode to format in a specific currency (e.g. 'USD'),
+     * or omit to use the platform's default currency.
      */
-    function format_currency($amount, int $decimals = 2): string
+    function format_currency($amount, ?string $currencyCode = null): string
     {
         /** @var CurrencyService $service */
         $service = app(CurrencyService::class);
 
-        $currency = $service->getDefaultCurrency();
+        if ($currencyCode && strtoupper($currencyCode) !== strtoupper($service->code())) {
+            static $symbolCache = [];
+            $code = strtoupper($currencyCode);
 
-        $formatted = number_format(
-            (float) $amount,
-            $decimals,
-            '.',   // decimal separator
-            ','    // thousand separator
-        );
+            if (!isset($symbolCache[$code])) {
+                $currency = \App\Models\Currency::where('code', $code)->first();
+                $symbolCache[$code] = $currency ? ($currency->symbol ?: $currency->code) : $code;
+            }
 
-        if (! $currency) {
-            return $formatted;
+            return $service->format((float) $amount, $symbolCache[$code]);
         }
 
-        // Use symbol if available, otherwise fallback to code
-        $symbol = $currency->symbol ?: $currency->code;
-
-        // Symbol before amount (recommended standard)
-        return "{$symbol}{$formatted}";
+        return $service->format((float) $amount);
     }
 }
 

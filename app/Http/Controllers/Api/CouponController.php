@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
+use App\Services\CouponService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @group Coupons
@@ -17,7 +18,7 @@ class CouponController extends Controller
     /**
      * List active coupons
      *
-     * Retrieve all active coupons.
+     * Retrieve all active global (non-seller) coupons.
      *
      * @queryParam type string Optional. percent or fixed. Example: percent
      *
@@ -27,20 +28,39 @@ class CouponController extends Controller
      *   "data": []
      * }
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $coupons = Coupon::where('is_active', true)
-            ->when($request->type, fn ($q) => $q->where('type', $request->type))
-            ->latest()
-            ->paginate(10);
+        try {
+            $coupons = Coupon::where('is_active', true)
+                ->whereNull('seller_id')
+                ->when($request->type, fn ($q) => $q->where('type', $request->type))
+                ->latest()
+                ->paginate(10);
 
-        return $this->successResponse($coupons, 'Coupons fetched successfully');
+            $coupons->getCollection()->transform(fn ($coupon) => [
+                'id'                  => $coupon->id,
+                'code_hint'           => substr($coupon->code, 0, 3) . '***',
+                'type'                => $coupon->type,
+                'value'               => $coupon->value,
+                'max_discount_amount' => $coupon->max_discount_amount,
+                'min_order_amount'    => $coupon->min_order_amount,
+                'max_order_amount'    => $coupon->max_order_amount,
+                'starts_at'           => $coupon->starts_at,
+                'expires_at'          => $coupon->expires_at,
+                'description'         => $coupon->description,
+            ]);
+
+            return $this->success($coupons, 'Coupons fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch coupons.', 500);
+        }
     }
 
     /**
      * Get coupon details
      *
-     * Retrieve a single coupon by ID.
+     * Retrieve a single global coupon by ID.
      *
      * @urlParam id int required Coupon ID. Example: 1
      *
@@ -54,115 +74,100 @@ class CouponController extends Controller
      *   }
      * }
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $coupon = Coupon::find($id);
+        try {
+            $coupon = Coupon::where('is_active', true)->whereNull('seller_id')->find($id);
 
-        if (!$coupon) {
-            return $this->errorResponse('Coupon not found', 404);
+            if (!$coupon) {
+                return $this->error('Coupon not found', 404);
+            }
+
+            return $this->success([
+                'id'                  => $coupon->id,
+                'code'                => $coupon->code,
+                'type'                => $coupon->type,
+                'value'               => $coupon->value,
+                'max_discount_amount' => $coupon->max_discount_amount,
+                'min_order_amount'    => $coupon->min_order_amount,
+                'max_order_amount'    => $coupon->max_order_amount,
+                'starts_at'           => $coupon->starts_at,
+                'expires_at'          => $coupon->expires_at,
+                'description'         => $coupon->description,
+            ], 'Coupon details fetched');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch coupon details.', 500);
         }
-
-        return $this->successResponse($coupon, 'Coupon details fetched');
     }
 
     /**
      * Validate coupon
      *
-     * Validate a coupon code against order data.
+     * Validate a coupon code against cart items. Handles seller-scoped coupons
+     * automatically — if the coupon belongs to a seller, only that seller's
+     * products count toward the discount.
      *
+     * @authenticated
      *
-     * @bodyParam code string required Coupon code. Example: START70
-     * @bodyParam order_amount number required Order amount. Example: 100
-     * @bodyParam category_ids array Optional Category IDs. Example: [1,2]
-     * @bodyParam product_ids array Optional Product IDs. Example: [5,10]
+     * @bodyParam code string required Coupon code. Example: SAVE20
+     * @bodyParam items array required Cart items for seller-scope validation.
+     * @bodyParam items[].product_id integer required Product ID. Example: 5
+     * @bodyParam items[].seller_offer_id integer required Seller offer ID. Example: 12
+     * @bodyParam items[].quantity integer required Quantity. Example: 1
+     * @bodyParam items[].unit_price number required Unit price. Example: 29.99
+     * @bodyParam items[].line_total number required Line total. Example: 29.99
+     * @bodyParam items[].category_ids array Optional category IDs for the product. Example: [1,2]
      *
      * @response 200 {
      *   "status": true,
      *   "message": "Coupon is valid",
      *   "data": {
-     *     "discount": 70
+     *     "discount": 6.00,
+     *     "type": "percent",
+     *     "value": 20,
+     *     "applicable_subtotal": 29.99
      *   }
      * }
      */
-    public function validateCoupon(Request $request)
+    public function validateCoupon(Request $request, CouponService $couponService): JsonResponse
     {
         $data = $request->validate([
-            'code'         => 'required|string',
-            'order_amount' => 'required|numeric|min:1',
-            'category_ids' => 'nullable|array',
-            'product_ids'  => 'nullable|array',
+            'code'                    => 'required|string',
+            'items'                   => 'required|array|min:1',
+            'items.*.product_id'      => 'required|integer',
+            'items.*.seller_offer_id' => 'required|integer',
+            'items.*.quantity'        => 'required|integer|min:1',
+            'items.*.unit_price'      => 'required|numeric|min:0',
+            'items.*.line_total'      => 'required|numeric|min:0',
+            'items.*.category_ids'    => 'nullable|array',
         ]);
 
-        $coupon = Coupon::where('code', $data['code'])->first();
+        try {
+            $subtotal = array_sum(array_column($data['items'], 'line_total'));
 
-        if (!$coupon || !$coupon->isActive()) {
-            return $this->errorResponse('Invalid or expired coupon', 422);
+            $result = $couponService->validate(
+                $data['code'],
+                $subtotal,
+                $data['items'],
+                auth()->id(),
+            );
+
+            if (!$result['valid']) {
+                return $this->error($result['error'], 422);
+            }
+
+            return $this->success([
+                'discount'            => $result['discount'],
+                'type'                => $result['coupon']->type,
+                'value'               => $result['coupon']->value,
+                'max_discount_amount' => $result['coupon']->max_discount_amount,
+                'applicable_subtotal' => $result['applicable_subtotal'],
+                'seller_id'           => $result['coupon']->seller_id,
+            ], 'Coupon is valid');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to validate coupon.', 500);
         }
-
-        if ($coupon->usage_limit && $coupon->used >= $coupon->usage_limit) {
-            return $this->errorResponse('Coupon usage limit reached', 422);
-        }
-
-        if ($coupon->min_order_amount && $data['order_amount'] < $coupon->min_order_amount) {
-            return $this->errorResponse('Order amount is too low for this coupon', 422);
-        }
-
-        if ($coupon->max_order_amount && $data['order_amount'] > $coupon->max_order_amount) {
-            return $this->errorResponse('Order amount exceeds coupon limit', 422);
-        }
-
-        // Category restrictions
-        if (!empty($coupon->include_categories) &&
-            empty(array_intersect($coupon->include_categories, $data['category_ids'] ?? []))) {
-            return $this->errorResponse('Coupon not applicable for selected categories', 422);
-        }
-
-        if (!empty($coupon->exclude_categories) &&
-            array_intersect($coupon->exclude_categories, $data['category_ids'] ?? [])) {
-            return $this->errorResponse('Coupon excluded for selected categories', 422);
-        }
-
-        // Product restrictions
-        if (!empty($coupon->include_products) &&
-            empty(array_intersect($coupon->include_products, $data['product_ids'] ?? []))) {
-            return $this->errorResponse('Coupon not applicable for selected products', 422);
-        }
-
-        if (!empty($coupon->exclude_products) &&
-            array_intersect($coupon->exclude_products, $data['product_ids'] ?? [])) {
-            return $this->errorResponse('Coupon excluded for selected products', 422);
-        }
-
-        // Calculate discount
-        $discount = $coupon->type === 'percent'
-            ? round(($coupon->value / 100) * $data['order_amount'], 2)
-            : min($coupon->value, $data['order_amount']);
-
-        return $this->successResponse([
-            'discount' => $discount,
-            'type'     => $coupon->type,
-            'value'    => $coupon->value,
-        ], 'Coupon is valid');
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

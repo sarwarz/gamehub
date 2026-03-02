@@ -15,10 +15,10 @@ class SellerBalance extends Model
     ];
 
     protected $casts = [
-        'available_balance' => 'float',
-        'pending_balance'   => 'float',
-        'total_earned'      => 'float',
-        'total_paid'        => 'float',
+        'available_balance' => 'decimal:2',
+        'pending_balance'   => 'decimal:2',
+        'total_earned'      => 'decimal:2',
+        'total_paid'        => 'decimal:2',
     ];
 
     public function seller()

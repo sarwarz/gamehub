@@ -1,0 +1,52 @@
+name: 'User Dashboard'
+description: |-
+
+  APIs for the customer dashboard providing aggregated stats,
+  recent activity, and account summary.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/dashboard
+    metadata:
+      custom: []
+      groupName: 'User Dashboard'
+      groupDescription: |-
+
+        APIs for the customer dashboard providing aggregated stats,
+        recent activity, and account summary.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Dashboard overview'
+      description: |-
+        Get comprehensive customer dashboard stats including order summary,
+        wallet balance, recent orders, wishlist count, and support ticket summary.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Dashboard loaded","data":{"stats":{...},"recent_orders":[],"wallet":null}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null

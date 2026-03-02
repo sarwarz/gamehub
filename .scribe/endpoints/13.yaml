@@ -1,126 +1,32 @@
-name: Taxes
+name: 'Seller Application'
 description: |-
 
-  APIs for retrieving and calculating tax rules
-  for checkout and seller-specific configurations.
+  APIs for customers to apply to become a seller on the marketplace.
+  The application goes through a review process before activation.
 endpoints:
   -
     custom: []
     httpMethods:
-      - GET
-    uri: api/v1/taxes
-    metadata:
-      custom: []
-      groupName: Taxes
-      groupDescription: |-
-
-        APIs for retrieving and calculating tax rules
-        for checkout and seller-specific configurations.
-      subgroup: ''
-      subgroupDescription: ''
-      title: 'List applicable taxes'
-      description: 'Retrieve active taxes based on location and seller.'
-      authenticated: true
-      deprecated: false
-    headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
-      Content-Type: application/json
-      Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
-    queryParameters:
-      seller_id:
-        custom: []
-        name: seller_id
-        description: 'Optional Seller ID.'
-        required: false
-        example: 5
-        type: integer
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      country:
-        custom: []
-        name: country
-        description: 'Optional Country code.'
-        required: false
-        example: US
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      state:
-        custom: []
-        name: state
-        description: 'Optional State.'
-        required: false
-        example: CA
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      city:
-        custom: []
-        name: city
-        description: 'Optional City.'
-        required: false
-        example: 'Los Angeles'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-    cleanQueryParameters:
-      seller_id: 5
-      country: US
-      state: CA
-      city: 'Los Angeles'
-    bodyParameters: []
-    cleanBodyParameters: []
-    fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Taxes fetched successfully",
-            "data": []
-          }
-        headers: []
-        description: ''
-    responseFields: []
-    auth:
-      - headers
-      - Authorization
-      - 'Bearer your_real_test_token_here'
-    controller: null
-    method: null
-    route: null
-  -
-    custom: []
-    httpMethods:
       - POST
-    uri: api/v1/taxes/calculate
+    uri: api/v1/seller-application
     metadata:
       custom: []
-      groupName: Taxes
+      groupName: 'Seller Application'
       groupDescription: |-
 
-        APIs for retrieving and calculating tax rules
-        for checkout and seller-specific configurations.
+        APIs for customers to apply to become a seller on the marketplace.
+        The application goes through a review process before activation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Calculate tax amount'
-      description: 'Calculate applicable tax amount for an order.'
+      title: 'Apply to become a seller'
+      description: |-
+        Submit a seller application. The authenticated user must not already
+        have a seller account. Applications start with "pending" status and
+        must be approved by an admin before the store becomes active.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -128,24 +34,46 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      amount:
+      store_name:
         custom: []
-        name: amount
-        description: 'Order amount.'
+        name: store_name
+        description: 'Store display name (max 255).'
         required: true
-        example: 100.0
-        type: number
+        example: 'Digital Keys Hub'
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      seller_id:
+      email:
         custom: []
-        name: seller_id
-        description: 'Optional Seller ID.'
+        name: email
+        description: 'Store contact email.'
+        required: true
+        example: seller@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'optional Contact phone number.'
         required: false
-        example: 5
-        type: integer
+        example: '+1234567890'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'optional Store description (max 2000).'
+        required: false
+        example: 'Premium digital game keys at the best prices.'
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: true
@@ -153,9 +81,9 @@ endpoints:
       country:
         custom: []
         name: country
-        description: 'Country code.'
+        description: Country.
         required: true
-        example: US
+        example: 'United States'
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -164,9 +92,9 @@ endpoints:
       state:
         custom: []
         name: state
-        description: 'Optional State.'
+        description: 'optional State or province.'
         required: false
-        example: CA
+        example: California
         type: string
         enumValues: []
         exampleWasSpecified: true
@@ -175,7 +103,7 @@ endpoints:
       city:
         custom: []
         name: city
-        description: 'Optional City.'
+        description: 'optional City.'
         required: false
         example: 'Los Angeles'
         type: string
@@ -183,32 +111,123 @@ endpoints:
         exampleWasSpecified: true
         nullable: true
         deprecated: false
+      address:
+        custom: []
+        name: address
+        description: 'optional Street address.'
+        required: false
+        example: '123 Market St'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      postal_code:
+        custom: []
+        name: postal_code
+        description: 'optional Postal/zip code.'
+        required: false
+        example: '90001'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      company_name:
+        custom: []
+        name: company_name
+        description: 'optional Legal company name.'
+        required: false
+        example: 'Digital Keys LLC'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      registration_number:
+        custom: []
+        name: registration_number
+        description: 'optional Business registration number.'
+        required: false
+        example: LLC-2024-12345
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      vat_number:
+        custom: []
+        name: vat_number
+        description: 'optional VAT/Tax ID number.'
+        required: false
+        example: US123456789
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      tax_id:
+        custom: []
+        name: tax_id
+        description: 'optional Tax identification number.'
+        required: false
+        example: 12-3456789
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      website:
+        custom: []
+        name: website
+        description: 'optional Store website URL.'
+        required: false
+        example: 'https://digitalkeyshub.com'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
     cleanBodyParameters:
-      amount: 100.0
-      seller_id: 5
-      country: US
-      state: CA
+      store_name: 'Digital Keys Hub'
+      email: seller@example.com
+      phone: '+1234567890'
+      description: 'Premium digital game keys at the best prices.'
+      country: 'United States'
+      state: California
       city: 'Los Angeles'
+      address: '123 Market St'
+      postal_code: '90001'
+      company_name: 'Digital Keys LLC'
+      registration_number: LLC-2024-12345
+      vat_number: US123456789
+      tax_id: 12-3456789
+      website: 'https://digitalkeyshub.com'
     fileParameters: []
     responses:
       -
         custom: []
-        status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Tax calculated successfully",
-            "data": {
-              "tax_total": 12.5
-            }
-          }
+        status: 201
+        content: '{"status":true,"message":"Seller application submitted successfully. You will be notified once reviewed.","data":{"id":1,"store_name":"Digital Keys Hub","slug":"digital-keys-hub","status":"pending","created_at":"2026-02-28T12:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 409
+        content: '{"status":false,"message":"You already have a seller account."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 422
+        content: '{"status":false,"message":"Validation error"}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -216,22 +235,24 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/seller/taxes
+    uri: api/v1/seller-application/status
     metadata:
       custom: []
-      groupName: Taxes
+      groupName: 'Seller Application'
       groupDescription: |-
 
-        APIs for retrieving and calculating tax rules
-        for checkout and seller-specific configurations.
+        APIs for customers to apply to become a seller on the marketplace.
+        The application goes through a review process before activation.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Seller tax rules'
-      description: 'Retrieve tax rules created by the authenticated seller.'
+      title: 'Check application status'
+      description: |-
+        Get the current status of the authenticated user's seller application.
+        Returns application details and current review status.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -245,19 +266,246 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Seller taxes fetched successfully",
-            "data": []
-          }
+        content: '{"status":true,"message":"Application status fetched.","data":{"id":1,"store_name":"Digital Keys Hub","slug":"digital-keys-hub","status":"pending","is_verified":false,"created_at":"2026-02-28T12:00:00.000000Z"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"No seller application found. Apply to become a seller first."}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/v1/seller-application
+    metadata:
+      custom: []
+      groupName: 'Seller Application'
+      groupDescription: |-
+
+        APIs for customers to apply to become a seller on the marketplace.
+        The application goes through a review process before activation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update pending application'
+      description: |-
+        Update a seller application that is still in "pending" status.
+        Once approved or rejected, applications cannot be modified.
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      store_name:
+        custom: []
+        name: store_name
+        description: 'optional Updated store name.'
+        required: false
+        example: 'My New Store Name'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      email:
+        custom: []
+        name: email
+        description: 'optional Updated contact email.'
+        required: false
+        example: newemail@example.com
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      phone:
+        custom: []
+        name: phone
+        description: 'optional Updated phone.'
+        required: false
+        example: '+1987654321'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      description:
+        custom: []
+        name: description
+        description: 'optional Updated description.'
+        required: false
+        example: 'Updated store description.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      country:
+        custom: []
+        name: country
+        description: 'optional Updated country.'
+        required: false
+        example: 'United Kingdom'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      state:
+        custom: []
+        name: state
+        description: 'optional Updated state.'
+        required: false
+        example: London
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      city:
+        custom: []
+        name: city
+        description: 'optional Updated city.'
+        required: false
+        example: Westminster
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      address:
+        custom: []
+        name: address
+        description: 'optional Updated address.'
+        required: false
+        example: '456 High Street'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      postal_code:
+        custom: []
+        name: postal_code
+        description: 'optional Updated postal code.'
+        required: false
+        example: 'SW1A 1AA'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      company_name:
+        custom: []
+        name: company_name
+        description: 'optional Updated company name.'
+        required: false
+        example: 'New Company Ltd'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      registration_number:
+        custom: []
+        name: registration_number
+        description: 'optional Updated registration number.'
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      vat_number:
+        custom: []
+        name: vat_number
+        description: 'optional Updated VAT number.'
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      tax_id:
+        custom: []
+        name: tax_id
+        description: 'optional Updated tax ID.'
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+      website:
+        custom: []
+        name: website
+        description: 'optional Updated website URL.'
+        required: false
+        example: consequatur
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      store_name: 'My New Store Name'
+      email: newemail@example.com
+      phone: '+1987654321'
+      description: 'Updated store description.'
+      country: 'United Kingdom'
+      state: London
+      city: Westminster
+      address: '456 High Street'
+      postal_code: 'SW1A 1AA'
+      company_name: 'New Company Ltd'
+      registration_number: consequatur
+      vat_number: consequatur
+      tax_id: consequatur
+      website: consequatur
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Application updated successfully.","data":{}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 403
+        content: '{"status":false,"message":"Only pending applications can be updated."}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"No seller application found."}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

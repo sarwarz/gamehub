@@ -10,15 +10,24 @@ use Exception;
 class LicenseDeliveryService
 {
     /**
-     * Auto deliver license keys for an order item
+     * Auto deliver license keys for an order item.
+     * Prefers pre-reserved keys (from checkout session), falls back to fresh stock.
      */
     public function deliver(OrderItem $item): array
     {
         return DB::transaction(function () use ($item) {
 
-            // 1️⃣ Fetch available keys (LOCKED)
+            $delivery = $item->deliveries()->first();
+
+            if ($delivery && $delivery->status === 'delivered' && !empty($delivery->payload)) {
+                return $delivery->payload;
+            }
+
             $keys = SellerOfferKey::where('seller_offer_id', $item->seller_offer_id)
-                ->where('status', 'available')
+                ->where(function ($q) {
+                    $q->where('status', 'available')
+                      ->orWhere('status', 'reserved');
+                })
                 ->lockForUpdate()
                 ->limit($item->quantity)
                 ->get();
@@ -27,14 +36,15 @@ class LicenseDeliveryService
                 throw new Exception('Insufficient license stock');
             }
 
-            // 2️⃣ Reserve & mark as sold
             foreach ($keys as $key) {
                 $key->update([
-                    'status' => 'sold',
+                    'status'              => 'sold',
+                    'reserved_at'         => null,
+                    'reserved_until'      => null,
+                    'reserved_session_id' => null,
                 ]);
             }
 
-            // 3️⃣ Return delivered payload
             return [
                 'type' => 'license',
                 'keys' => $keys->map(fn ($k) => $k->value)->values(),

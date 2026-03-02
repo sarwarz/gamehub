@@ -1,0 +1,220 @@
+name: Search
+description: |-
+
+  Lightweight search and autocomplete APIs
+  for the storefront search bar.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/search/autocomplete
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+
+        Lightweight search and autocomplete APIs
+        for the storefront search bar.
+      subgroup: ''
+      subgroupDescription: ''
+      title: Autocomplete
+      description: |-
+        Fast autocomplete endpoint for the search bar.
+        Returns matching products and sellers with minimal data.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Search query (min 2 chars).'
+        required: true
+        example: win
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      limit:
+        custom: []
+        name: limit
+        description: 'Max results per type (default 5).'
+        required: false
+        example: 8
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: win
+      limit: 8
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must be at least 2 characters. Must not be greater than 100 characters.'
+        required: true
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Results fetched","data":{"products":[],"sellers":[]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/search
+    metadata:
+      custom: []
+      groupName: Search
+      groupDescription: |-
+
+        Lightweight search and autocomplete APIs
+        for the storefront search bar.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Global search'
+      description: 'Full search with pagination, filters and sorting.'
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Search query.'
+        required: true
+        example: 'windows 11'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      category_id:
+        custom: []
+        name: category_id
+        description: 'Filter by category.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      platform_id:
+        custom: []
+        name: platform_id
+        description: 'Filter by platform.'
+        required: false
+        example: 2
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      min_price:
+        custom: []
+        name: min_price
+        description: 'numeric Minimum price.'
+        required: false
+        example: '5'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      max_price:
+        custom: []
+        name: max_price
+        description: 'numeric Maximum price.'
+        required: false
+        example: '100'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      sort:
+        custom: []
+        name: sort
+        description: 'Sort: relevance, price_asc, price_desc, newest, rating.'
+        required: false
+        example: price_asc
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page (default 12).'
+        required: false
+        example: 24
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      q: 'windows 11'
+      category_id: 1
+      platform_id: 2
+      min_price: '5'
+      max_price: '100'
+      sort: price_asc
+      per_page: 24
+    bodyParameters:
+      q:
+        custom: []
+        name: q
+        description: 'Must be at least 1 character. Must not be greater than 200 characters.'
+        required: true
+        example: vmqeopfuudtdsufvyvddq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      q: vmqeopfuudtdsufvyvddq
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Search results","data":{"current_page":1,"data":[],"total":0}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

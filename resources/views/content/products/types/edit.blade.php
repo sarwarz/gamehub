@@ -34,7 +34,11 @@
                 <input type="number" step="0.01" name="commission" class="form-control @error('commission') is-invalid @enderror"
                        value="{{ old('commission', $type->commission) }}" placeholder="e.g. 10.35">
                 @error('commission') <div class="invalid-feedback">{{ $message }}</div> @enderror
-                <small class="text-muted">Enter commission percentage (e.g. 10.35 for 10.35%).</small>
+                @if($commissionMode === 'product_type')
+                <small class="text-success"><i class="ti tabler-circle-check ti-xs"></i> Per-type commission is active. This rate applies to all products with this type.</small>
+                @else
+                <small class="text-warning"><i class="ti tabler-alert-triangle ti-xs"></i> Commission mode is Fixed — this value won't be used until you switch to Per-type mode in <a href="{{ route('settings.vendor') }}">Settings</a>.</small>
+                @endif
             </div>
 
             <!-- Status -->

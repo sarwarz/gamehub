@@ -1,0 +1,828 @@
+name: 'Affiliate Program'
+description: |-
+
+  Manage the authenticated user's affiliate account including
+  applying, viewing dashboard, commissions, referrals, and withdrawals.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/program-info
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get program info & tiers'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Program info","data":{"is_enabled":false,"cookie_days":30,"hold_days":14,"min_withdrawal":50,"payout_methods":["wallet"],"tiers":[{"name":"Bronze","slug":"bronze","commission_rate":"5.00","l2_commission_rate":"1.00","min_earnings_threshold":"0.00","min_referrals":0,"min_conversions":0,"color":"warning"},{"name":"Silver","slug":"silver","commission_rate":"8.00","l2_commission_rate":"2.00","min_earnings_threshold":"500.00","min_referrals":10,"min_conversions":5,"color":"secondary"},{"name":"Gold","slug":"gold","commission_rate":"12.00","l2_commission_rate":"3.00","min_earnings_threshold":"2000.00","min_referrals":50,"min_conversions":25,"color":"info"},{"name":"Platinum","slug":"platinum","commission_rate":"15.00","l2_commission_rate":"5.00","min_earnings_threshold":"10000.00","min_referrals":200,"min_conversions":100,"color":"primary"}]}}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          x-ratelimit-limit: '60'
+          x-ratelimit-remaining: '59'
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/affiliate/apply
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Apply to become an affiliate'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      bio:
+        custom: []
+        name: bio
+        description: 'Brief description about yourself.'
+        required: false
+        example: 'I run a gaming blog with 50k visitors/month.'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      website:
+        custom: []
+        name: website
+        description: 'Your website URL.'
+        required: false
+        example: 'https://mygamingblog.com'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      social_media:
+        custom: []
+        name: social_media
+        description: 'Social media profile.'
+        required: false
+        example: 'https://twitter.com/gamer'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      payment_method:
+        custom: []
+        name: payment_method
+        description: 'Preferred payout method.'
+        required: false
+        example: wallet
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      payment_details:
+        custom: []
+        name: payment_details
+        description: 'Payment details (bank info, paypal email, etc.).'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      bio: 'I run a gaming blog with 50k visitors/month.'
+      website: 'https://mygamingblog.com'
+      social_media: 'https://twitter.com/gamer'
+      payment_method: wallet
+      payment_details: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 201
+        content: '{ "status": true, "message": "Application submitted successfully.", "data": { "id": 1, "referral_code": "AB12CD34", "status": "pending" } }'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/status
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Check application status'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{ "status": true, "message": "Affiliate status", "data": { "id": 1, "status": "active", "referral_code": "AB12CD34", "tier": "silver" } }'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{ "status": false, "message": "No affiliate account found." }'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/dashboard
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Affiliate dashboard'
+      description: 'Returns affiliate stats overview with balance, click/conversion metrics, and recent activity.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/referral-link
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get referral link'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/commissions
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List commissions'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status (pending,held,available,paid,reversed).'
+        required: false
+        example: available
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: available
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/referrals
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List referrals'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status (clicked,registered,converted).'
+        required: false
+        example: converted
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: converted
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/balance
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get balance'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/withdrawals
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List withdrawals'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page.'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      per_page: 15
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/affiliate/withdraw
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Request a withdrawal'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Withdrawal amount.'
+        required: true
+        example: 100.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      payment_method:
+        custom: []
+        name: payment_method
+        description: 'Payout method.'
+        required: true
+        example: wallet
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      payment_details:
+        custom: []
+        name: payment_details
+        description: 'Payment details for non-wallet methods.'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      amount: 100.0
+      payment_method: wallet
+      payment_details: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - POST
+    uri: api/v1/affiliate/transfer-to-wallet
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Transfer to wallet'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      amount:
+        custom: []
+        name: amount
+        description: 'Amount to transfer.'
+        required: true
+        example: 50.0
+        type: number
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      amount: 50.0
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - PUT
+    uri: api/v1/affiliate/profile
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Update affiliate profile'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      bio:
+        custom: []
+        name: bio
+        description: 'Bio text.'
+        required: false
+        example: 'Gaming influencer'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      website:
+        custom: []
+        name: website
+        description: 'Website URL.'
+        required: false
+        example: 'https://example.com'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      social_media:
+        custom: []
+        name: social_media
+        description: 'Social media link.'
+        required: false
+        example: 'https://twitter.com/user'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      payment_method:
+        custom: []
+        name: payment_method
+        description: 'Preferred payout method.'
+        required: false
+        example: paypal
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      payment_details:
+        custom: []
+        name: payment_details
+        description: 'Payment details.'
+        required: false
+        example: []
+        type: object
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: true
+        deprecated: false
+    cleanBodyParameters:
+      bio: 'Gaming influencer'
+      website: 'https://example.com'
+      social_media: 'https://twitter.com/user'
+      payment_method: paypal
+      payment_details: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/affiliate/analytics
+    metadata:
+      custom: []
+      groupName: 'Affiliate Program'
+      groupDescription: |-
+
+        Manage the authenticated user's affiliate account including
+        applying, viewing dashboard, commissions, referrals, and withdrawals.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Analytics data (charts)'
+      description: ''
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null

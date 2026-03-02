@@ -3,7 +3,7 @@
 name: User
 description: |-
 
-  APIs for authenticated user information.
+  APIs for retrieving the authenticated user's account information.
 endpoints:
   -
     custom: []
@@ -15,17 +15,17 @@ endpoints:
       groupName: User
       groupDescription: |-
 
-        APIs for authenticated user information.
+        APIs for retrieving the authenticated user's account information.
       subgroup: ''
       subgroupDescription: ''
-      title: 'Get authenticated user'
+      title: 'Get current user'
       description: |-
-        Retrieve authenticated user's profile,
-        roles, permissions, wallet, and seller info.
+        Retrieve the authenticated user's full account details including
+        profile, wallet balance, seller account status, roles, and permissions.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -38,19 +38,15 @@ endpoints:
     responses:
       -
         custom: []
-        status: 401
-        content: '{"status":"error","message":"Unauthenticated"}'
-        headers:
-          cache-control: 'no-cache, private'
-          content-type: application/json
-          access-control-allow-origin: '*'
-          access-control-expose-headers: Authorization
-        description: null
+        status: 200
+        content: '{"status":true,"message":"User fetched successfully","data":{"id":1,"name":"John Doe","email":"john@example.com","avatar":null,"is_seller":false,"roles":["customer"],"permissions":[],"wallet":{"id":1,"balance":"150.00","is_active":true},"profile":{"id":1,"first_name":"John","last_name":"Doe","phone":"+1234567890"}}}'
+        headers: []
+        description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

@@ -1,26 +1,252 @@
-name: Orders
-description: ''
+name: Checkout
+description: |-
+
+  Payment-first checkout flow for purchasing digital products.
+  The cart lives entirely on the client; these endpoints validate items,
+  calculate totals, process payment, and create the order.
+
+  ## How Checkout Works
+
+  GameHub uses a **payment-first** model — the order is only created after
+  the payment gateway confirms the money was received. This eliminates
+  unpaid orders and stock-holding issues.
+
+  ## Integration Steps
+
+  ### Step 1: Create a Checkout Session
+
+  ```
+  POST /api/v1/checkout/sessions
+  ```
+
+  Send your cart items (offer IDs + quantities), billing address, currency,
+  and optional coupon code. The server validates stock, calculates taxes
+  and discounts, and returns a **session UUID** with a 30-minute TTL.
+
+  **Idempotency:** Pass an `X-Idempotency-Key` header to prevent duplicate
+  sessions if the request is retried.
+
+  ### Step 2: Initiate Payment
+
+  ```
+  POST /api/v1/checkout/sessions/{uuid}/pay
+  ```
+
+  Choose a payment method and the server will:
+  - Re-validate stock availability
+  - Reserve the license keys
+  - Deduct wallet balance (if `use_wallet: true` or `payment_method: "wallet"`)
+  - Create a payment with the gateway
+
+  **Response varies by gateway:**
+
+  | Gateway    | Response field    | What to do                               |
+  |------------|-------------------|------------------------------------------|
+  | `stripe`   | `payment.client_secret`  | Use Stripe.js `confirmPayment()`  |
+  | `paypal`   | `payment.approval_url`   | Redirect user to PayPal           |
+  | `cryptomus`| `payment.payment_url`    | Redirect user to Cryptomus        |
+  | `wallet`   | (none — instant)         | Order is created immediately      |
+
+  ### Step 3: User Completes Payment
+
+  For **Stripe**: use `stripe.confirmPayment()` with the `client_secret`.
+  For **PayPal / Cryptomus**: redirect the user to the approval URL.
+  For **wallet**: skip this step — the order was already created.
+
+  After the user pays, the payment gateway sends a webhook to
+  `POST /api/v1/webhooks/payment/{gateway}` which triggers order creation
+  in the background.
+
+  ### Step 4: Poll for Result
+
+  ```
+  GET /api/v1/checkout/sessions/{uuid}/result
+  ```
+
+  Poll this endpoint every 2-3 seconds after the user returns from the
+  payment gateway. It returns `status: "paying"` while the webhook is
+  being processed, and `status: "completed"` with the full order object
+  once the order is created.
+
+  ## Next.js Example
+
+  ```javascript
+  // 1. Create session
+  const session = await api.post('/checkout/sessions', {
+    items: [{ seller_offer_id: 5, quantity: 1 }],
+    billing: { name: 'John', email: 'john@example.com', ... },
+    currency: 'USD',
+  });
+
+  // 2. Initiate payment
+  const payment = await api.post(`/checkout/sessions/${session.session_uuid}/pay`, {
+    payment_method: 'stripe',
+  });
+
+  // 3. Confirm with Stripe.js
+  await stripe.confirmPayment({ clientSecret: payment.payment.client_secret });
+
+  // 4. Poll for result
+  let result;
+  do {
+    await new Promise(r => setTimeout(r, 2000));
+    result = await api.get(`/checkout/sessions/${session.session_uuid}/result`);
+  } while (result.status !== 'completed');
+
+  // result.order.id, result.order.order_number, etc.
+  ```
+
+  ## Error Handling
+
+  | Error | Cause | What to do |
+  |-------|-------|------------|
+  | `422` "Insufficient stock" | Stock sold out between session creation and payment | Show stock error, re-create session |
+  | `422` "Checkout session has expired" | Session TTL (30 min) exceeded | Start a new checkout |
+  | `422` "Insufficient wallet balance" | Wallet pay attempted with low balance | Show balance, offer gateway payment |
+  | `422` "Invalid or expired coupon" | Coupon used up or expired | Remove coupon and retry |
+
+  ## Session Statuses
+
+  | Status      | Meaning |
+  |-------------|---------|
+  | `open`      | Session created, awaiting payment initiation |
+  | `paying`    | Payment initiated, waiting for gateway confirmation |
+  | `completed` | Payment confirmed, order created |
+  | `expired`   | Session TTL exceeded (keys released, wallet hold reverted) |
 endpoints:
   -
     custom: []
     httpMethods:
       - POST
-    uri: api/v1/orders
+    uri: api/v1/checkout/sessions
     metadata:
       custom: []
-      groupName: Orders
-      groupDescription: ''
+      groupName: Checkout
+      groupDescription: |-
+
+        Payment-first checkout flow for purchasing digital products.
+        The cart lives entirely on the client; these endpoints validate items,
+        calculate totals, process payment, and create the order.
+
+        ## How Checkout Works
+
+        GameHub uses a **payment-first** model — the order is only created after
+        the payment gateway confirms the money was received. This eliminates
+        unpaid orders and stock-holding issues.
+
+        ## Integration Steps
+
+        ### Step 1: Create a Checkout Session
+
+        ```
+        POST /api/v1/checkout/sessions
+        ```
+
+        Send your cart items (offer IDs + quantities), billing address, currency,
+        and optional coupon code. The server validates stock, calculates taxes
+        and discounts, and returns a **session UUID** with a 30-minute TTL.
+
+        **Idempotency:** Pass an `X-Idempotency-Key` header to prevent duplicate
+        sessions if the request is retried.
+
+        ### Step 2: Initiate Payment
+
+        ```
+        POST /api/v1/checkout/sessions/{uuid}/pay
+        ```
+
+        Choose a payment method and the server will:
+        - Re-validate stock availability
+        - Reserve the license keys
+        - Deduct wallet balance (if `use_wallet: true` or `payment_method: "wallet"`)
+        - Create a payment with the gateway
+
+        **Response varies by gateway:**
+
+        | Gateway    | Response field    | What to do                               |
+        |------------|-------------------|------------------------------------------|
+        | `stripe`   | `payment.client_secret`  | Use Stripe.js `confirmPayment()`  |
+        | `paypal`   | `payment.approval_url`   | Redirect user to PayPal           |
+        | `cryptomus`| `payment.payment_url`    | Redirect user to Cryptomus        |
+        | `wallet`   | (none — instant)         | Order is created immediately      |
+
+        ### Step 3: User Completes Payment
+
+        For **Stripe**: use `stripe.confirmPayment()` with the `client_secret`.
+        For **PayPal / Cryptomus**: redirect the user to the approval URL.
+        For **wallet**: skip this step — the order was already created.
+
+        After the user pays, the payment gateway sends a webhook to
+        `POST /api/v1/webhooks/payment/{gateway}` which triggers order creation
+        in the background.
+
+        ### Step 4: Poll for Result
+
+        ```
+        GET /api/v1/checkout/sessions/{uuid}/result
+        ```
+
+        Poll this endpoint every 2-3 seconds after the user returns from the
+        payment gateway. It returns `status: "paying"` while the webhook is
+        being processed, and `status: "completed"` with the full order object
+        once the order is created.
+
+        ## Next.js Example
+
+        ```javascript
+        // 1. Create session
+        const session = await api.post('/checkout/sessions', {
+          items: [{ seller_offer_id: 5, quantity: 1 }],
+          billing: { name: 'John', email: 'john@example.com', ... },
+          currency: 'USD',
+        });
+
+        // 2. Initiate payment
+        const payment = await api.post(`/checkout/sessions/${session.session_uuid}/pay`, {
+          payment_method: 'stripe',
+        });
+
+        // 3. Confirm with Stripe.js
+        await stripe.confirmPayment({ clientSecret: payment.payment.client_secret });
+
+        // 4. Poll for result
+        let result;
+        do {
+          await new Promise(r => setTimeout(r, 2000));
+          result = await api.get(`/checkout/sessions/${session.session_uuid}/result`);
+        } while (result.status !== 'completed');
+
+        // result.order.id, result.order.order_number, etc.
+        ```
+
+        ## Error Handling
+
+        | Error | Cause | What to do |
+        |-------|-------|------------|
+        | `422` "Insufficient stock" | Stock sold out between session creation and payment | Show stock error, re-create session |
+        | `422` "Checkout session has expired" | Session TTL (30 min) exceeded | Start a new checkout |
+        | `422` "Insufficient wallet balance" | Wallet pay attempted with low balance | Show balance, offer gateway payment |
+        | `422` "Invalid or expired coupon" | Coupon used up or expired | Remove coupon and retry |
+
+        ## Session Statuses
+
+        | Status      | Meaning |
+        |-------------|---------|
+        | `open`      | Session created, awaiting payment initiation |
+        | `paying`    | Payment initiated, waiting for gateway confirmation |
+        | `completed` | Payment confirmed, order created |
+        | `expired`   | Session TTL exceeded (keys released, wallet hold reverted) |
       subgroup: ''
       subgroupDescription: ''
-      title: 'Create Order (Checkout)'
+      title: 'Create checkout session'
       description: |-
-        Create a new order for the authenticated user.
-        This endpoint validates seller offers, creates the order,
-        billing address, order items, seller earnings, and a payment transaction.
+        Validate cart items, calculate taxes and discounts, and create a
+        temporary checkout session (30 min TTL). No order or payment is
+        created at this stage.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -28,21 +254,10 @@ endpoints:
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters:
-      currency:
-        custom: []
-        name: currency
-        description: 'Currency code.'
-        required: true
-        example: USD
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
       items:
         custom: []
         name: items
-        description: 'List of order items.'
+        description: 'Cart items.'
         required: true
         example:
           - consequatur
@@ -54,7 +269,7 @@ endpoints:
       billing:
         custom: []
         name: billing
-        description: 'Billing address details.'
+        description: 'Billing address.'
         required: true
         example: []
         type: object
@@ -65,7 +280,7 @@ endpoints:
       billing.name:
         custom: []
         name: billing.name
-        description: 'Customer name.'
+        description: 'Full name.'
         required: true
         example: 'John Doe'
         type: string
@@ -76,7 +291,7 @@ endpoints:
       billing.email:
         custom: []
         name: billing.email
-        description: 'Email address.'
+        description: Email.
         required: true
         example: john@example.com
         type: string
@@ -84,56 +299,100 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      billing.phone:
+        custom: []
+        name: billing.phone
+        description: 'optional Phone.'
+        required: false
+        example: '+1234567890'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
       billing.address:
         custom: []
         name: billing.address
-        description: 'Street address.'
+        description: Street.
         required: true
-        example: consequatur
+        example: '123 Main St'
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
         deprecated: false
       billing.city:
         custom: []
         name: billing.city
-        description: 'City name.'
+        description: City.
         required: true
-        example: consequatur
+        example: 'New York'
         type: string
         enumValues: []
-        exampleWasSpecified: false
+        exampleWasSpecified: true
         nullable: false
+        deprecated: false
+      billing.state:
+        custom: []
+        name: billing.state
+        description: 'optional State.'
+        required: false
+        example: NY
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
         deprecated: false
       billing.country:
         custom: []
         name: billing.country
         description: 'Country code.'
         required: true
-        example: BD
+        example: US
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      payment_method:
+      billing.postcode:
         custom: []
-        name: payment_method
-        description: 'Payment method.'
+        name: billing.postcode
+        description: 'optional Postal code.'
+        required: false
+        example: '10001'
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
+        deprecated: false
+      currency:
+        custom: []
+        name: currency
+        description: 'Currency code.'
         required: true
-        example: stripe
+        example: USD
         type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
+        deprecated: false
+      coupon_code:
+        custom: []
+        name: coupon_code
+        description: 'optional Coupon code.'
+        required: false
+        example: SAVE20
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: true
         deprecated: false
       'items[].seller_offer_id':
         custom: []
         name: 'items[].seller_offer_id'
         description: 'Seller offer ID.'
         required: true
-        example: 15
+        example: 5
         type: integer
         enumValues: []
         exampleWasSpecified: true
@@ -150,164 +409,214 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-      billing.phone:
-        custom: []
-        name: billing.phone
-        description: 'Phone number.'
-        required: true
-        example: '+8801712345678'
-        type: string
-        enumValues: []
-        exampleWasSpecified: true
-        nullable: false
-        deprecated: false
-      billing.postcode:
-        custom: []
-        name: billing.postcode
-        description: 'Postal code.'
-        required: true
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
-      currency: USD
       items:
         - consequatur
       billing:
         name: 'John Doe'
         email: john@example.com
-        address: consequatur
-        city: consequatur
-        country: BD
-        phone: '+8801712345678'
-        postcode: consequatur
-      payment_method: stripe
+        phone: '+1234567890'
+        address: '123 Main St'
+        city: 'New York'
+        state: NY
+        country: US
+        postcode: '10001'
+      currency: USD
+      coupon_code: SAVE20
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 201
-        content: |-
-          {
-           "success": true,
-           "message": "Order created successfully.",
-           "data": {
-               "order_id": 101,
-               "order_number": "ORD-20260120-0001",
-               "status": "pending",
-               "payment_status": "pending"
-           }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 422
-        content: |-
-          {
-           "message": "One or more seller offers are not available."
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 500
-        content: |-
-          {
-           "success": false,
-           "message": "Unable to create order. Please try again."
-          }
-        headers: []
-        description: ''
+    responses: []
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
   -
     custom: []
     httpMethods:
-      - GET
-    uri: 'api/v1/orders/{order_id}'
+      - POST
+    uri: 'api/v1/checkout/sessions/{uuid}/pay'
     metadata:
       custom: []
-      groupName: Orders
-      groupDescription: ''
+      groupName: Checkout
+      groupDescription: |-
+
+        Payment-first checkout flow for purchasing digital products.
+        The cart lives entirely on the client; these endpoints validate items,
+        calculate totals, process payment, and create the order.
+
+        ## How Checkout Works
+
+        GameHub uses a **payment-first** model — the order is only created after
+        the payment gateway confirms the money was received. This eliminates
+        unpaid orders and stock-holding issues.
+
+        ## Integration Steps
+
+        ### Step 1: Create a Checkout Session
+
+        ```
+        POST /api/v1/checkout/sessions
+        ```
+
+        Send your cart items (offer IDs + quantities), billing address, currency,
+        and optional coupon code. The server validates stock, calculates taxes
+        and discounts, and returns a **session UUID** with a 30-minute TTL.
+
+        **Idempotency:** Pass an `X-Idempotency-Key` header to prevent duplicate
+        sessions if the request is retried.
+
+        ### Step 2: Initiate Payment
+
+        ```
+        POST /api/v1/checkout/sessions/{uuid}/pay
+        ```
+
+        Choose a payment method and the server will:
+        - Re-validate stock availability
+        - Reserve the license keys
+        - Deduct wallet balance (if `use_wallet: true` or `payment_method: "wallet"`)
+        - Create a payment with the gateway
+
+        **Response varies by gateway:**
+
+        | Gateway    | Response field    | What to do                               |
+        |------------|-------------------|------------------------------------------|
+        | `stripe`   | `payment.client_secret`  | Use Stripe.js `confirmPayment()`  |
+        | `paypal`   | `payment.approval_url`   | Redirect user to PayPal           |
+        | `cryptomus`| `payment.payment_url`    | Redirect user to Cryptomus        |
+        | `wallet`   | (none — instant)         | Order is created immediately      |
+
+        ### Step 3: User Completes Payment
+
+        For **Stripe**: use `stripe.confirmPayment()` with the `client_secret`.
+        For **PayPal / Cryptomus**: redirect the user to the approval URL.
+        For **wallet**: skip this step — the order was already created.
+
+        After the user pays, the payment gateway sends a webhook to
+        `POST /api/v1/webhooks/payment/{gateway}` which triggers order creation
+        in the background.
+
+        ### Step 4: Poll for Result
+
+        ```
+        GET /api/v1/checkout/sessions/{uuid}/result
+        ```
+
+        Poll this endpoint every 2-3 seconds after the user returns from the
+        payment gateway. It returns `status: "paying"` while the webhook is
+        being processed, and `status: "completed"` with the full order object
+        once the order is created.
+
+        ## Next.js Example
+
+        ```javascript
+        // 1. Create session
+        const session = await api.post('/checkout/sessions', {
+          items: [{ seller_offer_id: 5, quantity: 1 }],
+          billing: { name: 'John', email: 'john@example.com', ... },
+          currency: 'USD',
+        });
+
+        // 2. Initiate payment
+        const payment = await api.post(`/checkout/sessions/${session.session_uuid}/pay`, {
+          payment_method: 'stripe',
+        });
+
+        // 3. Confirm with Stripe.js
+        await stripe.confirmPayment({ clientSecret: payment.payment.client_secret });
+
+        // 4. Poll for result
+        let result;
+        do {
+          await new Promise(r => setTimeout(r, 2000));
+          result = await api.get(`/checkout/sessions/${session.session_uuid}/result`);
+        } while (result.status !== 'completed');
+
+        // result.order.id, result.order.order_number, etc.
+        ```
+
+        ## Error Handling
+
+        | Error | Cause | What to do |
+        |-------|-------|------------|
+        | `422` "Insufficient stock" | Stock sold out between session creation and payment | Show stock error, re-create session |
+        | `422` "Checkout session has expired" | Session TTL (30 min) exceeded | Start a new checkout |
+        | `422` "Insufficient wallet balance" | Wallet pay attempted with low balance | Show balance, offer gateway payment |
+        | `422` "Invalid or expired coupon" | Coupon used up or expired | Remove coupon and retry |
+
+        ## Session Statuses
+
+        | Status      | Meaning |
+        |-------------|---------|
+        | `open`      | Session created, awaiting payment initiation |
+        | `paying`    | Payment initiated, waiting for gateway confirmation |
+        | `completed` | Payment confirmed, order created |
+        | `expired`   | Session TTL exceeded (keys released, wallet hold reverted) |
       subgroup: ''
       subgroupDescription: ''
-      title: 'Show Order Details'
-      description: 'Get full details of a specific order.'
+      title: 'Pay for checkout session'
+      description: |-
+        Select a payment method and initiate payment. Returns gateway-specific
+        data the frontend needs to complete the payment (client_secret for
+        Stripe, approval_url for PayPal, payment_url for Cryptomus).
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
-      order_id:
+      uuid:
         custom: []
-        name: order_id
-        description: 'The ID of the order.'
+        name: uuid
+        description: 'Session UUID.'
         required: true
-        example: 1
-        type: integer
+        example: 66529e01-d113-3473-8d6f-9e11e09332ea
+        type: string
         enumValues: []
         exampleWasSpecified: false
         nullable: false
         deprecated: false
-      order:
+    cleanUrlParameters:
+      uuid: 66529e01-d113-3473-8d6f-9e11e09332ea
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      payment_method:
         custom: []
-        name: order
-        description: 'Order ID.'
+        name: payment_method
+        description: 'Payment method code.'
         required: true
-        example: 101
-        type: integer
+        example: stripe
+        type: string
         enumValues: []
         exampleWasSpecified: true
         nullable: false
         deprecated: false
-    cleanUrlParameters:
-      order_id: 1
-      order: 101
-    queryParameters: []
-    cleanQueryParameters: []
-    bodyParameters: []
-    cleanBodyParameters: []
+      use_wallet:
+        custom: []
+        name: use_wallet
+        description: 'optional Use wallet for partial payment.'
+        required: false
+        example: false
+        type: boolean
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanBodyParameters:
+      payment_method: stripe
+      use_wallet: false
     fileParameters: []
-    responses:
-      -
-        custom: []
-        status: 200
-        content: |-
-          {
-           "success": true,
-           "data": {
-               "id": 101,
-               "status": "pending"
-           }
-          }
-        headers: []
-        description: ''
-      -
-        custom: []
-        status: 403
-        content: |-
-          {
-           "message": "This action is unauthorized."
-          }
-        headers: []
-        description: ''
+    responses: []
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -315,23 +624,150 @@ endpoints:
     custom: []
     httpMethods:
       - GET
-    uri: api/v1/my-orders
+    uri: 'api/v1/checkout/sessions/{uuid}/result'
     metadata:
       custom: []
-      groupName: Orders
-      groupDescription: ''
+      groupName: Checkout
+      groupDescription: |-
+
+        Payment-first checkout flow for purchasing digital products.
+        The cart lives entirely on the client; these endpoints validate items,
+        calculate totals, process payment, and create the order.
+
+        ## How Checkout Works
+
+        GameHub uses a **payment-first** model — the order is only created after
+        the payment gateway confirms the money was received. This eliminates
+        unpaid orders and stock-holding issues.
+
+        ## Integration Steps
+
+        ### Step 1: Create a Checkout Session
+
+        ```
+        POST /api/v1/checkout/sessions
+        ```
+
+        Send your cart items (offer IDs + quantities), billing address, currency,
+        and optional coupon code. The server validates stock, calculates taxes
+        and discounts, and returns a **session UUID** with a 30-minute TTL.
+
+        **Idempotency:** Pass an `X-Idempotency-Key` header to prevent duplicate
+        sessions if the request is retried.
+
+        ### Step 2: Initiate Payment
+
+        ```
+        POST /api/v1/checkout/sessions/{uuid}/pay
+        ```
+
+        Choose a payment method and the server will:
+        - Re-validate stock availability
+        - Reserve the license keys
+        - Deduct wallet balance (if `use_wallet: true` or `payment_method: "wallet"`)
+        - Create a payment with the gateway
+
+        **Response varies by gateway:**
+
+        | Gateway    | Response field    | What to do                               |
+        |------------|-------------------|------------------------------------------|
+        | `stripe`   | `payment.client_secret`  | Use Stripe.js `confirmPayment()`  |
+        | `paypal`   | `payment.approval_url`   | Redirect user to PayPal           |
+        | `cryptomus`| `payment.payment_url`    | Redirect user to Cryptomus        |
+        | `wallet`   | (none — instant)         | Order is created immediately      |
+
+        ### Step 3: User Completes Payment
+
+        For **Stripe**: use `stripe.confirmPayment()` with the `client_secret`.
+        For **PayPal / Cryptomus**: redirect the user to the approval URL.
+        For **wallet**: skip this step — the order was already created.
+
+        After the user pays, the payment gateway sends a webhook to
+        `POST /api/v1/webhooks/payment/{gateway}` which triggers order creation
+        in the background.
+
+        ### Step 4: Poll for Result
+
+        ```
+        GET /api/v1/checkout/sessions/{uuid}/result
+        ```
+
+        Poll this endpoint every 2-3 seconds after the user returns from the
+        payment gateway. It returns `status: "paying"` while the webhook is
+        being processed, and `status: "completed"` with the full order object
+        once the order is created.
+
+        ## Next.js Example
+
+        ```javascript
+        // 1. Create session
+        const session = await api.post('/checkout/sessions', {
+          items: [{ seller_offer_id: 5, quantity: 1 }],
+          billing: { name: 'John', email: 'john@example.com', ... },
+          currency: 'USD',
+        });
+
+        // 2. Initiate payment
+        const payment = await api.post(`/checkout/sessions/${session.session_uuid}/pay`, {
+          payment_method: 'stripe',
+        });
+
+        // 3. Confirm with Stripe.js
+        await stripe.confirmPayment({ clientSecret: payment.payment.client_secret });
+
+        // 4. Poll for result
+        let result;
+        do {
+          await new Promise(r => setTimeout(r, 2000));
+          result = await api.get(`/checkout/sessions/${session.session_uuid}/result`);
+        } while (result.status !== 'completed');
+
+        // result.order.id, result.order.order_number, etc.
+        ```
+
+        ## Error Handling
+
+        | Error | Cause | What to do |
+        |-------|-------|------------|
+        | `422` "Insufficient stock" | Stock sold out between session creation and payment | Show stock error, re-create session |
+        | `422` "Checkout session has expired" | Session TTL (30 min) exceeded | Start a new checkout |
+        | `422` "Insufficient wallet balance" | Wallet pay attempted with low balance | Show balance, offer gateway payment |
+        | `422` "Invalid or expired coupon" | Coupon used up or expired | Remove coupon and retry |
+
+        ## Session Statuses
+
+        | Status      | Meaning |
+        |-------------|---------|
+        | `open`      | Session created, awaiting payment initiation |
+        | `paying`    | Payment initiated, waiting for gateway confirmation |
+        | `completed` | Payment confirmed, order created |
+        | `expired`   | Session TTL exceeded (keys released, wallet hold reverted) |
       subgroup: ''
       subgroupDescription: ''
-      title: 'List User Orders'
-      description: 'Get a paginated list of orders for the authenticated user.'
+      title: 'Get checkout result'
+      description: |-
+        Check the status of a checkout session. Returns the created order
+        if payment is complete, or the current session status if still processing.
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
-    urlParameters: []
-    cleanUrlParameters: []
+    urlParameters:
+      uuid:
+        custom: []
+        name: uuid
+        description: 'Session UUID.'
+        required: true
+        example: 66529e01-d113-3473-8d6f-9e11e09332ea
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      uuid: 66529e01-d113-3473-8d6f-9e11e09332ea
     queryParameters: []
     cleanQueryParameters: []
     bodyParameters: []
@@ -340,22 +776,19 @@ endpoints:
     responses:
       -
         custom: []
-        status: 200
-        content: |-
-          {
-           "success": true,
-           "data": {
-               "current_page": 1,
-               "data": []
-           }
-          }
-        headers: []
-        description: ''
+        status: 401
+        content: '{"status":false,"message":"Unauthenticated."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+          access-control-allow-origin: '*'
+          access-control-expose-headers: Authorization
+        description: null
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

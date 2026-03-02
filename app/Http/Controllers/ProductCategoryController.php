@@ -27,12 +27,18 @@ class ProductCategoryController extends Controller
                     return '<span class="badge bg-' . $class . '">' . ucfirst($row->status) . '</span>';
                 })
                 ->addColumn('actions', function ($row) {
-                    $editUrl   = route('categories.edit', $row->id);
+                    $editUrl = route('categories.edit', $row->id);
                     $deleteUrl = route('categories.destroy', $row->id);
-
                     return '
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger btn-delete" data-url="'.$deleteUrl.'">Delete</button>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <a href="'.$editUrl.'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                <i class="ti tabler-pencil ti-xs"></i>
+                            </a>
+                            <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn"
+                                    data-url="'.$deleteUrl.'" title="Delete">
+                                <i class="ti tabler-trash ti-xs"></i>
+                            </button>
+                        </div>
                     ';
                 })
                 ->rawColumns(['checkbox', 'status_badge', 'actions'])
@@ -41,7 +47,9 @@ class ProductCategoryController extends Controller
         }
 
 
-        return view('content.products.category.index');
+        $stats = ['total' => ProductCategory::count()];
+
+        return view('content.products.category.index', compact('stats'));
     }
 
 
@@ -59,6 +67,7 @@ class ProductCategoryController extends Controller
      */
     public function store(Request $request)
     {
+
         try {
             $validated = $request->validate([
                 'name'        => 'required|string|max:255',
@@ -106,6 +115,7 @@ class ProductCategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $category = ProductCategory::findOrFail($id);
 
         try {
@@ -136,6 +146,7 @@ class ProductCategoryController extends Controller
      */
     public function destroy($id)
     {
+
         try {
             $category = ProductCategory::findOrFail($id);
             $category->delete();
@@ -149,6 +160,7 @@ class ProductCategoryController extends Controller
 
     public function bulkDelete(Request $request)
     {
+
         $ids = $request->input('ids');
 
         if(!$ids || !is_array($ids)){

@@ -18,12 +18,23 @@ class UserController extends Controller
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            $users = User::with('roles');
+            $query = User::with('roles');
 
-            return DataTables::of($users)
+            if ($request->filled('role')) {
+                $query->whereHas('roles', fn($q) => $q->where('name', $request->role));
+            }
+            if ($request->filled('status')) {
+                $query->where('is_active', $request->status === 'active');
+            }
+            if ($request->filled('verified')) {
+                if ($request->verified === 'yes') $query->whereNotNull('email_verified_at');
+                else $query->whereNull('email_verified_at');
+            }
+
+            return DataTables::of($query)
                 ->addColumn('checkbox', function ($user) {
-                    return $user->is_super_admin
-                        ? '<input type="checkbox" class="form-check-input" disabled>'
+                    return $user->isSuperAdmin()
+                        ? '<input type="checkbox" class="form-check-input" disabled title="Protected account">'
                         : '<input type="checkbox" class="form-check-input bulk-checkbox" value="'.$user->id.'">';
                 })
                 ->addColumn('roles', function ($user) {
@@ -45,36 +56,45 @@ class UserController extends Controller
 
                     return $roles ?: '<span class="badge bg-label-secondary">No Role</span>';
                 })
-                ->addColumn('actions', function ($user) {
-                    // if ($user->is_super_admin) {
-                    //     return '
-                    //         <button class="btn btn-sm btn-secondary" disabled>
-                    //             Protected
-                    //         </button>
-                    //     ';
-                    // }
-
-                    $editUrl   = route('users.edit', $user->id);
-                    $deleteUrl = route('users.destroy', $user->id);
-
-                    return '
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-primary me-1">
-                            Edit
-                        </a>
-                        <form action="'.$deleteUrl.'" method="POST" style="display:inline-block;" 
-                            onsubmit="return confirm(\'Are you sure you want to delete this user?\')">
-                            '.csrf_field().method_field('DELETE').'
-                            <button type="submit" class="btn btn-sm btn-danger">
-                                 Delete
-                            </button>
-                        </form>
-                    ';
+                ->addColumn('status_badge', function ($user) {
+                    if ($user->is_active) {
+                        return '<span class="badge bg-label-success">Active</span>';
+                    }
+                    return '<span class="badge bg-label-danger">Inactive</span>';
                 })
-                ->rawColumns(['checkbox','roles','actions'])
+                ->addColumn('actions', function ($user) {
+                    $editUrl   = route('users.edit', $user->id);
+                    $editBtn = '<a href="'.$editUrl.'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                            <i class="ti tabler-pencil ti-xs"></i>
+                        </a>';
+
+                    $deleteBtn = '';
+                    if (!$user->isSuperAdmin()) {
+                        $deleteUrl = route('users.destroy', $user->id);
+                        $deleteBtn = '<button type="button" class="btn btn-icon btn-sm btn-label-danger delete-user-btn" data-url="'.$deleteUrl.'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
+                        </button>';
+                    }
+
+                    return '<div class="d-flex align-items-center justify-content-center gap-1">'.$editBtn.$deleteBtn.'</div>';
+                })
+                ->rawColumns(['checkbox','roles','status_badge','actions'])
                 ->make(true);
         }
 
-        return view('content.users.index');
+        $stats = [
+            'total'     => User::count(),
+            'customers' => User::whereHas('roles', fn($q) => $q->where('name', 'customer'))->count(),
+            'sellers'   => User::where(function ($q) {
+                $q->whereHas('roles', fn($r) => $r->where('name', 'seller'))
+                  ->orWhereHas('seller');
+            })->count(),
+            'admins'    => User::whereHas('roles', fn($q) => $q->whereIn('name', ['admin', 'superadmin']))->count(),
+            'verified'  => User::whereNotNull('email_verified_at')->count(),
+            'active'    => User::where('is_active', true)->count(),
+        ];
+
+        return view('content.users.index', compact('stats'));
     }
 
 
@@ -84,7 +104,9 @@ class UserController extends Controller
      */
     public function create()
     {
-        $roles = Role::all();
+        $roles = auth()->user()->isSuperAdmin()
+            ? Role::all()
+            : Role::where('name', '!=', 'superadmin')->get();
         $permissions = Permission::all();
         return view('content.users.create', compact('roles','permissions'));
     }
@@ -95,27 +117,38 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|email|max:255|unique:users',
-            'password'    => 'required|string|min:8|confirmed',
-            'roles'       => 'nullable|array',
-            'roles.*'     => 'exists:roles,id',
-            'permissions' => 'nullable|array',
+            'name'          => 'required|string|max:255',
+            'username'      => 'nullable|string|max:255|unique:users,username',
+            'email'         => 'required|email|max:255|unique:users',
+            'password'      => 'required|string|min:8|confirmed',
+            'is_active'     => 'required|boolean',
+            'is_verified'   => 'required|boolean',
+            'email_verified'=> 'required|boolean',
+            'roles'         => 'nullable|array',
+            'roles.*'       => 'exists:roles,id',
+            'permissions'   => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
         ]);
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
+            'name'              => $request->name,
+            'username'          => $request->username,
+            'email'             => $request->email,
+            'password'          => $request->password,
+            'is_active'         => $request->boolean('is_active'),
+            'is_verified'       => $request->boolean('is_verified'),
+            'email_verified_at' => $request->boolean('email_verified') ? now() : null,
         ]);
 
-        // Assign roles
         if ($request->filled('roles')) {
-            $user->roles()->sync($request->roles);
+            $requestedRoles = $request->roles;
+            if (!auth()->user()->isSuperAdmin()) {
+                $superadminRoleId = Role::where('name', 'superadmin')->value('id');
+                $requestedRoles = array_filter($requestedRoles, fn($id) => (int) $id !== $superadminRoleId);
+            }
+            $user->roles()->sync($requestedRoles);
         }
 
-        // Assign user-specific permissions
         if ($request->filled('permissions')) {
             $user->permissions()->sync($request->permissions);
         }
@@ -127,11 +160,14 @@ class UserController extends Controller
     /**
      * Show edit form
      */
-   public function edit(User $user)
+    public function edit(User $user)
     {
-        $roles = Role::all();
+        $user->load(['roles', 'permissions', 'wallet', 'seller', 'profile', 'addresses']);
+        $roles = auth()->user()->isSuperAdmin()
+            ? Role::all()
+            : Role::where('name', '!=', 'superadmin')->get();
         $permissions = Permission::all();
-        return view('content.users.edit', compact('user','roles','permissions'));
+        return view('content.users.edit', compact('user', 'roles', 'permissions'));
     }
 
     /**
@@ -140,49 +176,61 @@ class UserController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name'          => 'required|string|max:255',
-            'email'         => 'required|email|max:255|unique:users,email,' . $user->id,
-            'password'      => 'nullable|string|min:8|confirmed',
-            'roles'         => 'nullable|array',
-            'roles.*'       => 'exists:roles,id',
-            'permissions'   => 'nullable|array',
-            'permissions.*' => 'exists:permissions,id',
+            'name'            => 'required|string|max:255',
+            'username'        => 'nullable|string|max:255|unique:users,username,' . $user->id,
+            'email'           => 'required|email|max:255|unique:users,email,' . $user->id,
+            'password'        => 'nullable|string|min:8|confirmed',
+            'is_active'       => 'required|boolean',
+            'is_verified'     => 'required|boolean',
+            'email_verified'  => 'required|boolean',
+            'roles'           => 'nullable|array',
+            'roles.*'         => 'exists:roles,id',
+            'permissions'     => 'nullable|array',
+            'permissions.*'   => 'exists:permissions,id',
         ]);
 
         $data = [
-            'name'  => $request->name,
-            'email' => $request->email,
+            'name'        => $request->name,
+            'username'    => $request->username,
+            'email'       => $request->email,
+            'is_active'   => $request->boolean('is_active'),
+            'is_verified' => $request->boolean('is_verified'),
         ];
 
+        if ($request->boolean('email_verified') && !$user->email_verified_at) {
+            $data['email_verified_at'] = now();
+        } elseif (!$request->boolean('email_verified')) {
+            $data['email_verified_at'] = null;
+        }
+
         if ($request->filled('password')) {
-            $data['password'] = Hash::make($request->password);
+            $data['password'] = $request->password;
         }
 
-        /**
-         * ✅ ONLY update flags if roles are submitted
-         */
-        if ($request->has('roles')) {
-            $roleNames = Role::whereIn('id', $request->roles)->pluck('name')->toArray();
+        if ($user->isSuperAdmin()) {
+            $superadminRoleId = Role::where('name', 'superadmin')->value('id');
+            $requestedRoles = $request->input('roles', []);
 
-            $data['is_super_admin'] = in_array('superadmin', $roleNames);
+            if (!in_array($superadminRoleId, $requestedRoles)) {
+                $requestedRoles[] = $superadminRoleId;
+            }
 
-            // ⚠️ USE THE CORRECT COLUMN NAME
-            $data['is_seller'] = in_array('seller', $roleNames);
-            // If your column is `is_selelr`, use:
-            // $data['is_selelr'] = in_array('seller', $roleNames);
-
-            $user->roles()->sync($request->roles);
+            $user->roles()->sync($requestedRoles);
+            $data['is_active'] = true;
+        } elseif ($request->has('roles')) {
+            $superadminRoleId = Role::where('name', 'superadmin')->value('id');
+            $requestedRoles = array_filter($request->roles, fn($id) => (int) $id !== $superadminRoleId);
+            $user->roles()->sync($requestedRoles);
+        } else {
+            $user->roles()->detach();
         }
 
-        // Sync permissions (optional)
-        if ($request->has('permissions')) {
-            $user->permissions()->sync($request->permissions);
-        }
+        $user->permissions()->sync($request->input('permissions', []));
 
         $user->update($data);
 
         return redirect()
-            ->route('users.index')
+            ->route('users.edit', $user->id)
             ->with('success', 'User updated successfully.');
     }
 
@@ -193,6 +241,10 @@ class UserController extends Controller
      */
     public function destroy(User $user)
     {
+        if ($user->isSuperAdmin()) {
+            return back()->with('error', 'Super Admin account cannot be deleted.');
+        }
+
         $user->delete();
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
@@ -202,7 +254,21 @@ class UserController extends Controller
      */
     public function bulkDelete(Request $request)
     {
+        $request->validate([
+            'ids'   => 'required|array|min:1',
+            'ids.*' => 'integer|exists:users,id',
+        ]);
+
         $ids = $request->ids;
+
+        $protectedCount = User::whereIn('id', $ids)
+            ->whereHas('roles', fn($q) => $q->where('name', 'superadmin'))
+            ->count();
+
+        if ($protectedCount > 0) {
+            return response()->json(['message' => 'Selection contains a Super Admin account which cannot be deleted.'], 403);
+        }
+
         User::whereIn('id', $ids)->delete();
 
         return response()->json(['message' => 'Selected users deleted successfully.']);
@@ -214,7 +280,7 @@ class UserController extends Controller
     {
         if ($request->ajax()) {
 
-            $customers = User::with('roles')
+            $customers = User::with(['roles', 'wallet'])
             ->whereHas('roles', function ($q) {
                 $q->where('name', 'customer');
             });
@@ -224,11 +290,12 @@ class UserController extends Controller
             return DataTables::of($customers)
 
                 ->addColumn('customer', function ($user) {
+                    $initials = collect(explode(' ', $user->name))->map(fn($w) => strtoupper($w[0] ?? ''))->take(2)->implode('');
                     return '
                         <div class="d-flex align-items-center gap-2">
-                            <img src="'.asset($user->avatar ?? 'assets/img/avatars/default.png').'"
-                                 class="rounded-circle"
-                                 width="40">
+                            <span class="avatar avatar-sm bg-label-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;font-size:.8rem;font-weight:600;">
+                                '.$initials.'
+                            </span>
                             <div>
                                 <strong>'.$user->name.'</strong><br>
                                 <small class="text-muted">'.$user->email.'</small>
@@ -276,10 +343,11 @@ class UserController extends Controller
 
                 ->addColumn('actions', function ($user) {
                     return '
-                        <a href="'.route('users.edit', $user).'"
-                           class="btn btn-sm btn-warning">
-                            Edit
-                        </a>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <a href="'.route('users.edit', $user).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                <i class="ti tabler-pencil ti-xs"></i>
+                            </a>
+                        </div>
                     ';
                 })
 

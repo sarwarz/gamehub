@@ -2,21 +2,23 @@
     <div class="app-brand demo">
         <a href="{{ route('dashboard') }}" class="app-brand-link">
             <span class="app-brand-logo demo">
+                @if(!empty($appSettings['logo']))
+                <img src="{{ asset($appSettings['logo']) }}" alt="{{ $appSettings['site_name'] ?? config('app.name') }}" style="height: 28px; width: auto;" class="app-brand-logo-light">
+                @if(!empty($appSettings['logo_dark']))
+                <img src="{{ asset($appSettings['logo_dark']) }}" alt="{{ $appSettings['site_name'] ?? config('app.name') }}" style="height: 28px; width: auto; display:none;" class="app-brand-logo-dark">
+                @endif
+                @else
                 <span class="text-primary">
                     <svg width="32" height="22" viewBox="0 0 32 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            fill-rule="evenodd"
-                            clip-rule="evenodd"
-                            d="M0.00172773 0V6.85398C0.00172773 6.85398 -0.133178 9.01207 1.98092 10.8388L13.6912 21.9964L19.7809 21.9181L18.8042 9.88248L16.4951 7.17289L9.23799 0H0.00172773Z"
-                            fill="currentColor"
-                        />
-                        <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd" d="M7.69824 16.4364L12.5199 3.23696L16.5541 7.25596L7.69824 16.4364Z" fill="#161616" />
-                        <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd" d="M8.07751 15.9175L13.9419 4.63989L16.5849 7.28475L8.07751 15.9175Z" fill="#161616" />
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.77295 16.3566L23.6563 0H32V6.88383C32 6.88383 31.8262 9.17836 30.6591 10.4057L19.7824 22H13.6938L7.77295 16.3566Z" fill="currentColor" />
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M0.00172773 0V6.85398C0.00172773 6.85398 -0.133178 9.01207 1.98092 10.8388L13.6912 21.9964L19.7809 21.9181L18.8042 9.88248L16.4951 7.17289L9.23799 0H0.00172773Z" fill="currentColor"/>
+                        <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd" d="M7.69824 16.4364L12.5199 3.23696L16.5541 7.25596L7.69824 16.4364Z" fill="#161616"/>
+                        <path opacity="0.06" fill-rule="evenodd" clip-rule="evenodd" d="M8.07751 15.9175L13.9419 4.63989L16.5849 7.28475L8.07751 15.9175Z" fill="#161616"/>
+                        <path fill-rule="evenodd" clip-rule="evenodd" d="M7.77295 16.3566L23.6563 0H32V6.88383C32 6.88383 31.8262 9.17836 30.6591 10.4057L19.7824 22H13.6938L7.77295 16.3566Z" fill="currentColor"/>
                     </svg>
                 </span>
+                @endif
             </span>
-            <span class="app-brand-text demo menu-text fw-bold ms-3">{{ config('app.name') }}</span>
+            <span class="app-brand-text demo menu-text fw-bold ms-3">{{ $appSettings['site_name'] ?? config('app.name') }}</span>
         </a>
 
         <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto">
@@ -41,6 +43,15 @@
     </li>
     @endif
 
+    @if(auth()->user()->hasPermission('reports') && Route::has('reports.index'))
+    <li class="menu-item {{ menuItemActive(['reports.*']) }}">
+        <a href="{{ route('reports.index') }}" class="menu-link">
+            <i class="menu-icon icon-base ti tabler-chart-bar"></i>
+            <div data-i18n="Reports & Analytics">Reports & Analytics</div>
+        </a>
+    </li>
+    @endif
+
 
      <!-- Products Attributes -->
     @if(
@@ -55,7 +66,7 @@
     )
     <li class="menu-item {{ menuItemActive([
         'categories.*','platforms.*','types.*',
-        'regions.*','languages.*','workson.*','developers.*','publishers.*, labels.*'
+        'regions.*','languages.*','workson.*','developers.*','publishers.*', 'labels.*'
     ], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
@@ -210,19 +221,17 @@
 
     <!-- Sellers -->
     @if(auth()->user()->hasPermission('sellers') && Route::has('sellers.index'))
-    <li class="menu-item {{ menuItemActive(['sellers.*'], 'open active') }}">
+    <li class="menu-item {{ menuItemActive(['sellers.*', 'seller-withdraws.*'], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-building-store"></i>
             <div data-i18n="Manage Sellers">Manage Sellers</div>
         </a>
         <ul class="menu-sub">
-            
+
             @if(auth()->user()->hasPermission('sellers') && Route::has('sellers.index'))
             <li class="menu-item {{ menuItemActive(['sellers.index']) }}">
-                <a href="{{ route('sellers.index') }}" class="menu-link">
-                    <div data-i18n="All Sellers">All Sellers</div>
-                </a>
+                <a href="{{ route('sellers.index') }}" class="menu-link">All Sellers</a>
             </li>
             @endif
 
@@ -233,18 +242,13 @@
             <li class="menu-item {{ menuItemActive(['sellers.suspended']) }}">
                 <a href="{{ route('sellers.suspended') }}" class="menu-link">Suspended Sellers</a>
             </li>
+
             <li class="menu-item {{ menuItemActive(['seller-withdraws.index']) }}">
                 <a href="{{ route('seller-withdraws.index') }}" class="menu-link">Seller Withdraw</a>
             </li>
 
             <li class="menu-item {{ menuItemActive(['seller-withdraws.pending']) }}">
                 <a href="{{ route('seller-withdraws.pending') }}" class="menu-link">Pending Withdraw</a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Withdraw Method">Withdraw Method</div>
-                </a>
             </li>
 
         </ul>
@@ -348,8 +352,8 @@
 
 
     <!-- Manage Website -->
-    @if(auth()->user()->hasPermission('slider'))
-    <li class="menu-item {{ menuItemActive(['slider.*'], 'open active') }}">
+    @if(auth()->user()->hasPermission('sliders'))
+    <li class="menu-item {{ menuItemActive(['sliders.*', 'menus.*'], 'open active') }}">
 
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-world"></i>
@@ -357,28 +361,143 @@
         </a>
         <ul class="menu-sub">
 
-            <li class="menu-item">
+            <li class="menu-item {{ menuItemActive(['sliders.*']) }}">
                 <a href="{{ route('sliders.index') }}" class="menu-link">
                     <div data-i18n="Slider">Slider</div>
                 </a>
             </li>
 
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Home Page">Home Page</div>
+            <li class="menu-item {{ menuItemActive(['menus.*']) }}">
+                <a href="{{ route('menus.index') }}" class="menu-link">
+                    <div data-i18n="Menus">Menus</div>
                 </a>
             </li>
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Shop Page">Shop Page</div>
+        </ul>
+    </li>
+    @endif
+
+
+    <!-- Pages -->
+    @if(auth()->user()->hasPermission('pages'))
+    <li class="menu-item {{ menuItemActive(['pages.*', 'faqs.*', 'static-pages.*'], 'open active') }}">
+
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ti tabler-layout-columns"></i>
+            <div data-i18n="Manage Pages">Manage Pages</div>
+        </a>
+        <ul class="menu-sub">
+
+            <li class="menu-item {{ menuItemActive(['pages.*']) }}">
+                <a href="{{ route('pages.index') }}" class="menu-link">
+                    <div data-i18n="Custom Page">Custom Page</div>
                 </a>
             </li>
 
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Footer">Footer</div>
+            <li class="menu-item {{ request()->is('dashboard/static-pages/about') ? 'active' : '' }}">
+                <a href="{{ route('static-pages.edit', 'about') }}" class="menu-link">
+                    <div data-i18n="About Us">About Us</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ request()->is('dashboard/static-pages/contact') ? 'active' : '' }}">
+                <a href="{{ route('static-pages.edit', 'contact') }}" class="menu-link">
+                    <div data-i18n="Contact Us">Contact Us</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['faqs.*']) }}">
+                <a href="{{ route('faqs.index') }}" class="menu-link">
+                    <div data-i18n="FAQ">FAQ</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ request()->is('dashboard/static-pages/privacy') ? 'active' : '' }}">
+                <a href="{{ route('static-pages.edit', 'privacy') }}" class="menu-link">
+                    <div data-i18n="Privacy Policy">Privacy Policy</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ request()->is('dashboard/static-pages/terms') ? 'active' : '' }}">
+                <a href="{{ route('static-pages.edit', 'terms') }}" class="menu-link">
+                    <div data-i18n="Terms & Conditions">Terms & Conditions</div>
+                </a>
+            </li>
+
+        </ul>
+    </li>
+    @endif
+
+    <!-- Blogs -->
+    @if(
+        auth()->user()->hasPermission('blogs') ||
+        auth()->user()->hasPermission('blog-categories') ||
+        auth()->user()->hasPermission('blog-comments')
+    )
+    <li class="menu-item {{ menuItemActive(['blogs.*', 'blog-categories.*', 'blog-comments.*'], 'open active') }}">
+
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ti tabler-notebook"></i>
+            <div data-i18n="Manage Blogs">Manage Blogs</div>
+        </a>
+
+        <ul class="menu-sub">
+
+            @if(auth()->user()->hasPermission('blog-categories'))
+            <li class="menu-item {{ menuItemActive(['blog-categories.*']) }}">
+                <a href="{{ route('blog-categories.index') }}" class="menu-link">
+                    <div data-i18n="Categories">Categories</div>
+                </a>
+            </li>
+            @endif
+
+            @if(auth()->user()->hasPermission('blogs'))
+            <li class="menu-item {{ menuItemActive(['blogs.index']) }}">
+                <a href="{{ route('blogs.index') }}" class="menu-link">
+                    <div data-i18n="All Blogs">All Blogs</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['blogs.popular']) }}">
+                <a href="{{ route('blogs.popular') }}" class="menu-link">
+                    <div data-i18n="Popular Blogs">Popular Blogs</div>
+                </a>
+            </li>
+            @endif
+
+            @if(auth()->user()->hasPermission('blog-comments'))
+            <li class="menu-item {{ menuItemActive(['blog-comments.*']) }}">
+                <a href="{{ route('blog-comments.index') }}" class="menu-link">
+                    <div data-i18n="Comments">Comments</div>
+                </a>
+            </li>
+            @endif
+
+        </ul>
+    </li>
+    @endif
+
+
+    <!-- Wallet Management -->
+    @if(auth()->user()->hasPermission('wallets'))
+    <li class="menu-item {{ menuItemActive(['wallets.*'], 'open active') }}">
+
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ti tabler-wallet"></i>
+            <div data-i18n="Wallet Management">Wallet Management</div>
+        </a>
+
+        <ul class="menu-sub">
+
+            <li class="menu-item {{ menuItemActive(['wallets.index']) }}">
+                <a href="{{ route('wallets.index') }}" class="menu-link">
+                    <div data-i18n="User Wallets">User Wallets</div>
+                </a>
+            </li>
+
+            <li class="menu-item {{ menuItemActive(['wallets.all.transactions']) }}">
+                <a href="{{ route('wallets.all.transactions') }}" class="menu-link">
+                    <div data-i18n="Transactions">Transactions</div>
                 </a>
             </li>
 
@@ -388,179 +507,105 @@
     @endif
 
 
-    <!-- Pages -->
-    <li class="menu-item">
-
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-layout-columns"></i>
-            <div data-i18n="Manage Pages">Manage Pages</div>
-        </a>
-        <ul class="menu-sub">
-
-            <li class="menu-item">
-                <a href="{{ route('pages.index') }}" class="menu-link">
-                    <div data-i18n="Custom Page">Custom Page</div>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="About Us">About Us</div>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Contact Us">Contact Us</div>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="FAQ">FAQ</div>
-                </a>
-            </li>
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Privacy Policy">Privacy Policy</div>
-                </a>
-            </li>
-            
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Terms & Conditions">Terms & Conditions</div>
-                </a>
-            </li>
-
-
-        </ul>
-    </li>
-
-    <!-- Blogs -->
-    <li class="menu-item {{ request()->routeIs('blog*') ? 'active open' : '' }}">
-
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-notebook"></i>
-            <div data-i18n="Manage Blogs">Manage Blogs</div>
-        </a>
-
-        <ul class="menu-sub">
-
-            <li class="menu-item {{ request()->routeIs('blog-categories.*') ? 'active' : '' }}">
-                <a href="{{ route('blog-categories.index') }}" class="menu-link">
-                    <div data-i18n="Categories">Categories</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ request()->routeIs('blogs.index') ? 'active' : '' }}">
-                <a href="{{ route('blogs.index') }}" class="menu-link">
-                    <div data-i18n="All Blogs">All Blogs</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ request()->routeIs('blogs.popular') ? 'active' : '' }}">
-                <a href="{{ route('blogs.popular') }}" class="menu-link">
-                    <div data-i18n="Popular Blogs">Popular Blogs</div>
-                </a>
-            </li>
-
-            <li class="menu-item {{ request()->routeIs('blog-comments.*') ? 'active' : '' }}">
-                <a href="{{ route('blog-comments.index') }}" class="menu-link">
-                    <div data-i18n="Comments">Comments</div>
-                </a>
-            </li>
-
-        </ul>
-    </li>
-
-
-    <!-- Wallet Management -->
-    <li class="menu-item
-        {{ request()->routeIs('wallets.*') || request()->routeIs('wallet-settings.*') ? 'active open' : '' }}">
-
-        <a href="javascript:void(0);" class="menu-link menu-toggle">
-            <i class="menu-icon icon-base ti tabler-wallet"></i>
-            <div data-i18n="Wallet Management">Wallet Management</div>
-        </a>
-
-        <ul class="menu-sub">
-
-            <!-- User Wallets -->
-            <li class="menu-item {{ request()->routeIs('wallets.index') ? 'active' : '' }}">
-                <a href="{{ route('wallets.index') }}" class="menu-link">
-                    <div data-i18n="User Wallets">User Wallets</div>
-                </a>
-            </li>
-
-            <!-- Transactions -->
-            <li class="menu-item {{ request()->routeIs('wallets.all.transactions') ? 'active' : '' }}">
-                <a href="{{ route('wallets.all.transactions') }}" class="menu-link">
-                    <div data-i18n="Transactions">Transactions</div>
-                </a>
-            </li>
-
-            <!-- Wallet Settings (Global) -->
-            <li class="menu-item {{ request()->routeIs('wallet-settings.*') ? 'active' : '' }}">
-                <a href="{{ route('wallet-settings.edit') }}" class="menu-link">
-                    <div data-i18n="Wallet Settings">Wallet Settings</div>
-                </a>
-            </li>
-
-        </ul>
-    </li>
-
-
-
 
     <!-- Support Tickets -->
-
-     <li class="menu-item">
-
+    @if(auth()->user()->hasPermission('support-tickets'))
+    <li class="menu-item {{ menuItemActive(['support-tickets.*', 'canned-responses.*', 'ticket-departments.*'], 'open active') }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-lifebuoy"></i>
             <div data-i18n="Support Tickets">Support Tickets</div>
         </a>
         <ul class="menu-sub">
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="All Ticket">All Ticket</div>
+            <li class="menu-item {{ menuItemActive(['support-tickets.index']) && !request('status') ? 'active' : '' }}">
+                <a href="{{ route('support-tickets.index') }}" class="menu-link">
+                    <div data-i18n="All Tickets">All Tickets</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
-                    <div data-i18n="Seller Ticket">Seller Ticket</div>
+            <li class="menu-item {{ request('status') === 'escalated' ? 'active' : '' }}">
+                <a href="{{ route('support-tickets.index', ['status' => 'escalated']) }}" class="menu-link">
+                    <div data-i18n="Escalated">Escalated</div>
                 </a>
             </li>
-
-
+            <li class="menu-item {{ menuItemActive(['ticket-departments.*']) }}">
+                <a href="{{ route('ticket-departments.index') }}" class="menu-link">
+                    <div data-i18n="Departments">Departments</div>
+                </a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['canned-responses.*']) }}">
+                <a href="{{ route('canned-responses.index') }}" class="menu-link">
+                    <div data-i18n="Canned Responses">Canned Responses</div>
+                </a>
+            </li>
         </ul>
     </li>
+    @endif
 
+
+    <!-- Affiliates -->
+    @if(auth()->user()->hasPermission('affiliates'))
+    <li class="menu-item {{ menuItemActive(['affiliates.*', 'affiliate-commissions.*', 'affiliate-withdrawals.*', 'affiliate-tiers.*'], 'open active') }}">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
+            <i class="menu-icon icon-base ti tabler-affiliate"></i>
+            <div data-i18n="Affiliates">Affiliates</div>
+        </a>
+        <ul class="menu-sub">
+            <li class="menu-item {{ menuItemActive(['affiliates.index']) }}">
+                <a href="{{ route('affiliates.index') }}" class="menu-link">
+                    <div data-i18n="All Affiliates">All Affiliates</div>
+                </a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['affiliates.pending']) }}">
+                <a href="{{ route('affiliates.pending') }}" class="menu-link">
+                    <div data-i18n="Pending">Pending Applications</div>
+                </a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['affiliate-commissions.*']) }}">
+                <a href="{{ route('affiliate-commissions.index') }}" class="menu-link">
+                    <div data-i18n="Commissions">Commissions</div>
+                </a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['affiliate-withdrawals.*']) }}">
+                <a href="{{ route('affiliate-withdrawals.index') }}" class="menu-link">
+                    <div data-i18n="Withdrawals">Withdrawals</div>
+                </a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['affiliate-tiers.*']) }}">
+                <a href="{{ route('affiliate-tiers.index') }}" class="menu-link">
+                    <div data-i18n="Tiers">Tiers</div>
+                </a>
+            </li>
+        </ul>
+    </li>
+    @endif
 
     <!-- Communications-->
-    <li class="menu-item">
-
+    @if(
+        auth()->user()->hasPermission('subscribers') ||
+        auth()->user()->hasPermission('contact-messages')
+    )
+    <li class="menu-item {{ menuItemActive(['subscribers.*', 'contact-messages.*'], 'open active') }}">
         <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-mail"></i>
             <div data-i18n="Communications">Communications</div>
         </a>
         <ul class="menu-sub">
-
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            @if(auth()->user()->hasPermission('subscribers'))
+            <li class="menu-item {{ menuItemActive(['subscribers.*']) }}">
+                <a href="{{ route('subscribers.index') }}" class="menu-link">
                     <div data-i18n="Subscribers">Subscribers</div>
                 </a>
             </li>
-            <li class="menu-item">
-                <a href="#" class="menu-link">
+            @endif
+            @if(auth()->user()->hasPermission('contact-messages'))
+            <li class="menu-item {{ menuItemActive(['contact-messages.*']) }}">
+                <a href="{{ route('contact-messages.index') }}" class="menu-link">
                     <div data-i18n="Contact Messages">Contact Messages</div>
                 </a>
             </li>
+            @endif
         </ul>
     </li>
+    @endif
 
 
 
@@ -622,14 +667,86 @@
     </li>
     @endif
 
-     <!-- Ecommerce -->
-    <li class="menu-item">
-
-        <a href="{{ route('settings.edit') }}" class="menu-link">
+     <!-- Settings -->
+    @if(auth()->user()->hasPermission('settings'))
+    <li class="menu-item {{ request()->routeIs('settings.*') ? 'open active' : '' }}">
+        <a href="javascript:void(0);" class="menu-link menu-toggle">
             <i class="menu-icon icon-base ti tabler-settings"></i>
             <div data-i18n="Settings">Settings</div>
         </a>
+        <ul class="menu-sub">
+            <li class="menu-item {{ menuItemActive(['settings.general']) }}">
+                <a href="{{ route('settings.general') }}" class="menu-link">General</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.branding']) }}">
+                <a href="{{ route('settings.branding') }}" class="menu-link">Branding</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.security']) }}">
+                <a href="{{ route('settings.security') }}" class="menu-link">Security</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.registration']) }}">
+                <a href="{{ route('settings.registration') }}" class="menu-link">Registration</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.store']) }}">
+                <a href="{{ route('settings.store') }}" class="menu-link">Store & Commerce</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.checkout']) }}">
+                <a href="{{ route('settings.checkout') }}" class="menu-link">Checkout</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.products']) }}">
+                <a href="{{ route('settings.products') }}" class="menu-link">Products</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.vendor']) }}">
+                <a href="{{ route('settings.vendor') }}" class="menu-link">Vendor / Seller</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.affiliate']) }}">
+                <a href="{{ route('settings.affiliate') }}" class="menu-link">Affiliate Program</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.refund-escrow']) }}">
+                <a href="{{ route('settings.refund-escrow') }}" class="menu-link">Refund & Escrow</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.reviews']) }}">
+                <a href="{{ route('settings.reviews') }}" class="menu-link">Reviews & Ratings</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.wallet']) }}">
+                <a href="{{ route('settings.wallet') }}" class="menu-link">Payment & Wallet</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.invoice']) }}">
+                <a href="{{ route('settings.invoice') }}" class="menu-link">Invoice</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.currency']) }}">
+                <a href="{{ route('settings.currency') }}" class="menu-link">Currency & Locale</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.email']) }}">
+                <a href="{{ route('settings.email') }}" class="menu-link">Email / SMTP</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.notifications']) }}">
+                <a href="{{ route('settings.notifications') }}" class="menu-link">Notifications</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.seo']) }}">
+                <a href="{{ route('settings.seo') }}" class="menu-link">SEO</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.social']) }}">
+                <a href="{{ route('settings.social') }}" class="menu-link">Social Links</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.legal']) }}">
+                <a href="{{ route('settings.legal') }}" class="menu-link">Legal Pages</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.website']) }}">
+                <a href="{{ route('settings.website') }}" class="menu-link">Website / CMS</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.api-integrations']) }}">
+                <a href="{{ route('settings.api-integrations') }}" class="menu-link">API & Integrations</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.maintenance']) }}">
+                <a href="{{ route('settings.maintenance') }}" class="menu-link">Maintenance</a>
+            </li>
+            <li class="menu-item {{ menuItemActive(['settings.ai']) }}">
+                <a href="{{ route('settings.ai') }}" class="menu-link">AI Configuration</a>
+            </li>
+        </ul>
     </li>
+    @endif
 
 
 </ul>

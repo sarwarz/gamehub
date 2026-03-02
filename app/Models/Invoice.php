@@ -25,9 +25,13 @@ class Invoice extends Model
     ];
 
     protected $casts = [
-        'issued_at' => 'date',
-        'paid_at'   => 'date',
-        'meta'      => 'array',
+        'subtotal'       => 'decimal:2',
+        'tax_total'      => 'decimal:2',
+        'discount_total' => 'decimal:2',
+        'grand_total'    => 'decimal:2',
+        'issued_at'      => 'date',
+        'paid_at'        => 'date',
+        'meta'           => 'array',
     ];
 
     /* ---------------------------

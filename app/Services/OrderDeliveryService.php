@@ -5,9 +5,10 @@ namespace App\Services;
 use App\Models\Order;
 use App\Models\OrderDelivery;
 use App\Models\OrderNote;
+use App\Models\Setting;
+use App\Events\OrderCompleted;
+use App\Services\SellerBalanceService;
 use Illuminate\Support\Facades\DB;
-use App\Mail\OrderDeliveredMail;
-use Illuminate\Support\Facades\Mail;
 use Throwable;
 
 class OrderDeliveryService
@@ -57,6 +58,15 @@ class OrderDeliveryService
                         'type' => 'system',
                         'is_visible_to_customer' => false,
                     ]);
+
+                    try {
+                        if (Setting::get('order_notifications', 'admin_on_delivery_failed', true)) {
+                            $admins = \App\Models\User::whereHas('roles', fn($q) => $q->whereIn('name', ['admin', 'superadmin']))->get();
+                            $admins->each(fn($a) => $a->notify(new \App\Notifications\DeliveryFailedNotification($order, 'admin', $e->getMessage())));
+                        }
+                    } catch (\Throwable $ex) {
+                        \Illuminate\Support\Facades\Log::warning('Delivery failed notification error: ' . $ex->getMessage());
+                    }
                 });
 
                 report($e);
@@ -113,28 +123,21 @@ class OrderDeliveryService
             return;
         }
 
-        
+        $order->update([
+            'status'       => 'completed',
+            'completed_at' => now(),
+        ]);
+
+        app(SellerBalanceService::class)->onOrderCompleted($order->id);
 
         $order->notes()->create([
-            'note' => 'Order auto-completed after successful delivery of all items.',
+            'note' => 'Order auto-completed after successful delivery of all items. Seller earnings released.',
             'type' => 'system',
             'is_visible_to_customer' => true,
         ]);
 
-
-        if (!$hasPendingItems) {
-
-            $order->update(['status' => 'completed']);
-
-            DB::afterCommit(function () use ($order) {
-                Mail::to(
-                    $order->addresses
-                        ->where('type', 'billing')
-                        ->first()?->email
-                )->queue(new OrderDeliveredMail($order));
-            });
-        }
-
-        
+        DB::afterCommit(function () use ($order) {
+            event(new OrderCompleted($order->fresh()));
+        });
     }
 }

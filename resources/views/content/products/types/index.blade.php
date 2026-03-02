@@ -1,34 +1,100 @@
 @extends('layouts.app')
 @section('title', 'Product Types')
 
+@push('page-css')
+<style>
+    .bulk-bar { background:#f0f2ff; border-radius:8px; animation:bulkSlide .3s ease; }
+    @keyframes bulkSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+</style>
+@endpush
+
 @section('content')
 <div class="app-ecommerce-types">
 
     @include('partials.alerts')
 
-    <div class="card p-2">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Product Types</h5>
-            <div>
-                <button class="btn btn-danger" id="bulk-delete" data-url="{{ route('types.bulk-delete') }}">
-                    <i class="menu-icon icon-base ti tabler-trash"></i> Delete Selected
-                </button>
-                <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTypeList">
-                    <i class="menu-icon icon-base ti tabler-plus"></i> Add Type
-                </button>
+    {{-- Page Header --}}
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1"><i class="ti tabler-box ti-md me-1 text-primary"></i> Product Types</h4>
+            <p class="text-muted mb-0">Manage product types and commission rates</p>
+        </div>
+        <button class="btn btn-primary" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTypeList">
+            <i class="ti tabler-plus ti-xs me-1"></i> Add Type
+        </button>
+    </div>
+
+    {{-- Stats Card --}}
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-primary">
+                            <i class="ti tabler-box fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['total']) }}</h5>
+                            <small class="text-muted">Total Types</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-{{ $commissionMode === 'product_type' ? 'success' : 'secondary' }}">
+                            <i class="ti tabler-percentage fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ $commissionMode === 'product_type' ? 'Per Type' : 'Fixed' }}</h5>
+                            <small class="text-muted">Commission Mode</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    @if($commissionMode !== 'product_type')
+    <div class="alert alert-warning d-flex align-items-center gap-2 mb-4">
+        <i class="ti tabler-info-circle ti-md"></i>
+        <div>Commission mode is set to <strong>Fixed</strong>. Per-type commission rates below are inactive. <a href="{{ route('settings.vendor') }}" class="fw-semibold">Change in Settings →</a></div>
+    </div>
+    @endif
+
+    {{-- Bulk Action Bar --}}
+    <div class="bulk-bar p-3 mb-3 d-none" id="bulk-bar">
+        <div class="d-flex align-items-center justify-content-between">
+            <span class="fw-semibold"><span id="bulk-count">0</span> type(s) selected</span>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-danger" id="bulk-delete-btn">
+                    <i class="ti tabler-trash ti-xs me-1"></i> Delete Selected
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="bulk-cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Main Card --}}
+    <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+            <div class="d-flex flex-wrap justify-content-between align-items-center row-gap-2">
+                <h5 class="card-title mb-0">All Types</h5>
+            </div>
+        </div>
         <div class="table-responsive">
-            <table class="table table-bordered" id="types-table">
-                <thead>
+            <table class="table table-hover align-middle mb-0" id="types-table" style="width:100%">
+                <thead class="table-light">
                     <tr>
-                        <th><input type="checkbox" class="form-check-input" id="select-all"></th>
+                        <th width="30"><input type="checkbox" class="form-check-input" id="select-all"></th>
                         <th>Name</th>
                         <th>Slug</th>
                         <th>Commission</th>
-                        <th>Status</th>
-                        <th width="200">Actions</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center" width="100">Actions</th>
                     </tr>
                 </thead>
             </table>
@@ -59,6 +125,11 @@
                 <div class="mb-3">
                     <label class="form-label">Commission (%)</label>
                     <input type="number" step="0.01" min="0" max="100" name="commission" class="form-control" placeholder="e.g. 10.00" required>
+                    @if($commissionMode !== 'product_type')
+                    <small class="text-warning">Commission mode is Fixed — this value won't be used until you switch to Per-type mode.</small>
+                    @else
+                    <small class="text-muted">This rate will apply to all products with this type.</small>
+                    @endif
                 </div>
 
                 <div class="mb-3">
@@ -81,18 +152,113 @@
 
 @push('page-js')
 <script>
-let table = $('#types-table').DataTable({
-    processing: true,
-    serverSide: true,
-    ajax: '{{ route('types.index') }}',
-    columns: [
-        { data: 'checkbox', orderable: false, searchable: false },
-        { data: 'name' },
-        { data: 'slug' },
-        { data: 'commission', name: 'commission' }, // ✅ show commission
-        { data: 'status_badge', orderable: false, searchable: false },
-        { data: 'actions', orderable: false, searchable: false }
-    ]
-});
+(function ($) {
+    'use strict';
+
+    const Page = {
+        table: null,
+
+        init() {
+            this.initDataTable();
+            this.bindEvents();
+        },
+
+        initDataTable() {
+            this.table = $('#types-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: '{{ route('types.index') }}',
+                order: [[1, 'asc']],
+                pageLength: 25,
+                columns: [
+                    { data: 'checkbox', orderable: false, searchable: false, className: 'pe-0' },
+                    { data: 'name', name: 'name' },
+                    { data: 'slug', name: 'slug' },
+                    { data: 'commission', name: 'commission' },
+                    { data: 'status_badge', orderable: false, searchable: false, className: 'text-center' },
+                    { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                language: {
+                    emptyTable: '<div class="py-4 text-center"><i class="ti tabler-box ti-xl text-muted mb-2 d-block"></i><span class="text-muted">No types found</span></div>'
+                }
+            });
+        },
+
+        bindEvents() {
+            $('#select-all').on('change', e => {
+                $('.bulk-checkbox').prop('checked', e.target.checked);
+                this.syncBulkBar();
+            });
+
+            $(document).on('change', '.bulk-checkbox', () => this.syncBulkBar());
+
+            $('#bulk-cancel-btn').on('click', () => {
+                $('#select-all').prop('checked', false);
+                $('.bulk-checkbox').prop('checked', false);
+                this.syncBulkBar();
+            });
+
+            $('#bulk-delete-btn').on('click', () => this.bulkDelete());
+
+            $(document).on('click', '.btn-delete', e => {
+                e.preventDefault();
+                const url = $(e.currentTarget).data('url');
+                Swal.fire({
+                    title: 'Delete Type?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                    buttonsStyling: false
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+                    $.ajax({
+                        url, type: 'DELETE', data: { _token: '{{ csrf_token() }}' },
+                        success: () => {
+                            this.table.ajax.reload(null, false);
+                            Swal.fire({ icon: 'success', title: 'Type deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                        },
+                        error: () => Swal.fire({ icon: 'error', title: 'Failed', timer: 1500, showConfirmButton: false })
+                    });
+                });
+            });
+        },
+
+        syncBulkBar() {
+            const count = $('.bulk-checkbox:checked').length;
+            $('#bulk-count').text(count);
+            $('#bulk-bar').toggleClass('d-none', count === 0);
+        },
+
+        bulkDelete() {
+            const ids = $('.bulk-checkbox:checked').map((_, el) => el.value).get();
+            if (!ids.length) return;
+
+            Swal.fire({
+                title: 'Delete Types?',
+                text: `${ids.length} type(s) will be permanently deleted.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete',
+                customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post('{{ route('types.bulk-delete') }}', { ids, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.table.ajax.reload(null, false);
+                        $('#select-all').prop('checked', false);
+                        this.syncBulkBar();
+                        Swal.fire({ icon: 'success', title: 'Types deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', timer: 1500, showConfirmButton: false }));
+            });
+        }
+    };
+
+    $(document).ready(() => Page.init());
+
+})(jQuery);
 </script>
 @endpush

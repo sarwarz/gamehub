@@ -41,6 +41,13 @@ class ProductController extends Controller
                     'publisher:id,name',
                 ]);
 
+            if ($request->filled('status')) {
+                $products->where('status', $request->status);
+            }
+            if ($request->filled('featured')) {
+                $products->where('is_featured', $request->featured === 'yes');
+            }
+
             /* ===============================
             | APPLY DYNAMIC FILTERS
             =============================== */
@@ -136,7 +143,15 @@ class ProductController extends Controller
             return $this->productDataTable($products);
         }
 
+        $stats = [
+            'total'    => Product::count(),
+            'active'   => Product::where('status', 'active')->count(),
+            'inactive' => Product::where('status', 'inactive')->count(),
+            'featured' => Product::where('is_featured', true)->count(),
+        ];
+
         return view('content.products.index', [
+            'stats'      => $stats,
             'categories' => ProductCategory::where('status', 'active')->get(),
             'platforms'  => ProductPlatform::where('status', 'active')->get(),
             'types'      => ProductType::where('status', 'active')->get(),
@@ -175,14 +190,25 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //  Validate
-         $validated = $request->validate([
+        $productSettings = \App\Models\Setting::group('product');
+        $requireDesc  = !empty($productSettings['require_product_description']);
+        $minDescLen   = (int) ($productSettings['min_description_length'] ?? 0);
+        $maxImages    = (int) ($productSettings['max_images_per_product'] ?? 10);
+        $maxImageSize = (int) (($productSettings['max_image_size_mb'] ?? 2) * 1024);
+        $allowedTypes = $productSettings['allowed_image_types'] ?? ['jpg', 'jpeg', 'png'];
+        if (is_string($allowedTypes)) $allowedTypes = explode(',', $allowedTypes);
+        $allowedTypes = array_map('trim', array_filter($allowedTypes));
+        $mimes = !empty($allowedTypes) ? implode(',', $allowedTypes) : 'jpg,jpeg,png';
+
+        $descRule = $requireDesc ? "required|string|min:{$minDescLen}" : 'nullable|string';
+
+        $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'slug'        => 'nullable|string|max:255|unique:products,slug',
             'sku'         => 'nullable|string|max:255|unique:products,sku',
-            'description' => 'nullable|string',
+            'short_description' => 'nullable|string|max:500',
+            'description' => $descRule,
 
-            // Many-to-many
             'category_ids'   => 'nullable|array',
             'category_ids.*' => 'exists:product_categories,id',
             'platform_ids'   => 'nullable|array',
@@ -200,9 +226,9 @@ class ProductController extends Controller
             'publisher_id'=> 'nullable|exists:product_publishers,id',
             'label_id'    => 'nullable|exists:product_labels,id',
 
-            // Media
-            'cover_image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'gallery.*'   => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'cover_image' => "nullable|image|mimes:{$mimes}|max:{$maxImageSize}",
+            'gallery'     => "nullable|array|max:{$maxImages}",
+            'gallery.*'   => "nullable|image|mimes:{$mimes}|max:{$maxImageSize}",
 
             'delivery_type' => 'required|in:instant,manual,email,link',
             'status'        => 'required|in:active,inactive',
@@ -337,13 +363,14 @@ class ProductController extends Controller
 
     public function update(Request $request, $id)
     {
+
         $product = Product::findOrFail($id);
 
         $validated = $request->validate([
             'title'       => 'required|string|max:255',
             'slug'        => 'nullable|string|max:255|unique:products,slug,' . $product->id,
             'sku'         => 'nullable|string|max:255|unique:products,sku,' . $product->id,
-            'short_description' => 'nullable|string',
+            'short_description' => 'nullable|string|max:500',
             'description' => 'nullable|string',
 
             // Relations
@@ -475,6 +502,7 @@ class ProductController extends Controller
      ====================================================== */
     public function destroy($id)
     {
+
         $product = Product::findOrFail($id);
 
         if ($product->image && file_exists(public_path($product->image))) {
@@ -510,6 +538,7 @@ class ProductController extends Controller
 
    public function bulkDelete(Request $request)
     {
+
         $ids = $request->input('ids');
 
         if (!is_array($ids) || empty($ids)) {
@@ -668,13 +697,14 @@ class ProductController extends Controller
             })
 
             ->addColumn('actions', function ($row) {
-                return '
-                    <a href="'.route('products.edit', $row->id).'" class="btn btn-sm btn-warning">Edit</a>
-                    <button class="btn btn-sm btn-danger btn-delete"
-                        data-url="'.route('products.destroy', $row->id).'">
-                        Delete
+                return '<div class="d-flex align-items-center justify-content-center gap-1">
+                    <a href="'.route('products.edit', $row->id).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                        <i class="ti tabler-pencil ti-xs"></i>
+                    </a>
+                    <button type="button" class="btn btn-icon btn-sm btn-label-danger btn-delete" data-url="'.route('products.destroy', $row->id).'" title="Delete">
+                        <i class="ti tabler-trash ti-xs"></i>
                     </button>
-                ';
+                </div>';
             })
 
             ->rawColumns(['checkbox', 'product_column', 'status_badge', 'actions'])

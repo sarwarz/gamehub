@@ -10,34 +10,31 @@ return new class extends Migration {
         Schema::create('wallet_transactions', function (Blueprint $table) {
             $table->id();
 
-            // Relations
             $table->foreignId('wallet_id')
                 ->constrained()
                 ->cascadeOnDelete();
 
-            // Amount
             $table->decimal('amount', 15, 2);
-
-            // credit | debit
             $table->enum('type', ['credit', 'debit']);
 
-            // Purpose
-            $table->string('source')->nullable(); 
-            // examples: order, refund, withdrawal, bonus, adjustment
+            $table->string('source')->nullable();
 
-            // Optional reference
             $table->unsignedBigInteger('reference_id')->nullable();
             $table->string('reference_type')->nullable();
-            // polymorphic-like without overhead
 
-            // Meta
             $table->string('description')->nullable();
+
+            $table->enum('status', ['pending', 'completed', 'failed'])
+                ->default('completed');
+
+            $table->decimal('balance_after', 15, 2)->nullable();
 
             $table->timestamps();
 
-            // Performance indexes
             $table->index(['wallet_id', 'type']);
             $table->index(['reference_id', 'reference_type']);
+            $table->index('status');
+            $table->index('source');
         });
     }
 

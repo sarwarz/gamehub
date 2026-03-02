@@ -14,19 +14,30 @@ class SellerEarning extends Model
         'commission',
         'net_amount',
         'status',
+        'escrow_expires_at',
+        'escrow_released_at',
     ];
 
     protected $casts = [
-        'gross_amount' => 'float',
-        'commission'   => 'float',
-        'net_amount'   => 'float',
+        'gross_amount'       => 'decimal:2',
+        'commission'         => 'decimal:2',
+        'net_amount'         => 'decimal:2',
+        'escrow_expires_at'  => 'datetime',
+        'escrow_released_at' => 'datetime',
     ];
 
-    /**
-     * Each earning belongs to a seller
-     */
     public function seller()
     {
         return $this->belongsTo(Seller::class);
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
+    }
+
+    public function orderItem()
+    {
+        return $this->belongsTo(OrderItem::class);
     }
 }

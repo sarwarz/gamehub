@@ -85,7 +85,15 @@ class SellerOfferController extends Controller
         | NORMAL PAGE LOAD
         |--------------------------------------------------------------------------
         */
+        $stats = [
+            'total'     => SellerOffer::count(),
+            'active'    => SellerOffer::where('status', 'active')->count(),
+            'inactive'  => SellerOffer::where('status', 'inactive')->count(),
+            'suspended' => SellerOffer::where('status', 'suspended')->count(),
+        ];
+
         return view('content.seller_offers.index', [
+            'stats'    => $stats,
             'sellers'  => Seller::select('id', 'store_name')->orderBy('store_name')->get(),
             'products' => Product::select('id', 'title')->orderBy('title')->get(),
         ]);
@@ -98,8 +106,10 @@ class SellerOfferController extends Controller
      */
     public function create()
     {
-        // You can preload products & sellers for dropdowns
-        return view('content.seller_offers.create');
+        return view('content.seller_offers.create', [
+            'products' => Product::active()->select('id', 'title')->orderBy('title')->get(),
+            'sellers'  => Seller::select('id', 'store_name')->orderBy('store_name')->get(),
+        ]);
     }
 
     /**
@@ -107,6 +117,7 @@ class SellerOfferController extends Controller
      */
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'seller_id'   => 'required|exists:sellers,id',
             'product_id'  => 'required|exists:products,id',
@@ -163,8 +174,13 @@ class SellerOfferController extends Controller
      */
     public function edit($id)
     {
-        $offer = SellerOffer::with('product')->findOrFail($id);
-        return view('content.seller_offers.edit', compact('offer'));
+        $offer = SellerOffer::with(['product.types', 'product.platforms', 'product.regions', 'product.languages', 'keys'])->findOrFail($id);
+
+        return view('content.seller_offers.edit', [
+            'offer'    => $offer,
+            'products' => Product::active()->select('id', 'title')->orderBy('title')->get(),
+            'sellers'  => Seller::select('id', 'store_name')->orderBy('store_name')->get(),
+        ]);
     }
 
     /**
@@ -172,6 +188,7 @@ class SellerOfferController extends Controller
      */
     public function update(Request $request, $id)
     {
+
         $offer = SellerOffer::findOrFail($id);
 
         $validated = $request->validate([
@@ -221,6 +238,7 @@ class SellerOfferController extends Controller
      */
     public function destroy($id)
     {
+
         SellerOffer::findOrFail($id)->delete();
         return response()->json(['success' => true]);
     }
@@ -240,6 +258,7 @@ class SellerOfferController extends Controller
 
     public function bulkDelete(Request $request)
     {
+
         $request->validate([
             'ids' => 'required|array'
         ]);
@@ -285,23 +304,21 @@ class SellerOfferController extends Controller
             )
 
             ->addColumn('seller', function ($o) {
-
                 $seller = $o->seller;
 
                 $avatar = $seller->logo
                     ? asset($seller->logo)
-                    : 'https://ui-avatars.com/api/?name='.urlencode($seller->store_name).'&background=0D8ABC&color=fff';
+                    : asset('assets/img/avatars/1.png');
 
                 return '
                     <div class="d-flex align-items-center">
                         <img src="'.$avatar.'"
-                            class="rounded-circle me-2"
-                            width="36" height="36"
-                            alt="Avatar">
-
+                            class="rounded-circle me-3"
+                            width="38" height="38"
+                            style="object-fit:cover">
                         <div class="lh-sm">
-                            <div class="fw-semibold">'.e($seller->store_name).'</div>
-                            <small class="text-muted">'.e($seller->email).'</small>
+                            <span class="fw-semibold">'.e($seller->store_name).'</span>
+                            <div class="text-muted small">'.e($seller->email).'</div>
                         </div>
                     </div>
                 ';
@@ -317,17 +334,16 @@ class SellerOfferController extends Controller
 
 
             ->addColumn('product', function ($row) {
-
                 $image = $row->product?->image
                     ? asset($row->product->image)
                     : asset('assets/img/default-product.png');
 
-
                 return '
                     <div class="d-flex align-items-center">
                         <img src="'.$image.'"
-                            class="rounded me-2" width="40" height="40">
-                        <span>'.e($row->product->title).'</span>
+                            class="rounded me-3" width="38" height="38"
+                            style="object-fit:cover">
+                        <span class="fw-semibold">'.e($row->product->title).'</span>
                     </div>
                 ';
             })
@@ -355,27 +371,34 @@ class SellerOfferController extends Controller
                 $map = [
                     'active'    => 'success',
                     'inactive'  => 'secondary',
+                    'draft'     => 'info',
                     'suspended' => 'danger',
                 ];
 
-                return '<span class="badge bg-'.$map[$o->status].'">'
+                $class = $map[$o->status] ?? 'secondary';
+
+                return '<span class="badge bg-label-'.$class.'">'
                     .ucfirst($o->status).
                 '</span>';
             })
 
             ->addColumn('actions', function ($offer) {
+                $toggleStatus = $offer->status === 'active' ? 'inactive' : 'active';
+                $toggleIcon = $offer->status === 'active' ? 'tabler-circle-x' : 'tabler-circle-check';
+                $toggleColor = $offer->status === 'active' ? 'btn-label-warning' : 'btn-label-success';
+                $toggleTitle = $offer->status === 'active' ? 'Deactivate' : 'Activate';
 
-
-                return view('partials.action-dropdown', [
-                    'editUrl'          => route('seller-offers.edit', $offer),
-                    'deleteId'         => $offer->id,
-
-                    'showStatusToggle' => true,
-                    'isActive'         => $offer->status === 'active',
-                    'toggleId'         => $offer->id,
-                ])->render();
-
-
+                return '<div class="d-flex align-items-center justify-content-center gap-1">
+                    <a href="'.route('seller-offers.edit', $offer).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                        <i class="ti tabler-pencil ti-xs"></i>
+                    </a>
+                    <button type="button" class="btn btn-icon btn-sm '.$toggleColor.' status-toggle-btn" data-id="'.$offer->id.'" data-status="'.$toggleStatus.'" title="'.$toggleTitle.'">
+                        <i class="ti '.$toggleIcon.' ti-xs"></i>
+                    </button>
+                    <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-id="'.$offer->id.'" title="Delete">
+                        <i class="ti tabler-trash ti-xs"></i>
+                    </button>
+                </div>';
             })
 
             ->rawColumns(['checkbox', 'seller', 'product', 'status_badge', 'actions'])

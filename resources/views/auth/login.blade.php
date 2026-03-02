@@ -46,6 +46,15 @@
               <h4 class="mb-1">Welcome to {{ config('app.name') }}! 👋</h4>
               <p class="mb-6">Please sign-in to your account and start the adventure</p>
 
+              @if ($errors->any())
+              <div class="alert alert-danger alert-dismissible mb-4" role="alert">
+                @foreach ($errors->all() as $error)
+                  <div>{{ $error }}</div>
+                @endforeach
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+              @endif
+
               <form id="formAuthentication" class="mb-4" action="{{ route('login') }}" method="post">
                 @csrf
                 <div class="mb-6 form-control-validation">

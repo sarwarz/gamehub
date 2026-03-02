@@ -34,8 +34,8 @@ class Currency extends Model
                     ->where('is_default', true)
                     ->update(['is_default' => false]);
 
-                // 🔁 Sync with settings table
                 Setting::set('general', 'currency', $currency->code);
+                Setting::set('general', 'currency_symbol', $currency->symbol ?: $currency->code);
 
 
                 app(\App\Services\CurrencyService::class)->clearCache();

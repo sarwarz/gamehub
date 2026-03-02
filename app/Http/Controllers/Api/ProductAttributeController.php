@@ -45,16 +45,21 @@ class ProductAttributeController extends Controller
      */
     public function index()
     {
-        return $this->successResponse([
-            'categories' => $this->categoriesData(),
-            'platforms'  => $this->platformsData(),
-            'types'      => $this->typesData(),
-            'regions'    => $this->regionsData(),
-            'languages'  => $this->languagesData(),
-            'works_on'   => $this->worksOnData(),
-            'developers' => $this->developersData(),
-            'publishers' => $this->publishersData(),
-        ], 'Product attributes fetched successfully');
+        try {
+            return $this->success([
+                'categories' => $this->categoriesData(),
+                'platforms'  => $this->platformsData(),
+                'types'      => $this->typesData(),
+                'regions'    => $this->regionsData(),
+                'languages'  => $this->languagesData(),
+                'works_on'   => $this->worksOnData(),
+                'developers' => $this->developersData(),
+                'publishers' => $this->publishersData(),
+            ], 'Product attributes fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch product attributes');
+        }
     }
 
     /**
@@ -67,63 +72,131 @@ class ProductAttributeController extends Controller
      */
     public function categories()
     {
-        return $this->successResponse($this->categoriesData());
+        try {
+            return $this->success($this->categoriesData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch categories');
+        }
     }
 
     /**
      * Get product platforms
+     *
+     * List all platforms (e.g. Windows, Steam) for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Windows","slug":"windows"}]}
      */
     public function platforms()
     {
-        return $this->successResponse($this->platformsData());
+        try {
+            return $this->success($this->platformsData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch platforms');
+        }
     }
 
     /**
      * Get product types
+     *
+     * List all product types (e.g. Retail, OEM) with commission. For filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Retail","slug":"retail","commission":10}]}
      */
     public function types()
     {
-        return $this->successResponse($this->typesData());
+        try {
+            return $this->success($this->typesData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch types');
+        }
     }
 
     /**
      * Get product regions
+     *
+     * List all regions (e.g. Global, EU) for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Global","slug":"global"}]}
      */
     public function regions()
     {
-        return $this->successResponse($this->regionsData());
+        try {
+            return $this->success($this->regionsData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch regions');
+        }
     }
 
     /**
      * Get product languages
+     *
+     * List all languages for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"English","slug":"en"}]}
      */
     public function languages()
     {
-        return $this->successResponse($this->languagesData());
+        try {
+            return $this->success($this->languagesData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch languages');
+        }
     }
 
     /**
      * Get supported operating systems
+     *
+     * List "works on" options (e.g. Windows 10, Windows 11) for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Windows 10","slug":"windows-10"}]}
      */
     public function worksOn()
     {
-        return $this->successResponse($this->worksOnData());
+        try {
+            return $this->success($this->worksOnData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch works-on options');
+        }
     }
 
     /**
      * Get product developers
+     *
+     * List all developers for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Microsoft","slug":"microsoft"}]}
      */
     public function developers()
     {
-        return $this->successResponse($this->developersData());
+        try {
+            return $this->success($this->developersData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch developers');
+        }
     }
 
     /**
      * Get product publishers
+     *
+     * List all publishers for filters and product creation.
+     *
+     * @response 200 {"status":true,"message":"Success","data":[{"id":1,"name":"Microsoft","slug":"microsoft"}]}
      */
     public function publishers()
     {
-        return $this->successResponse($this->publishersData());
+        try {
+            return $this->success($this->publishersData());
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch publishers');
+        }
     }
 
     /* -----------------------------
@@ -142,7 +215,7 @@ class ProductAttributeController extends Controller
 
     protected function typesData()
     {
-        return ProductType::select('id', 'name', 'slug', 'commission')->orderBy('name')->get();
+        return ProductType::select('id', 'name', 'slug')->orderBy('name')->get();
     }
 
     protected function regionsData()
@@ -168,18 +241,5 @@ class ProductAttributeController extends Controller
     protected function publishersData()
     {
         return ProductPublisher::select('id', 'name', 'slug')->orderBy('name')->get();
-    }
-
-    /* -----------------------------
-     | API Response Helper
-     |------------------------------*/
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
     }
 }

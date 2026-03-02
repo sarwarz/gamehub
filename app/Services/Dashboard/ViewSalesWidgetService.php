@@ -32,19 +32,22 @@ class ViewSalesWidgetService
                 ->sum('subtotal');
 
             return [
-                'title'  => 'Best seller of the month',
-                'amount' => $amount,
-                'cta'    => route('seller.sales'),
+                'title'           => 'Your sales this month',
+                'amount'          => $amount,
+                'formatted_amount'=> format_currency($amount),
+                'cta'             => route('orders.index'),
             ];
         }
 
-        // Admin fallback
+        $amount = Order::paid()
+            ->whereBetween('created_at', [$start, $end])
+            ->sum('total_amount');
+
         return [
-            'title'  => 'Total sales this month',
-            'amount' => Order::paid()
-                ->whereBetween('created_at', [$start, $end])
-                ->sum('total_amount'),
-            'cta' => route('orders.index'),
+            'title'            => 'Marketplace sales this month',
+            'amount'           => $amount,
+            'formatted_amount' => format_currency($amount),
+            'cta'              => route('orders.index'),
         ];
     }
 }

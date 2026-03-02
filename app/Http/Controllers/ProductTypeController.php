@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ProductType;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
@@ -27,23 +28,33 @@ class ProductTypeController extends Controller
                     .ucfirst($row->status).'</span>'
                 )
                 ->addColumn('actions', function ($row) {
-                    $editUrl   = route('types.edit', $row->id);
+                    $editUrl = route('types.edit', $row->id);
                     $deleteUrl = route('types.destroy', $row->id);
-
                     return '
-                        <a href="'.$editUrl.'" class="btn btn-sm btn-warning">Edit</a>
-                        <button class="btn btn-sm btn-danger btn-delete" data-url="'.$deleteUrl.'">Delete</button>
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            <a href="'.$editUrl.'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                                <i class="ti tabler-pencil ti-xs"></i>
+                            </a>
+                            <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn"
+                                    data-url="'.$deleteUrl.'" title="Delete">
+                                <i class="ti tabler-trash ti-xs"></i>
+                            </button>
+                        </div>
                     ';
                 })
                 ->rawColumns(['checkbox','commission','status_badge','actions'])
                 ->make(true);
         }
 
-        return view('content.products.types.index');
+        $stats = ['total' => ProductType::count()];
+        $commissionMode = Setting::get('vendor', 'commission_mode', 'fixed');
+
+        return view('content.products.types.index', compact('stats', 'commissionMode'));
     }
 
     public function store(Request $request)
     {
+
         $validated = $request->validate([
             'name'       => 'required|string|max:255',
             'slug'       => 'nullable|string|max:255|unique:product_types,slug',
@@ -63,11 +74,13 @@ class ProductTypeController extends Controller
     public function edit($id)
     {
         $type = ProductType::findOrFail($id);
-        return view('content.products.types.edit', compact('type'));
+        $commissionMode = Setting::get('vendor', 'commission_mode', 'fixed');
+        return view('content.products.types.edit', compact('type', 'commissionMode'));
     }
 
     public function update(Request $request, $id)
     {
+
         $type = ProductType::findOrFail($id);
 
         $validated = $request->validate([
@@ -84,6 +97,7 @@ class ProductTypeController extends Controller
 
     public function destroy($id)
     {
+
         $type = ProductType::findOrFail($id);
         $type->delete();
 
@@ -92,6 +106,7 @@ class ProductTypeController extends Controller
 
     public function bulkDelete(Request $request)
     {
+
         $ids = $request->input('ids');
 
         if (!$ids || !is_array($ids)) {

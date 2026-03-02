@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('seller_earnings', function (Blueprint $table) {
@@ -21,15 +18,15 @@ return new class extends Migration
             $table->decimal('commission', 12, 2);
             $table->decimal('net_amount', 12, 2);
 
-            $table->enum('status', ['pending', 'available', 'paid'])->default('pending');
+            $table->enum('status', ['pending', 'held', 'available', 'paid'])->default('pending');
+            $table->timestamp('escrow_expires_at')->nullable();
+            $table->timestamp('escrow_released_at')->nullable();
+            $table->timestamp('balance_credited_at')->nullable();
+
             $table->timestamps();
         });
-
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('seller_earnings');

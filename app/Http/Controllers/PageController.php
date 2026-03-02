@@ -18,6 +18,10 @@ class PageController extends Controller
         if ($request->ajax()) {
             $pages = Page::query();
 
+            if ($request->filled('status')) {
+                $pages->where('is_active', $request->status === 'active');
+            }
+
             return DataTables::of($pages)
                 ->addColumn('checkbox', fn ($page) =>
                     '<input type="checkbox" class="row-checkbox" value="'.$page->id.'">')
@@ -38,17 +42,27 @@ class PageController extends Controller
                 )
 
                 ->addColumn('actions', fn ($page) => '
-                    <a href="'.route('pages.edit', $page).'"
-                       class="btn btn-sm btn-warning">Edit</a>
-                    <button class="btn btn-sm btn-danger delete-btn"
-                            data-id="'.$page->id.'">Delete</button>
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                        <a href="'.route('pages.edit', $page).'" class="btn btn-icon btn-sm btn-label-primary" title="Edit">
+                            <i class="ti tabler-pencil ti-xs"></i>
+                        </a>
+                        <button type="button" class="btn btn-icon btn-sm btn-label-danger delete-btn" data-id="'.$page->id.'" title="Delete">
+                            <i class="ti tabler-trash ti-xs"></i>
+                        </button>
+                    </div>
                 ')
 
                 ->rawColumns(['checkbox', 'title_column', 'menu', 'status', 'actions'])
                 ->make(true);
         }
 
-        return view('content.pages.index');
+        $stats = [
+            'total'     => Page::count(),
+            'published' => Page::where('is_active', true)->count(),
+            'draft'     => Page::where('is_active', false)->count(),
+        ];
+
+        return view('content.pages.index', compact('stats'));
     }
 
     /**
@@ -64,6 +78,7 @@ class PageController extends Controller
      */
     public function store(Request $request)
     {
+
         $data = $request->validate([
             'title'            => 'required|string|max:255',
             'slug'             => 'nullable|string|max:255|unique:pages,slug',
@@ -104,6 +119,7 @@ class PageController extends Controller
      */
     public function update(Request $request, Page $page)
     {
+
         $data = $request->validate([
             'title'            => 'required|string|max:255',
             'slug'             => 'nullable|string|max:255|unique:pages,slug,' . $page->id,
@@ -130,7 +146,7 @@ class PageController extends Controller
 
         $page->update($data);
 
-        return redirect()->route('pages.index')
+        return redirect()->route('pages.edit', $page)
             ->with('success', 'Page updated successfully');
     }
 
@@ -139,6 +155,7 @@ class PageController extends Controller
      */
     public function destroy(Page $page)
     {
+
         if ($page->featured_image) {
             Storage::disk('public')->delete($page->featured_image);
         }
@@ -153,6 +170,7 @@ class PageController extends Controller
      */
     public function bulkDelete(Request $request)
     {
+
         Page::whereIn('id', $request->ids)->delete();
 
         return response()->json(['message' => 'Pages deleted']);

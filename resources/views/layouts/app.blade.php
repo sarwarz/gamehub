@@ -1,9 +1,13 @@
 <!doctype html>
 
+@php
+    $localeRtl = (bool) \App\Models\Setting::get('currency_locale', 'rtl_enabled', false);
+    $localeLang = \App\Models\Setting::get('currency_locale', 'default_language', 'en');
+@endphp
 <html
-  lang="en"
+  lang="{{ $localeLang }}"
   class=" layout-navbar-fixed layout-menu-fixed layout-compact "
-  dir="ltr"
+  dir="{{ $localeRtl ? 'rtl' : 'ltr' }}"
   data-skin="default"
   data-bs-theme="light"
   data-assets-path="assets/"
@@ -14,13 +18,27 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>@yield('title') | {{ config('app.name') }}</title>
+    <title>@yield('title') | {{ $appSettings['site_name'] ?? config('app.name') }}</title>
 
     <meta name="description" content="" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Favicon -->
+    @if(!empty($appSettings['favicon']))
+    <link rel="icon" type="image/x-icon" href="{{ asset($appSettings['favicon']) }}" />
+    @else
     <link rel="icon" type="image/x-icon" href="{{ asset('assets/img/favicon/favicon.ico') }}" />
+    @endif
+
+    <!-- Dynamic Brand Colors -->
+    <style>
+    :root {
+        --bs-primary: {{ $appSettings['primary_color'] ?? '#7367f0' }};
+        --bs-primary-rgb: {{ implode(',', array_map('hexdec', str_split(ltrim($appSettings['primary_color'] ?? '#7367f0', '#'), 2))) }};
+        --bs-secondary: {{ $appSettings['secondary_color'] ?? '#a8aaae' }};
+        --bs-secondary-rgb: {{ implode(',', array_map('hexdec', str_split(ltrim($appSettings['secondary_color'] ?? '#a8aaae', '#'), 2))) }};
+    }
+    </style>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -55,6 +73,7 @@
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-bs5/datatables.bootstrap5.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-responsive-bs5/responsive.bootstrap5.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/datatables-buttons-bs5/buttons.bootstrap5.css') }}" />
+    <link rel="stylesheet" href="{{ asset('assets/vendor/css/pages/app-datatables.css') }}" />
 
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/select2/select2.css') }}" />
     <link rel="stylesheet" href="{{ asset('assets/vendor/libs/@form-validation/form-validation.css') }}" />
@@ -67,6 +86,50 @@
 
     @stack('page-css');
 
+    <style>
+    @keyframes bellRing {
+        0%   { transform: rotate(0); }
+        15%  { transform: rotate(14deg); }
+        30%  { transform: rotate(-14deg); }
+        45%  { transform: rotate(10deg); }
+        60%  { transform: rotate(-10deg); }
+        75%  { transform: rotate(4deg); }
+        100% { transform: rotate(0); }
+    }
+    .bell-ring { animation: bellRing 0.8s ease-in-out; transform-origin: top center; }
+    </style>
+
+    @unless(auth()->check() && auth()->user()->canDelete())
+    <style>
+        body.no-delete-permission [title="Delete"],
+        body.no-delete-permission .btn-delete,
+        body.no-delete-permission .btn-bulk-delete,
+        body.no-delete-permission .bulk-delete-btn,
+        body.no-delete-permission .delete-btn,
+        body.no-delete-permission .delete-user-btn,
+        body.no-delete-permission .btn-delete-tax,
+        body.no-delete-permission [id="bulk-delete-btn"],
+        body.no-delete-permission [id="bulk-delete"],
+        body.no-delete-permission [id="btn-delete-permission"],
+        body.no-delete-permission [id="btn-delete-role"],
+        body.no-delete-permission [id="btn-delete-seller"],
+        body.no-delete-permission [data-action="delete"],
+        body.no-delete-permission .card.border-danger:has([class*="tabler-alert-triangle"]) { display: none !important; }
+    </style>
+    @endunless
+
+    @php
+        $seoGA = \App\Models\Setting::get('seo', 'google_analytics', '');
+        $seoHeadScripts = \App\Models\Setting::get('seo', 'head_scripts', '');
+    @endphp
+    @if(!empty($seoGA))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $seoGA }}"></script>
+    <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','{{ $seoGA }}');</script>
+    @endif
+    @if(!empty($seoHeadScripts))
+    {!! $seoHeadScripts !!}
+    @endif
+
     <!-- Helpers -->
     <script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
     <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
@@ -76,7 +139,7 @@
     <script src="{{ asset('assets/js/config.js') }}"></script>
   </head>
 
-  <body>
+  <body @unless(auth()->check() && auth()->user()->canDelete()) class="no-delete-permission" @endunless>
     <!-- Layout wrapper -->
     <div class="layout-wrapper layout-content-navbar  ">
       <div class="layout-container">
@@ -164,8 +227,8 @@
      <script src="{{ asset('assets/js/forms-pickers.js') }}"></script>
 
     <!-- Page JS -->
-    <script src="{{ asset('assets/js/app-ecommerce-dashboard.js') }}"></script>
     <script>
+    window._canDelete = {{ auth()->check() && auth()->user()->canDelete() ? 'true' : 'false' }};
     $(document).ready(function() {
             $('.select2').select2({
                 placeholder: "-- Select Option --",
@@ -175,7 +238,9 @@
         });
     </script>
 	@stack('page-js');
-    
+
+    <script src="{{ asset('assets/js/header-notifications.js') }}"></script>
+
     <script>
       // ===============================
       // Global Delete Handlers with SweetAlert2

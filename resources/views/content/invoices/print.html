@@ -3,189 +3,232 @@
 <head>
 <meta charset="utf-8">
 <title>Invoice #{{invoice_number}}</title>
-
 <style>
-@page {
-  margin: 30px;
-}
+@page { margin: 25mm 20mm; }
+
+* { box-sizing: border-box; }
 
 body {
-  margin: 0;
-  padding: 0;
-  font-family: DejaVu Sans, sans-serif;
-  font-size: 12px;
-  color: #111;
-  background: #ffffff;
+  margin: 0; padding: 0;
+  font-family: 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 12px; line-height: 1.5;
+  color: #2d3748; background: #fff;
 }
 
-h2 {
-  margin: 0;
-  font-size: 18px;
+h1, h2, h3, p { margin: 0; }
+
+.container { max-width: 800px; margin: 0 auto; padding: 0 10px; }
+
+/* Header band */
+.header-band {
+  background: #696cff;
+  color: #fff;
+  padding: 28px 30px;
+  border-radius: 8px;
+  margin-bottom: 30px;
+}
+.header-band table { width: 100%; }
+.header-band td { vertical-align: top; }
+.brand-name { font-size: 22px; font-weight: 700; letter-spacing: .5px; }
+.brand-subtitle { font-size: 11px; opacity: .85; margin-top: 4px; }
+.inv-title { font-size: 26px; font-weight: 700; text-align: right; letter-spacing: 1px; }
+.inv-meta { font-size: 11px; text-align: right; margin-top: 6px; opacity: .9; }
+
+/* Section */
+.section { margin-bottom: 24px; }
+.section-title {
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 1px;
+  color: #696cff; margin-bottom: 8px;
+  border-bottom: 2px solid #696cff;
+  padding-bottom: 4px; display: inline-block;
 }
 
-p {
-  margin: 0 0 5px 0;
+/* Addresses */
+.addr-table { width: 100%; }
+.addr-table td { vertical-align: top; width: 50%; padding-right: 20px; }
+.addr-name { font-size: 14px; font-weight: 700; color: #1a202c; margin-bottom: 4px; }
+.addr-line { font-size: 11px; color: #4a5568; line-height: 1.7; }
+
+/* Items table */
+.items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.items-table thead th {
+  background: #f7f7f9; color: #566a7f;
+  font-size: 10px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .8px;
+  padding: 10px 12px; border-bottom: 2px solid #e2e8f0;
+}
+.items-table tbody td {
+  padding: 10px 12px; border-bottom: 1px solid #edf2f7;
+  font-size: 12px; color: #2d3748;
+}
+.items-table tbody tr:last-child td { border-bottom: none; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.fw-bold { font-weight: 700; }
+
+/* Totals */
+.totals-wrapper { display: flex; justify-content: flex-end; }
+.totals-table { width: 280px; border-collapse: collapse; }
+.totals-table td { padding: 6px 0; font-size: 12px; }
+.totals-table .sep td { border-top: 2px solid #696cff; padding-top: 10px; }
+.totals-table .total-label { font-size: 14px; font-weight: 700; color: #1a202c; }
+.totals-table .total-value { font-size: 16px; font-weight: 700; color: #696cff; text-align: right; }
+.totals-table .sub-label { color: #718096; }
+.totals-table .sub-value { text-align: right; color: #2d3748; }
+
+/* Status badge */
+.status-badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 4px; font-size: 10px;
+  font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase;
+}
+.status-paid { background: #e8faec; color: #28a745; }
+.status-issued { background: #e8f4fd; color: #03a9f4; }
+.status-draft { background: #f0f0f0; color: #6c757d; }
+.status-cancelled { background: #fde8e8; color: #dc3545; }
+
+/* Footer */
+.footer {
+  margin-top: 30px; padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 10px; color: #a0aec0;
+}
+.footer table { width: 100%; }
+.footer td { vertical-align: top; }
+.footer .note-text { color: #718096; font-style: italic; }
+
+/* Watermark for paid */
+.paid-stamp {
+  position: fixed; top: 45%; left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 100px; font-weight: 900;
+  color: rgba(40, 167, 69, 0.06);
+  letter-spacing: 10px; text-transform: uppercase;
+  pointer-events: none; z-index: 0;
 }
 
-.divider {
-  border-top: 1px solid #dddddd;
-  margin: 20px 0;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  background: #f3f4f6;
-  text-align: left;
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-}
-
-td {
-  padding: 8px;
-  border-bottom: 1px solid #ddd;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.no-border td {
-  border: none;
-}
-
-.total-row td {
-  font-weight: bold;
-  border-top: 2px solid #111;
-}
-
-.note {
-  font-size: 11px;
-  color: #555;
+@media print {
+  body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  .no-print { display: none !important; }
 }
 </style>
-
-<!-- AUTO PRINT -->
-<script>
-  window.onload = function () {
-    window.print();
-  };
-</script>
+<script>window.onload = function(){ window.print(); };</script>
 </head>
-
 <body>
 
-<!-- HEADER -->
-<table class="no-border">
-  <tr>
-    <td width="60%" valign="top">
-      <strong style="font-size:18px;">Vuexy</strong><br>
-      Office 149, 450 South Brand Brooklyn<br>
-      San Diego County, CA 91905, USA<br>
-      +1 (123) 456 7891
-    </td>
-    <td width="40%" valign="top" align="right">
-      <h2>INVOICE</h2>
-      <strong>#{{invoice_number}}</strong><br>
-      Issued: {{issued_date}}<br>
-      Due: {{due_date}}
-    </td>
-  </tr>
-</table>
+{{paid_watermark}}
 
-<div class="divider"></div>
+<div class="container">
 
-<!-- BILLING + SUMMARY -->
-<table class="no-border">
-  <tr>
-    <td width="50%" valign="top">
-      <strong>Invoice To</strong><br>
-      {{customer_name}}<br>
-      {{customer_company}}<br>
-      {{customer_address}}<br>
-      {{customer_phone}}<br>
-      {{customer_email}}
-    </td>
+  <!-- HEADER BAND -->
+  <div class="header-band">
+    <table>
+      <tr>
+        <td width="55%">
+          <div class="brand-name">{{app_name}}</div>
+          <div class="brand-subtitle">{{app_address}}</div>
+          {{tax_number}}
+        </td>
+        <td width="45%">
+          <div class="inv-title">INVOICE</div>
+          <div class="inv-meta">
+            <strong>#{{invoice_number}}</strong><br>
+            Issued: {{issued_date}}<br>
+            {{due_date_line}}
+            Status: <span class="status-badge status-{{status_class}}">{{status_label}}</span>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
 
-    <td width="50%" valign="top">
-      <table>
+  <!-- ADDRESSES -->
+  <div class="section">
+    <table class="addr-table">
+      <tr>
+        <td>
+          <div class="section-title">Invoice To</div>
+          <div class="addr-name">{{customer_name}}</div>
+          <div class="addr-line">
+            {{customer_address_lines}}
+          </div>
+        </td>
+        <td>
+          <div class="section-title">Order Details</div>
+          <div class="addr-line">
+            <strong>Order:</strong> #{{order_number}}<br>
+            <strong>Payment:</strong> {{payment_method}}<br>
+            <strong>Currency:</strong> {{currency}}
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="section">
+    <div class="section-title">Items</div>
+    <table class="items-table">
+      <thead>
         <tr>
-          <td>Subtotal</td>
-          <td class="text-right">{{subtotal}}</td>
+          <th width="5%" class="text-center">#</th>
+          <th width="45%">Item</th>
+          <th width="18%" class="text-right">Unit Price</th>
+          <th width="12%" class="text-center">Qty</th>
+          <th width="20%" class="text-right">Total</th>
         </tr>
-        <tr>
-          <td>Discount</td>
-          <td class="text-right">-{{discount}}</td>
-        </tr>
-        <tr>
-          <td>Tax</td>
-          <td class="text-right">{{tax}}</td>
-        </tr>
-        <tr class="total-row">
-          <td>Total</td>
-          <td class="text-right">{{grand_total}}</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+      </thead>
+      <tbody>
+        {{items}}
+      </tbody>
+    </table>
+  </div>
 
-<div class="divider"></div>
-
-<!-- ITEMS -->
-<table>
-  <thead>
+  <!-- TOTALS -->
+  <table style="width:100%">
     <tr>
-      <th width="25%">Item</th>
-      <th width="35%">Description</th>
-      <th width="15%">Cost</th>
-      <th width="10%">Qty</th>
-      <th width="15%" class="text-right">Price</th>
+      <td width="60%" valign="top" style="padding-top:6px">
+        {{note_block}}
+      </td>
+      <td width="40%" valign="top">
+        <table class="totals-table">
+          <tr>
+            <td class="sub-label">Subtotal</td>
+            <td class="sub-value">{{subtotal}}</td>
+          </tr>
+          <tr>
+            <td class="sub-label">Discount</td>
+            <td class="sub-value">-{{discount}}</td>
+          </tr>
+          <tr>
+            <td class="sub-label">Tax</td>
+            <td class="sub-value">{{tax}}</td>
+          </tr>
+          <tr class="sep">
+            <td class="total-label">Total Due</td>
+            <td class="total-value">{{grand_total}}</td>
+          </tr>
+        </table>
+      </td>
     </tr>
-  </thead>
-  <tbody>
-    {{items}}
-  </tbody>
-</table>
+  </table>
 
-<!-- TOTALS RIGHT -->
-<table class="no-border" style="margin-top:20px;">
-  <tr>
-    <td width="70%"></td>
-    <td width="30%">
-      <table>
-        <tr>
-          <td>Subtotal</td>
-          <td class="text-right">{{subtotal}}</td>
-        </tr>
-        <tr>
-          <td>Discount</td>
-          <td class="text-right">-{{discount}}</td>
-        </tr>
-        <tr>
-          <td>Tax</td>
-          <td class="text-right">{{tax}}</td>
-        </tr>
-        <tr class="total-row">
-          <td>Total</td>
-          <td class="text-right">{{grand_total}}</td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+  <!-- FOOTER -->
+  <div class="footer">
+    <table>
+      <tr>
+        <td width="50%">
+          Generated by <strong>{{salesperson}}</strong>
+        </td>
+        <td width="50%" style="text-align:right">
+          {{footer_message}}
+        </td>
+      </tr>
+    </table>
+  </div>
 
-<div class="divider"></div>
-
-<!-- FOOTER -->
-<p class="note">
-  <strong>Salesperson:</strong> {{salesperson}}<br><br>
-  {{footer_message}}<br><br>
-  <strong>Note:</strong> {{note}}
-</p>
-
+</div>
 </body>
 </html>

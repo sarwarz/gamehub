@@ -25,8 +25,6 @@ class SellerOffer extends Model
 
         'sale_mode',
         'status',
-        'is_verified',
-        'is_promoted',
     ];
 
     protected $casts = [
@@ -58,5 +56,24 @@ class SellerOffer extends Model
     public function keys()
     {
         return $this->hasMany(SellerOfferKey::class);
+    }
+
+    /**
+     * Resolve the unit price based on quantity and sale_mode.
+     * Applies wholesale tiers: 100+ → wholesale_100_plus, 10-99 → wholesale_10_99, else retail.
+     */
+    public function resolveUnitPrice(int $quantity): float
+    {
+        $canWholesale = in_array($this->sale_mode, ['wholesale', 'both']);
+
+        if ($canWholesale && $quantity >= 100 && $this->wholesale_100_plus_price) {
+            return (float) $this->wholesale_100_plus_price;
+        }
+
+        if ($canWholesale && $quantity >= 10 && $this->wholesale_10_99_price) {
+            return (float) $this->wholesale_10_99_price;
+        }
+
+        return (float) $this->retail_price;
     }
 }

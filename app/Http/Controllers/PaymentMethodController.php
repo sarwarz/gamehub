@@ -5,18 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Currency;
 use Illuminate\Http\Request;
 use App\Models\PaymentMethod;
-use App\Services\CountryService;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Storage;
 
 class PaymentMethodController extends Controller
 {
     public function index()
     {
-
         $methods = PaymentMethod::orderBy('sort_order')->get();
-
-        // Default selected gateway
         $activeMethod = $methods->first();
         $currencies = Currency::where('is_active', true)->get();
 
@@ -39,9 +33,7 @@ class PaymentMethodController extends Controller
         $data = $request->validate([
             'is_enabled' => 'nullable|boolean',
             'mode'       => 'required|in:sandbox,live',
-            'country'    => 'nullable|string',
             'currency'   => 'nullable|string',
-            'rate'       => 'required|numeric|min:0',
             'config'     => 'nullable|array',
         ]);
 
@@ -51,6 +43,6 @@ class PaymentMethodController extends Controller
 
         return redirect()
             ->route('payment-methods.edit', $code)
-            ->with('success', 'Payment method updated successfully');
+            ->with('success', "{$method->name} settings saved successfully.");
     }
 }

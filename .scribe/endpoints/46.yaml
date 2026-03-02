@@ -1,0 +1,142 @@
+name: 'Seller Reviews'
+description: |-
+
+  APIs for sellers to view and manage reviews on their products.
+  All endpoints require authentication and an active seller account.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/seller/reviews
+    metadata:
+      custom: []
+      groupName: 'Seller Reviews'
+      groupDescription: |-
+
+        APIs for sellers to view and manage reviews on their products.
+        All endpoints require authentication and an active seller account.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List reviews on my products'
+      description: 'Get all reviews for products the seller has active offers on.'
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      status:
+        custom: []
+        name: status
+        description: 'Filter by status: approved, pending, rejected.'
+        required: false
+        example: approved
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      rating:
+        custom: []
+        name: rating
+        description: 'Filter by rating (1-5).'
+        required: false
+        example: 5
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      product_id:
+        custom: []
+        name: product_id
+        description: 'Filter by product.'
+        required: false
+        example: 3
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Results per page (default 15).'
+        required: false
+        example: 10
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      status: approved
+      rating: 5
+      product_id: 3
+      per_page: 10
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Reviews fetched","data":{"current_page":1,"data":[],"total":0}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/seller/reviews/summary
+    metadata:
+      custom: []
+      groupName: 'Seller Reviews'
+      groupDescription: |-
+
+        APIs for sellers to view and manage reviews on their products.
+        All endpoints require authentication and an active seller account.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Review summary'
+      description: "Get aggregated review statistics for the seller's products."
+      authenticated: true
+      deprecated: false
+    headers:
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: '{"status":true,"message":"Summary fetched","data":{"total_reviews":50,"average_rating":"4.20","rating_breakdown":{"5":20,"4":15,"3":10,"2":3,"1":2},"recent_reviews":[]}}'
+        headers: []
+        description: ''
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
+    controller: null
+    method: null
+    route: null

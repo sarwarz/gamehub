@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('seller_withdraws', function (Blueprint $table) {
@@ -20,24 +17,25 @@ return new class extends Migration
 
             $table->decimal('amount', 12, 2);
 
-            $table->string('method'); 
-            // e.g. bank, paypal, crypto, bkash
+            $table->string('method');
+            $table->json('payment_details')->nullable();
 
             $table->enum('status', [
                 'pending',
                 'approved',
-                'rejected'
+                'rejected',
+                'cancelled',
             ])->default('pending');
 
-            $table->text('note')->nullable(); // admin note / rejection reason
+            $table->text('note')->nullable();
+            $table->text('admin_note')->nullable();
+            $table->string('transaction_id')->nullable();
+            $table->timestamp('processed_at')->nullable();
 
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('seller_withdraws');

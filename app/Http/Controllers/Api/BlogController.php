@@ -32,26 +32,31 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
-        $blogs = Blog::with('category')
-            ->where('is_published', true)
-            ->where(function ($q) {
-                $q->whereNull('published_at')
-                  ->orWhere('published_at', '<=', now());
-            })
-            ->when($request->category_id, fn ($q) =>
-                $q->where('blog_category_id', $request->category_id)
-            )
-            ->when($request->search, fn ($q) =>
-                $q->where('title', 'like', '%' . $request->search . '%')
-            )
-            ->orderBy('position')
-            ->latest('published_at')
-            ->paginate(10);
+        try {
+            $blogs = Blog::with('category')
+                ->where('is_published', true)
+                ->where(function ($q) {
+                    $q->whereNull('published_at')
+                      ->orWhere('published_at', '<=', now());
+                })
+                ->when($request->category_id, fn ($q) =>
+                    $q->where('blog_category_id', $request->category_id)
+                )
+                ->when($request->search, fn ($q) =>
+                    $q->where('title', 'like', '%' . str_replace(['%', '_'], ['\\%', '\\_'], $request->search) . '%')
+                )
+                ->orderBy('position')
+                ->latest('published_at')
+                ->paginate(10);
 
-        return $this->successResponse(
-            $blogs->through(fn ($blog) => $this->transform($blog)),
-            'Blogs fetched successfully'
-        );
+            return $this->success(
+                $blogs->through(fn ($blog) => $this->transform($blog)),
+                'Blogs fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch blogs');
+        }
     }
 
     /**
@@ -71,22 +76,27 @@ class BlogController extends Controller
      */
     public function show(string $slug)
     {
-        $blog = Blog::with(['category', 'comments'])
-            ->where('slug', $slug)
-            ->where('is_published', true)
-            ->first();
+        try {
+            $blog = Blog::with(['category', 'comments' => fn($q) => $q->where('is_approved', true)])
+                ->where('slug', $slug)
+                ->where('is_published', true)
+                ->first();
 
-        if (!$blog) {
-            return $this->errorResponse('Blog not found', 404);
+            if (!$blog) {
+                return $this->error('Blog not found', 404);
+            }
+
+            // Increase view count (safe)
+            $blog->increment('views');
+
+            return $this->success(
+                $this->transform($blog, true),
+                'Blog fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch blog');
         }
-
-        // Increase view count (safe)
-        $blog->increment('views');
-
-        return $this->successResponse(
-            $this->transform($blog, true),
-            'Blog fetched successfully'
-        );
     }
 
     /* --------------------------------
@@ -112,8 +122,12 @@ class BlogController extends Controller
             'comments' => $full
                 ? $blog->comments->map(fn ($comment) => [
                     'id'      => $comment->id,
-                    'name'    => $comment->name,
+                    'name'    => $comment->user?->name ?? $comment->name,
                     'comment' => $comment->comment,
+                    'user'    => $comment->user ? [
+                        'id'   => $comment->user->id,
+                        'name' => $comment->user->name,
+                    ] : null,
                     'created_at' => $comment->created_at,
                 ])
                 : null,
@@ -123,26 +137,5 @@ class BlogController extends Controller
                 'keywords'    => $blog->meta_keywords,
             ],
         ];
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

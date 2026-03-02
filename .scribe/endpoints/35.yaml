@@ -1,0 +1,190 @@
+name: Menus
+description: |-
+
+  Public navigation menu endpoints.
+  Returns hierarchical menu data for header, footer, and sidebar navigation.
+endpoints:
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: api/v1/menus
+    metadata:
+      custom: []
+      groupName: Menus
+      groupDescription: |-
+
+        Public navigation menu endpoints.
+        Returns hierarchical menu data for header, footer, and sidebar navigation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get all active menus'
+      description: |-
+        Returns all active menus with their nested items.
+        Each menu includes its location (header/footer/sidebar) and hierarchical items.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      location:
+        custom: []
+        name: location
+        description: 'Filter by location: header, footer, sidebar.'
+        required: false
+        example: header
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanQueryParameters:
+      location: header
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Menus fetched successfully",
+            "data": [
+              {
+                "id": 1,
+                "name": "Main Navigation",
+                "slug": "main-navigation",
+                "location": "header",
+                "items": [
+                  {
+                    "id": 1,
+                    "title": "Home",
+                    "type": "link",
+                    "url": "/",
+                    "icon": null,
+                    "target": "_self",
+                    "children": []
+                  },
+                  {
+                    "id": 2,
+                    "title": "Shop",
+                    "type": "megamenu",
+                    "url": "/shop",
+                    "icon": null,
+                    "target": "_self",
+                    "columns": 4,
+                    "children": [
+                      {
+                        "id": 3,
+                        "title": "Games",
+                        "type": "link",
+                        "url": "/shop/games",
+                        "icon": null,
+                        "target": "_self",
+                        "children": [
+                          {
+                            "id": 4,
+                            "title": "Productivity",
+                            "type": "heading",
+                            "url": "#",
+                            "icon": null,
+                            "target": "_self",
+                            "children": [
+                              { "id": 5, "title": "Office Suites", "type": "link", "url": "/shop/office", "icon": null, "target": "_self", "children": [] }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        headers: []
+        description: success
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null
+  -
+    custom: []
+    httpMethods:
+      - GET
+    uri: 'api/v1/menus/{location}'
+    metadata:
+      custom: []
+      groupName: Menus
+      groupDescription: |-
+
+        Public navigation menu endpoints.
+        Returns hierarchical menu data for header, footer, and sidebar navigation.
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'Get menu by location'
+      description: |-
+        Returns a single menu by its location. If multiple menus exist
+        for a location, the first active one is returned.
+      authenticated: false
+      deprecated: false
+    headers:
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      location:
+        custom: []
+        name: location
+        description: 'The menu location.'
+        required: true
+        example: header
+        type: string
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
+    cleanUrlParameters:
+      location: header
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        custom: []
+        status: 200
+        content: |-
+          {
+            "status": true,
+            "message": "Menu fetched successfully",
+            "data": {
+              "id": 1,
+              "name": "Main Navigation",
+              "slug": "main-navigation",
+              "location": "header",
+              "items": []
+            }
+          }
+        headers: []
+        description: success
+      -
+        custom: []
+        status: 404
+        content: |-
+          {
+            "status": false,
+            "message": "Menu not found."
+          }
+        headers: []
+        description: 'not found'
+    responseFields: []
+    auth: []
+    controller: null
+    method: null
+    route: null

@@ -1,171 +1,200 @@
 @extends('layouts.app')
-
 @section('title', 'Orders')
 
 @push('page-css')
 <link rel="stylesheet" href="{{ asset('assets/vendor/css/pages/app-ecommerce.css') }}">
+<style>
+    .bulk-bar { background:#f0f2ff; border-radius:8px; animation:bulkSlide .3s ease; }
+    @keyframes bulkSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+</style>
 @endpush
 
 @section('content')
-<div class="app-ecommerce-orders">
 
-    {{-- Alerts --}}
     @include('partials.alerts')
 
-    <div class="card mb-3 p-4 collapse" id="filter-collapse">
+    <!-- Page Header -->
+    <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
-            <div class="card-bodys">
-                <p>Filters</p>
-                <form id="filterForm">
-                    <div id="filterRows">
-                        <!-- Filter row -->
-                        <div class="row g-2 align-items-center filter-row mb-2">
-                            <div class="col-md-6">
-                                <select name="field[]" class="form-select">
-                                    <option value="">Select field</option>
+            <h4 class="mb-1"><i class="ti tabler-shopping-cart me-2"></i>Orders</h4>
+            <p class="text-muted mb-0">Manage and process all customer orders</p>
+        </div>
+        <a href="{{ route('orders.create') }}" class="btn btn-primary">
+            <i class="ti tabler-plus me-1"></i> New Order
+        </a>
+    </div>
 
-                                    <!-- Order / General -->
-                                    <option value="status">Status</option>
-                                    <option value="created_at">Created At</option>
-                                    <option value="amount">Amount</option>
-                                    <!-- Customer -->
-                                    <option value="customer_name">Customer Name</option>
-                                    <option value="customer_email">Customer Email</option>
-                                    <option value="customer_phone">Customer Phone</option>
-
-                                    <!-- Payment / Shipping -->
-                                    <option value="payment_method">Payment Method</option>
-                                    <option value="payment_status">Payment Status</option>
-                                </select>
-
-
-                            </div>
-
-                            <div class="col-md-6">
-                                <select class="form-select" name="operator[]">
-                                    <option value="=">Is equal to</option>
-                                    <option value="!=">Is not equal to</option>
-                                    <option value="like">Contains</option>
-                                    <option value=">">Greater than</option>
-                                    <option value="<">Less than</option>
-                                </select>
-                            </div>
-
-                            <div class="col-md-12 value-wrapper">
-                                <input type="text" class="form-control" name="value[]" placeholder="Value">
-                            </div>
-
-                            <div class="col-md-1 text-start">
-                                <button type="button" class="btn btn-outline-danger remove-row d-none">
-                                    <i class="menu-icon icon-base ti tabler-trash"></i>
-                                </button>
-                            </div>
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-primary">
+                            <i class="ti tabler-shopping-cart fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['total']) }}</h5>
+                            <small class="text-muted">Total Orders</small>
                         </div>
                     </div>
-
-                    <div class="d-flex gap-2 mt-3">
-                        <button type="button" class="btn btn-outline-secondary" id="addFilter">
-                            Add additional filter
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            Apply
-                        </button>
-                        <button type="button"
-                            class="btn btn-outline-danger d-none"
-                            id="clearFilters">
-                        Clear Filters
-                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-warning">
+                            <i class="ti tabler-clock fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['pending']) }}</h5>
+                            <small class="text-muted">Pending</small>
+                        </div>
                     </div>
-                </form>
-
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 mb-xl-0 mb-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-success">
+                            <i class="ti tabler-circle-check fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ number_format($stats['completed']) }}</h5>
+                            <small class="text-muted">Completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="avatar avatar-md me-3 bg-label-info">
+                            <i class="ti tabler-currency-dollar fs-4"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">{{ format_currency($stats['revenue']) }}</h5>
+                            <small class="text-muted">Revenue</small>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm">
-        {{-- Header --}}
-
-
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-               <div class="btn-group">
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle waves-effect" data-bs-toggle="dropdown" aria-expanded="false">
-                    Bulk Actions
+    <!-- DataTable Card -->
+    <div class="card">
+        <!-- Card Header -->
+        <div class="card-header pb-0">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <h5 class="mb-0"><i class="ti tabler-list-details me-2"></i>All Orders</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-label-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filter-collapse">
+                        <i class="ti tabler-filter me-1"></i> Filters
                     </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="status"
-                            data-status="processing">
-                            Change status to processing
-                            </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="status"
-                            data-status="completed">
-                            Change status to completed
-                            </a>
-                        </li>
-
-                        <li>
-                            <a class="dropdown-item bulk-action"
-                            href="#"
-                            data-action="status"
-                            data-status="cancelled">
-                            Change status to cancelled
-                            </a>
-                        </li>
-
-                        <li><hr class="dropdown-divider"></li>
-
-                        <li>
-                            <a class="dropdown-item bulk-action text-danger"
-                            href="#"
-                            data-action="delete"
-                            data-url="{{ route('orders.bulk-delete') }}">
-                            Move to Trash
-                            </a>
-                        </li>
-                    </ul>
-
                 </div>
-                <button type="button" class="btn btn-outline-secondary waves-effect" data-bs-toggle="collapse" data-bs-target="#filter-collapse" aria-expanded="true" aria-controls="filter-collapse">Filters</button>
             </div>
-            <div>
-                <a href="{{ route('orders.create') }}" class="btn btn-primary">
-                    <i class="ti tabler-plus me-1"></i>
-                    Add Order
-                </a>
+
+            <!-- Collapsible Filter Row -->
+            <div class="collapse mt-3" id="filter-collapse">
+                <div class="row g-3 pb-3 border-bottom">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Order Status</label>
+                        <select id="filter-status" class="form-select form-select-sm">
+                            <option value="">All Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Payment Status</label>
+                        <select id="filter-payment-status" class="form-select form-select-sm">
+                            <option value="">All Payment Statuses</option>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="failed">Failed</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">Payment Method</label>
+                        <select id="filter-payment-method" class="form-select form-select-sm">
+                            <option value="">All Methods</option>
+                            <option value="paypal">PayPal</option>
+                            <option value="stripe">Stripe</option>
+                            <option value="wallet">Wallet</option>
+                            <option value="cod">Cash on Delivery</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted">&nbsp;</label>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-primary" id="apply-filters">
+                                <i class="ti tabler-check me-1"></i> Apply
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="clear-filters">
+                                <i class="ti tabler-x me-1"></i> Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
-        {{-- Table --}}
+        <!-- Bulk Actions Bar -->
+        <div class="card-body py-0">
+            <div class="bulk-bar d-none py-2 px-3 mt-3" id="bulk-bar">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-primary rounded-pill fs-6" id="bulk-count">0</span>
+                        <span class="fw-medium" style="font-size:.85rem">orders selected</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-label-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                <i class="ti tabler-refresh me-1"></i> Change Status
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="status" data-status="processing"><i class="ti tabler-loader ti-xs me-2 text-info"></i> Processing</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="status" data-status="completed"><i class="ti tabler-circle-check ti-xs me-2 text-success"></i> Completed</a></li>
+                                <li><a class="dropdown-item bulk-action" href="#" data-action="status" data-status="cancelled"><i class="ti tabler-circle-x ti-xs me-2 text-danger"></i> Cancelled</a></li>
+                            </ul>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-label-danger bulk-action" data-action="delete" data-url="{{ route('orders.bulk-delete') }}">
+                            <i class="ti tabler-trash me-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
         <div class="table-responsive">
-            <table class="table table-hover align-middle" id="orders-table" style="width:100%">
-                <thead>
+            <table id="orders-table" class="table table-hover">
+                <thead class="table-light">
                     <tr>
-                        <th width="30">
-                            <input type="checkbox" class="form-check-input" id="select-all">
-                        </th>
+                        <th width="40"><input type="checkbox" class="form-check-input" id="select-all"></th>
                         <th>Order</th>
                         <th>Customer</th>
-                        <th>Payment Method</th>
-                        <th class="text-center">Payment Status</th>
-                        <th>Order Date</th>
+                        <th>Payment</th>
+                        <th class="text-center">Pay. Status</th>
                         <th class="text-end">Total</th>
                         <th class="text-center">Status</th>
-                        <th class="text-center">Actions</th>
+                        <th class="text-center" width="80">Actions</th>
                     </tr>
                 </thead>
             </table>
         </div>
     </div>
-
-</div>
 @endsection
 
 @push('page-js')
@@ -174,7 +203,6 @@
     'use strict';
 
     const OrdersPage = {
-
         table: null,
 
         init() {
@@ -184,234 +212,146 @@
         },
 
         cacheDom() {
-            this.$table        = $('#orders-table');
-            this.$filterForm   = $('#filterForm');
-            this.$filterRows   = $('#filterRows');
-            this.$clearBtn     = $('#clearFilters');
-            this.$addFilterBtn = $('#addFilter');
-            this.$selectAll    = $('#select-all');
+            this.$table      = $('#orders-table');
+            this.$selectAll  = $('#select-all');
+            this.$bulkBar    = $('#bulk-bar');
+            this.$bulkCount  = $('#bulk-count');
         },
 
-        /* ===============================
-         * DataTable
-         =============================== */
         initDataTable() {
             this.table = this.$table.DataTable({
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '{{ route('orders.index') }}',
-                    data: d => {
-                        d.filters = this.$filterForm.serializeArray();
+                    url: '{{ route("orders.index") }}',
+                    data: function (d) {
+                        d.status = $('#filter-status').val();
+                        d.payment_status = $('#filter-payment-status').val();
+                        d.payment_method = $('#filter-payment-method').val();
                     }
                 },
-                order: [[5, 'desc']],
+                order: [[1, 'desc']],
                 lengthMenu: [10, 25, 50, 100],
                 pageLength: 25,
-                columns: this.getColumns()
+                columns: [
+                    { data: 'checkbox', orderable: false, searchable: false, className: 'pe-0' },
+                    { data: 'order_col', name: 'order_number' },
+                    { data: 'buyer', orderable: false, searchable: false },
+                    { data: 'payment_method', orderable: false, searchable: false },
+                    { data: 'payment_status', orderable: false, searchable: false, className: 'text-center' },
+                    { data: 'total_formatted', name: 'total_amount', className: 'text-end' },
+                    { data: 'status_badge', orderable: false, searchable: false, className: 'text-center' },
+                    { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
+                ],
+                language: {
+                    emptyTable: '<div class="py-4 text-center"><i class="ti tabler-shopping-cart-off ti-xl text-muted mb-2 d-block"></i><span class="text-muted">No orders found</span></div>',
+                    zeroRecords: '<div class="py-3 text-center text-muted">No matching orders</div>'
+                }
             });
         },
 
-        getColumns() {
-            return [
-                { data: 'checkbox', orderable: false, searchable: false },
-                {
-                    data: 'order_number',
-                    render: (data, type, row) => {
-                        const orderNo = data ?? row.id;
-                        return `<span class="fw-semibold">#${orderNo}</span>`;
-                    }
-                },
-                { data: 'buyer', orderable: false, searchable: false },
-                { data: 'payment_method', orderable: false, searchable: false },
-                { data: 'payment_status', orderable: false, searchable: false, className: 'text-center' },
-                { data: 'order_date', name: 'created_at' },
-                { data: 'total_formatted', className: 'text-end fw-semibold' },
-                { data: 'status_badge', orderable: false, searchable: false, className: 'text-center' },
-                { data: 'actions', orderable: false, searchable: false, className: 'text-center' }
-            ];
-        },
-
-        /* ===============================
-         * Events
-         =============================== */
         bindEvents() {
+            const self = this;
 
-            // Apply filters
-            this.$filterForm.on('submit', e => {
-                e.preventDefault();
-                this.table.ajax.reload();
-                this.$clearBtn.removeClass('d-none');
+            // Filter handlers
+            $('#apply-filters').on('click', () => self.table.ajax.reload());
+
+            $('#clear-filters').on('click', () => {
+                $('#filter-status, #filter-payment-status, #filter-payment-method').val('');
+                self.table.ajax.reload();
             });
-
-            // Clear filters
-            this.$clearBtn.on('click', () => this.clearFilters());
-
-            // Add filter row
-            this.$addFilterBtn.on('click', () => this.addFilterRow());
-
-            // Remove filter row
-            $(document).on('click', '.remove-row', e =>
-                $(e.currentTarget).closest('.filter-row').remove()
-            );
-
-            // Dynamic field input
-            $(document).on('change', 'select[name="field[]"]', e =>
-                this.handleFieldChange($(e.currentTarget))
-            );
 
             // Select all
-            this.$selectAll.on('change', e =>
-                $('.bulk-checkbox').prop('checked', e.target.checked)
-            );
+            this.$selectAll.on('change', function () {
+                $('.bulk-checkbox').prop('checked', this.checked);
+                self.syncBulkBar();
+            });
+
+            // Individual checkbox
+            $(document).on('change', '.bulk-checkbox', () => self.syncBulkBar());
 
             // Bulk actions
-            $(document).on('click', '.bulk-action', e => {
+            $(document).on('click', '.bulk-action', function (e) {
                 e.preventDefault();
+                const $btn = $(this);
+                self.handleBulkAction($btn.data('action'), $btn.data('status'), $btn.data('url'));
+            });
 
-                const $btn   = $(e.currentTarget);
-                const action = $btn.data('action');
-                const status = $btn.data('status');
-                const url    = $btn.data('url');
-
-                this.handleBulkAction(action, status, url);
+            // Single delete
+            $(document).on('click', '.delete-btn', function (e) {
+                e.preventDefault();
+                const url = $(this).data('url');
+                Swal.fire({
+                    title: 'Delete this order?',
+                    text: 'This action cannot be undone.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, delete',
+                    cancelButtonText: 'Cancel',
+                    customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                    buttonsStyling: false
+                }).then(r => {
+                    if (!r.isConfirmed) return;
+                    $.ajax({
+                        url: url,
+                        type: 'DELETE',
+                        data: { _token: '{{ csrf_token() }}' },
+                        success: () => {
+                            self.table.ajax.reload(null, false);
+                            Swal.fire({ icon: 'success', title: 'Order deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                        },
+                        error: () => Swal.fire({ icon: 'error', title: 'Failed to delete order', showConfirmButton: false, timer: 1500 })
+                    });
+                });
             });
         },
 
-        /* ===============================
-         * Filters
-         =============================== */
-        clearFilters() {
-            this.$filterForm[0].reset();
-            this.$filterRows.find('.filter-row:not(:first)').remove();
-            this.$filterRows.find('.value-wrapper').html(this.defaultInput());
-            this.table.ajax.reload();
-            this.$clearBtn.addClass('d-none');
-        },
+        syncBulkBar() {
+            const count = $('.bulk-checkbox:checked').length;
+            this.$bulkCount.text(count);
 
-        addFilterRow() {
-            const $row = this.$filterRows.find('.filter-row:first').clone();
-            $row.find('select, input').val('');
-            $row.find('.remove-row').removeClass('d-none');
-            this.$filterRows.append($row);
-        },
-
-        handleFieldChange($select) {
-            const field = $select.val();
-            const $row  = $select.closest('.filter-row');
-
-            $row.find('.value-wrapper').html(this.getFieldInput(field));
-
-            if (['created_at', 'amount'].includes(field)) {
-                $row.find('select[name="operator[]"]').val('=');
+            if (count > 0) {
+                this.$bulkBar.removeClass('d-none');
+            } else {
+                this.$bulkBar.addClass('d-none');
             }
+
+            const total = $('.bulk-checkbox').length;
+            this.$selectAll.prop('checked', count > 0 && count === total);
         },
 
-        getFieldInput(field) {
-            const inputs = {
-                status: `
-                    <select name="value[]" class="form-select">
-                        <option value="">Select Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="refunded">Refunded</option>
-                    </select>`,
-
-                payment_status: `
-                    <select name="value[]" class="form-select">
-                        <option value="">Select Payment Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="paid">Paid</option>
-                        <option value="failed">Failed</option>
-                        <option value="refunded">Refunded</option>
-                    </select>`,
-
-
-                payment_method: `
-                    <select name="value[]" class="form-select">
-                        <option value="">Select Payment Method</option>
-                        <option value="paypal">PayPal</option>
-                        <option value="stripe">Stripe</option>
-                        <option value="cod">Cash on Delivery</option>
-                    </select>`,
-
-                created_at: `<input type="date" class="form-control" name="value[]">`,
-                amount: `<input type="number" step="0.01" class="form-control" name="value[]" placeholder="Amount">`
-            };
-
-            return inputs[field] || this.defaultInput();
-        },
-
-        defaultInput() {
-            return `<input type="text" class="form-control" name="value[]" placeholder="Value">`;
-        },
-
-        /* ===============================
-         * Bulk Actions (SweetAlert)
-         =============================== */
-        handleBulkAction(action, status = null, url = null) {
-
+        handleBulkAction(action, status, url) {
             const ids = this.getSelectedIds();
-
             if (!ids.length) {
-                this.toast('info', 'Please select at least one order');
+                Swal.fire({ icon: 'info', title: 'No Selection', text: 'Please select at least one order.', timer: 2000, showConfirmButton: false });
                 return;
             }
-
-            if (action === 'delete') {
-                this.confirmBulkDelete(ids, url);
-                return;
-            }
-
-            if (action === 'status') {
-                this.confirmBulkStatus(ids, status);
-            }
+            if (action === 'delete') { this.confirmBulkDelete(ids, url); return; }
+            if (action === 'status') { this.confirmBulkStatus(ids, status); }
         },
 
         getSelectedIds() {
-            return $('.bulk-checkbox:checked')
-                .map((_, el) => el.value)
-                .get();
+            return $('.bulk-checkbox:checked').map((_, el) => el.value).get();
         },
 
         confirmBulkStatus(ids, status) {
             Swal.fire({
                 title: 'Change Order Status?',
-                text: `Selected orders will be marked as "${status}".`,
-                icon: 'warning',
+                html: `<span class="text-muted">Selected orders will be marked as <strong>${status}</strong>.</span>`,
+                icon: 'question',
                 showCancelButton: true,
-                confirmButtonText: 'Yes, change status',
+                confirmButtonText: 'Yes, change',
                 cancelButtonText: 'Cancel',
-                reverseButtons: true
-            }).then(result => {
-
-                if (!result.isConfirmed) return;
-
-                Swal.showLoading();
-
-                $.post('{{ route('orders.bulk-status') }}', {
-                    ids,
-                    status,
-                    _token: '{{ csrf_token() }}'
-                })
-                .done(() => {
-                    Swal.close();
-                    this.afterBulkAction();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Order status updated',
-                        showConfirmButton: false,
-                        timer: 1800,
-                        timerProgressBar: true
-                    });
-
-                })
-                .fail(() => {
-                    Swal.close();
-                    this.toast('error', 'Failed to update order status');
-                });
+                customClass: { confirmButton: 'btn btn-primary me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post('{{ route("orders.bulk-status") }}', { ids, status, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.afterBulkAction();
+                        Swal.fire({ icon: 'success', title: 'Status updated', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not update status.', timer: 2000, showConfirmButton: false }));
             });
         },
 
@@ -419,52 +359,28 @@
             Swal.fire({
                 title: 'Delete Orders?',
                 text: 'This action cannot be undone.',
-                icon: 'error',
+                icon: 'warning',
                 showCancelButton: true,
                 confirmButtonText: 'Yes, delete',
                 cancelButtonText: 'Cancel',
-                reverseButtons: true
-            }).then(result => {
-
-                if (!result.isConfirmed) return;
-
-                Swal.showLoading();
-
-                $.post(url, {
-                    ids,
-                    _token: '{{ csrf_token() }}'
-                })
-                .done(() => {
-                    Swal.close();
-                    this.afterBulkAction();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Orders deleted successfully',
-                        showConfirmButton: false,
-                        timer: 1800,
-                        timerProgressBar: true
-                    });
-                })
-                .fail(() => {
-                    Swal.close();
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Failed to delete orders',
-                        showConfirmButton: false,
-                        timer: 1800,
-                        timerProgressBar: true
-                    });
-                });
+                customClass: { confirmButton: 'btn btn-danger me-3', cancelButton: 'btn btn-label-secondary' },
+                buttonsStyling: false
+            }).then(r => {
+                if (!r.isConfirmed) return;
+                $.post(url, { ids, _token: '{{ csrf_token() }}' })
+                    .done(() => {
+                        this.afterBulkAction();
+                        Swal.fire({ icon: 'success', title: 'Orders deleted', showConfirmButton: false, timer: 1500, timerProgressBar: true });
+                    })
+                    .fail(() => Swal.fire({ icon: 'error', title: 'Failed', text: 'Could not delete orders.', timer: 2000, showConfirmButton: false }));
             });
         },
 
         afterBulkAction() {
             this.table.ajax.reload(null, false);
             this.$selectAll.prop('checked', false);
-        },
-
-
-
+            this.$bulkBar.addClass('d-none');
+        }
     };
 
     $(document).ready(() => OrdersPage.init());

@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\Notifications\Auth\VerifyEmailNotification;
+use App\Notifications\Auth\ResetPasswordNotification;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -21,12 +25,12 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
+        'social_provider',
+        'social_id',
+        'avatar',
         'is_active',
         'is_verified',
-        'avatar',
-        'phone',
-        'country',
-        'city',
+        'email_verified_at',
     ];
 
     /**
@@ -72,6 +76,16 @@ class User extends Authenticatable
         return $this->hasOne(Seller::class);
     }
 
+    public function affiliate()
+    {
+        return $this->hasOne(Affiliate::class);
+    }
+
+    public function referredBy()
+    {
+        return $this->hasOne(AffiliateReferral::class, 'referred_user_id');
+    }
+
     // If user is buyer, they may have many orders
     public function orders()
     {
@@ -98,7 +112,25 @@ class User extends Authenticatable
         return $this->hasOne(Wallet::class);
     }
 
-    // Scope to get only customers
+    public function isInternal(): bool
+    {
+        return $this->roles()->where('type', 'internal')->exists();
+    }
+
+    public function isExternal(): bool
+    {
+        return $this->roles()->where('type', 'external')->exists();
+    }
+
+    public function isSeller(): bool
+    {
+        return $this->roles()->where('name', 'seller')->exists();
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->roles()->where('name', 'customer')->exists();
+    }
 
     public function scopeCustomers($query)
     {
@@ -107,15 +139,24 @@ class User extends Authenticatable
         });
     }
 
+    public function scopeSellers($query)
+    {
+        return $query->whereHas('roles', function ($q) {
+            $q->where('name', 'seller');
+        });
+    }
+
+    public function scopeInternalUsers($query)
+    {
+        return $query->whereHas('roles', function ($q) {
+            $q->where('type', 'internal');
+        });
+    }
+
     public function media()
     {
         return $this->morphMany(Media::class, 'mediable');
     }
-
-
-
-
-
 
    public function hasPermission(string $permission): bool
     {
@@ -141,10 +182,28 @@ class User extends Authenticatable
         return $this->hasOne(UserProfile::class);
     }
 
+    public function addresses()
+    {
+        return $this->hasMany(UserAddress::class);
+    }
 
+    public function wishlist()
+    {
+        return $this->hasMany(Wishlist::class);
+    }
 
+    public function canDelete(): bool
+    {
+        return $this->isSuperAdmin() || $this->hasRole('admin');
+    }
 
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new VerifyEmailNotification);
+    }
 
-
-
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
+    }
 }

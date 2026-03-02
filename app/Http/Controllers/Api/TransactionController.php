@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 /**
  * @group Transactions
@@ -37,19 +38,29 @@ class TransactionController extends Controller
      *   }
      * }
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $transactions = Transaction::with(['seller'])
-            ->where('user_id', $request->user()->id)
-            ->when($request->type, fn ($q) => $q->where('type', $request->type))
-            ->when($request->status, fn ($q) => $q->where('status', $request->status))
-            ->when($request->category, fn ($q) => $q->where('category', $request->category))
-            ->when($request->from, fn ($q) => $q->whereDate('created_at', '>=', $request->from))
-            ->when($request->to, fn ($q) => $q->whereDate('created_at', '<=', $request->to))
-            ->latest()
-            ->paginate(15);
+        $request->validate([
+            'from' => 'nullable|date',
+            'to'   => 'nullable|date',
+        ]);
 
-        return $this->successResponse($transactions, 'Transactions fetched successfully');
+        try {
+            $transactions = Transaction::with(['seller'])
+                ->where('user_id', $request->user()->id)
+                ->when($request->type, fn ($q) => $q->where('type', $request->type))
+                ->when($request->status, fn ($q) => $q->where('status', $request->status))
+                ->when($request->category, fn ($q) => $q->where('category', $request->category))
+                ->when($request->from, fn ($q) => $q->whereDate('created_at', '>=', $request->from))
+                ->when($request->to, fn ($q) => $q->whereDate('created_at', '<=', $request->to))
+                ->latest()
+                ->paginate(15);
+
+            return $this->success($transactions, 'Transactions fetched successfully');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch transactions.', 500);
+        }
     }
 
     /**
@@ -72,40 +83,24 @@ class TransactionController extends Controller
      *   }
      * }
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $transaction = Transaction::with([
-                'seller',
-                'reference'
-            ])
-            ->where('user_id', auth()->id())
-            ->find($id);
+        try {
+            $transaction = Transaction::with([
+                    'seller',
+                    'reference'
+                ])
+                ->where('user_id', auth()->id())
+                ->find($id);
 
-        if (!$transaction) {
-            return $this->errorResponse('Transaction not found', 404);
+            if (!$transaction) {
+                return $this->error('Transaction not found', 404);
+            }
+
+            return $this->success($transaction, 'Transaction details fetched');
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Unable to fetch transaction details.', 500);
         }
-
-        return $this->successResponse($transaction, 'Transaction details fetched');
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

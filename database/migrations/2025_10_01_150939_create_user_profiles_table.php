@@ -24,19 +24,10 @@ return new class extends Migration {
             $table->string('phone')->nullable();
             $table->string('alternate_phone')->nullable();
 
-            // Address
-            $table->string('address_line1')->nullable();
-            $table->string('address_line2')->nullable();
-            $table->string('city')->nullable();
-            $table->string('state')->nullable();
-            $table->string('postal_code')->nullable();
-            $table->string('country')->nullable();
-
             // eCommerce-related
-            $table->string('company')->nullable(); // B2B customers
-            $table->string('tax_id')->nullable(); // VAT/GST
-            $table->boolean('newsletter_subscribed')->default(false); // marketing
-            $table->boolean('is_verified')->default(false); // KYC
+            $table->string('company')->nullable();
+            $table->string('tax_id')->nullable();
+            $table->boolean('newsletter_subscribed')->default(false);
 
             // Preferences
             $table->string('preferred_currency', 10)->default('USD');

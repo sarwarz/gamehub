@@ -29,14 +29,19 @@ class BlogCategoryController extends Controller
      */
     public function index()
     {
-        $categories = BlogCategory::where('is_active', true)
-            ->orderBy('position')
-            ->get();
+        try {
+            $categories = BlogCategory::where('is_active', true)
+                ->orderBy('position')
+                ->get();
 
-        return $this->successResponse(
-            $categories->map(fn ($category) => $this->transform($category)),
-            'Blog categories fetched successfully'
-        );
+            return $this->success(
+                $categories->map(fn ($category) => $this->transform($category)),
+                'Blog categories fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch blog categories');
+        }
     }
 
     /**
@@ -56,18 +61,23 @@ class BlogCategoryController extends Controller
      */
     public function show(string $slug)
     {
-        $category = BlogCategory::where('slug', $slug)
-            ->where('is_active', true)
-            ->first();
+        try {
+            $category = BlogCategory::where('slug', $slug)
+                ->where('is_active', true)
+                ->first();
 
-        if (!$category) {
-            return $this->errorResponse('Blog category not found', 404);
+            if (!$category) {
+                return $this->error('Blog category not found', 404);
+            }
+
+            return $this->success(
+                $this->transform($category, true),
+                'Blog category fetched successfully'
+            );
+        } catch (\Throwable $e) {
+            report($e);
+            return $this->error('Failed to fetch blog category');
         }
-
-        return $this->successResponse(
-            $this->transform($category, true),
-            'Blog category fetched successfully'
-        );
     }
 
     /* --------------------------------
@@ -88,26 +98,5 @@ class BlogCategoryController extends Controller
                 'keywords'    => $category->meta_keywords,
             ],
         ];
-    }
-
-    /* --------------------------------
-     | API Response Helpers
-     |-------------------------------- */
-
-    protected function successResponse($data, $message = 'Success', $code = 200)
-    {
-        return response()->json([
-            'status'  => true,
-            'message' => $message,
-            'data'    => $data,
-        ], $code);
-    }
-
-    protected function errorResponse($message, $code = 400)
-    {
-        return response()->json([
-            'status'  => false,
-            'message' => $message,
-        ], $code);
     }
 }

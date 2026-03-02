@@ -20,14 +20,12 @@ endpoints:
         These endpoints are used by frontend and mobile applications.
       subgroup: ''
       subgroupDescription: ''
-      title: 'List product requests'
-      description: |-
-        Get a paginated list of product requests.
-        You can optionally filter by status.
+      title: 'List my product requests'
+      description: "Paginated list of the authenticated user's product requests. Optional filter by status."
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -36,7 +34,7 @@ endpoints:
       status:
         custom: []
         name: status
-        description: 'Optional. Filter by status (pending, approved, rejected, completed).'
+        description: 'Filter by status (pending, approved, rejected, completed).'
         required: false
         example: pending
         type: string
@@ -44,8 +42,20 @@ endpoints:
         exampleWasSpecified: true
         nullable: false
         deprecated: false
+      per_page:
+        custom: []
+        name: per_page
+        description: 'Items per page (default 10).'
+        required: false
+        example: 15
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        nullable: false
+        deprecated: false
     cleanQueryParameters:
       status: pending
+      per_page: 15
     bodyParameters: []
     cleanBodyParameters: []
     fileParameters: []
@@ -53,22 +63,14 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Product requests fetched successfully",
-            "data": {
-              "current_page": 1,
-              "data": []
-            }
-          }
+        content: '{"status":true,"message":"Product requests fetched successfully","data":{"current_page":1,"data":[]}}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -91,7 +93,7 @@ endpoints:
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters: []
@@ -228,7 +230,7 @@ endpoints:
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -247,11 +249,11 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Get product request details'
-      description: 'Retrieve a single product request by ID.'
+      description: 'Retrieve one of your product requests by ID.'
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -277,22 +279,20 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Product request details fetched",
-            "data": {
-              "id": 1,
-              "title": "Windows 11 Pro OEM"
-            }
-          }
+        content: '{"status":true,"message":"Product request details fetched","data":{"id":1,"title":"Windows 11 Pro OEM"}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"Product request not found."}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -311,11 +311,11 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Update product request'
-      description: 'Update product request information or status.'
+      description: 'Update one of your product requests. Only pending requests should be editable.'
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -368,39 +368,29 @@ endpoints:
         exampleWasSpecified: false
         nullable: true
         deprecated: false
-      status:
-        custom: []
-        name: status
-        description: 'Optional Status (pending, approved, rejected, completed).'
-        required: false
-        example: consequatur
-        type: string
-        enumValues: []
-        exampleWasSpecified: false
-        nullable: false
-        deprecated: false
     cleanBodyParameters:
       title: consequatur
       description: 'Dolores dolorum amet iste laborum eius est dolor.'
       source_url: 'http://kunze.biz/iste-laborum-eius-est-dolor.html'
-      status: consequatur
     fileParameters: []
     responses:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Product request updated successfully"
-          }
+        content: '{"status":true,"message":"Product request updated successfully","data":{}}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"Product request not found."}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null
@@ -419,11 +409,11 @@ endpoints:
       subgroup: ''
       subgroupDescription: ''
       title: 'Delete product request'
-      description: 'Remove a product request.'
+      description: 'Remove one of your product requests.'
       authenticated: true
       deprecated: false
     headers:
-      Authorization: 'Bearer Bearer {YOUR_API_TOKEN}'
+      Authorization: 'Bearer {YOUR_API_TOKEN}'
       Content-Type: application/json
       Accept: application/json
     urlParameters:
@@ -449,18 +439,20 @@ endpoints:
       -
         custom: []
         status: 200
-        content: |-
-          {
-            "status": true,
-            "message": "Product request deleted successfully"
-          }
+        content: '{"status":true,"message":"Product request deleted successfully"}'
+        headers: []
+        description: ''
+      -
+        custom: []
+        status: 404
+        content: '{"status":false,"message":"Product request not found."}'
         headers: []
         description: ''
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer your_real_test_token_here'
+      - 'Bearer 4|dQ9mJHW40BM01MiAKEF5AdQeftzpUuYnro5I8zxV21dde371'
     controller: null
     method: null
     route: null

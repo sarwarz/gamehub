@@ -12,9 +12,7 @@ class PaymentMethod extends Model
         'type',
         'is_enabled',
         'mode',
-        'country',
         'currency',
-        'rate',
         'config',
         'sort_order',
     ];
