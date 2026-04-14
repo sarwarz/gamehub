@@ -314,13 +314,13 @@ class WalletController extends Controller
      *
      * @authenticated
      *
-     * @bodyParam order_id integer required Order ID to pay for. Example: 101
+     * @bodyParam order_id string required Order ID to pay for. Example: 101
      * @bodyParam amount numeric required Amount to pay from wallet. Example: 25.50
      */
     public function pay(Request $request): JsonResponse
     {
         $request->validate([
-            'order_id' => 'required|integer',
+            'order_id' => 'required|string',
             'amount'   => 'required|numeric|min:0.01|max:999999.99',
         ]);
 
